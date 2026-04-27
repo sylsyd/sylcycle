@@ -733,13 +733,6 @@
     .print-area { display: none; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-
-  <!-- SylCycle cloud: Firebase + shared auth -->
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-  <script src="sylcycle-auth.js"></script>
-
 </head>
 <body>
 
@@ -1682,10 +1675,7 @@ const DB = {
     catch(e) { return {students:{}}; }
   },
   saveData(data) {
-    try {
-      localStorage.setItem(this.KEY, JSON.stringify(data));
-      if(window.SylCycle) SylCycle.cloudSave(this.KEY, data);
-    }
+    try { localStorage.setItem(this.KEY, JSON.stringify(data)); }
     catch(e) {
       if (e.name === 'QuotaExceededError') flash('Storage nearly full — export a backup soon.', 'warn');
     }
@@ -1694,10 +1684,7 @@ const DB = {
     try { return JSON.parse(localStorage.getItem(this.SETTINGS_KEY) || '{}'); }
     catch(e) { return {}; }
   },
-  saveSettings(s) {
-    localStorage.setItem(this.SETTINGS_KEY, JSON.stringify(s));
-    if(window.SylCycle) SylCycle.cloudSave(this.SETTINGS_KEY, s);
-  },
+  saveSettings(s) { localStorage.setItem(this.SETTINGS_KEY, JSON.stringify(s)); },
 
   saveAssessment(name, assessment) {
     const data = this.loadData();
@@ -5284,8 +5271,7 @@ document.getElementById('add-student-modal').addEventListener('click', function(
 const _rm = document.getElementById('rename-modal'); if(_rm) _rm.addEventListener('click', function(e) { if(e.target===this) closeRename(); });
 
 /* ── Boot ── */
-if(window.SylCycle && SylCycle.onReady) SylCycle.onReady(initApp);
-else initApp();
+initApp();
 </script>
 </body>
 </html>
