@@ -1,0 +1,2297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CyclePlanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* =============================================================
+   CyclePlanner — refactored single-file MVP
+   -------------------------------------------------------------
+   Structure:
+   1. Design tokens
+   2. Base layout
+   3. Components
+   4. Workflow screens
+   5. Editor + preview
+   6. Responsive + print
+   ============================================================= */
+
+/* 1. Design tokens */
+:root{
+  --bg:#f7f3f1;
+  --panel:#ffffff;
+  --ink:#102847;
+  --muted:#68758a;
+  --soft:#8a97aa;
+  --line:#eadbd8;
+  --line-strong:#d8b8b2;
+  --blue:#12325f;
+  --blue-soft:#f4f6fa;
+  --crimson:#9f1239;
+  --crimson-dark:#7f102d;
+  --crimson-soft:#fff1f4;
+  --crimson-line:#efb4c2;
+  --success:#1c8b5d;
+  --warning:#b97700;
+  --danger:#c63c3c;
+  --shadow:0 12px 30px rgba(62,42,45,.08);
+  --radius-lg:24px;
+  --radius-md:18px;
+  --radius-sm:14px;
+}
+
+/* 2. Base layout */
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  background:linear-gradient(180deg,#eee4df 0%,#f7f3f1 100%);
+  color:var(--ink);
+  font-family:Quicksand,system-ui,-apple-system,Segoe UI,Arial,sans-serif;
+}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.app{max-width:1540px;margin:0 auto;padding:18px 20px 24px}
+.topbar{
+  background:rgba(255,255,255,.92);
+  border:1px solid var(--line);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow);
+  padding:18px 22px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  margin-bottom:18px;
+}
+.brand{display:flex;align-items:center;gap:16px}
+.brand-badge{
+  width:56px;height:56px;border-radius:16px;
+  background:linear-gradient(145deg,#fff,#f7f1ee);
+  border:1px solid var(--line);
+  color:var(--crimson);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;letter-spacing:-.08em;
+}
+.brand h1{margin:0;font-size:26px;line-height:1;font-weight:800;letter-spacing:-.035em}
+.brand h1 em{font-style:normal;color:var(--crimson)}
+.brand p{margin:6px 0 0;color:var(--muted);font-size:13px}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.screen{display:none}
+.screen.active{display:block}
+.panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow);
+}
+.main-panel{padding:22px;min-height:calc(100vh - 180px)}
+
+/* 3. Components */
+.chip{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 12px;border-radius:999px;
+  background:#fff;border:1px solid var(--line);
+  color:var(--ink);font-weight:700;font-size:12px;
+}
+.btn,.small-btn,.mini-btn,.seg-btn{
+  border:0;border-radius:14px;font-weight:800;transition:.14s ease;background:#fff;color:var(--ink);
+}
+.btn{width:100%;padding:13px 16px;background:var(--blue);color:#fff;box-shadow:0 10px 20px rgba(16,40,71,.14)}
+.btn:hover,.small-btn:hover,.mini-btn:hover,.seg-btn:hover{transform:translateY(-1px)}
+.btn.crimson,.small-btn.primary{background:var(--crimson);border-color:var(--crimson);color:#fff;box-shadow:0 10px 20px rgba(159,18,57,.16)}
+.btn.crimson:hover,.small-btn.primary:hover{background:var(--crimson-dark)}
+.btn.secondary,.small-btn{background:#fff;color:var(--ink);border:1.5px solid var(--line);box-shadow:none}
+.btn.secondary:hover,.small-btn:hover{background:#f7f3f1}
+.btn.outline-crimson{background:#fff;color:var(--crimson-dark);border:1.5px solid var(--crimson-line);box-shadow:none}
+.btn.outline-crimson:hover{background:var(--crimson-soft)}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.small-btn{padding:9px 12px;font-size:12px}
+.small-btn.export{background:var(--crimson);border-color:var(--crimson);color:#fff}
+.small-btn.export:hover{background:var(--crimson-dark)}
+.small-btn.danger,.mini-btn.danger{color:var(--danger)}
+.mini-btn{padding:7px 9px;border-radius:10px;background:#f7f3f1;color:var(--ink);font-size:11px}
+.pill-row{display:flex;gap:8px;flex-wrap:wrap}
+.section-actions{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+.section-actions .small-btn{font-size:11px;padding:8px 10px}
+.section{
+  border:1px solid var(--line);
+  border-radius:var(--radius-md);
+  background:linear-gradient(180deg,#fff,#fffdfc);
+  padding:16px;
+  margin-bottom:14px;
+}
+.section h3{margin:0 0 5px;font-size:15px}
+.sub,.tiny{color:var(--muted);font-size:12px;line-height:1.48}
+.tiny{font-size:11px}
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+label{display:block;font-size:12px;font-weight:800;margin-bottom:6px}
+input,textarea,select{
+  width:100%;border:1.5px solid var(--line);background:#fff;border-radius:14px;
+  padding:12px 13px;color:var(--ink);outline:none;
+}
+textarea{min-height:86px;resize:vertical;line-height:1.5}
+input:focus,textarea:focus,select:focus{border-color:var(--crimson);box-shadow:0 0 0 4px rgba(159,18,57,.09)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.status{display:none;margin-top:12px;padding:11px 12px;border-radius:14px;font-size:12px;line-height:1.45;border:1px solid var(--line)}
+.status.show{display:block}
+.status.ok{background:#edf9f4;border-color:#bfe7d1;color:#176844}
+.status.warn{background:#fff8eb;border-color:#f2ddb0;color:#8c6200}
+.status.err{background:#fff0f0;border-color:#efc3c3;color:#a62d2d}
+
+.create-loading{display:none;margin-top:12px;border:1.5px solid var(--crimson-line);border-radius:16px;background:linear-gradient(180deg,#fff8fa 0%,#fff 100%);padding:14px 16px;align-items:flex-start;gap:12px;color:var(--ink);box-shadow:0 10px 24px rgba(159,18,57,.08)}
+.create-loading.show{display:flex}
+.create-loading .spinner{width:22px;height:22px;border-width:3px;margin-top:2px}
+.create-loading strong{display:block;font-size:13px;margin-bottom:4px;color:var(--ink)}
+.create-loading p{margin:0;font-size:12px;line-height:1.45;color:var(--muted)}
+.btn[disabled],.small-btn[disabled]{opacity:.65;cursor:wait;transform:none!important;filter:none!important}
+.hidden{display:none!important}
+
+/* 4. Workflow screens */
+.workflow-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:18px}
+.workflow-tab{
+  min-height:78px;border:1px solid var(--line);background:rgba(255,255,255,.92);
+  border-radius:20px;padding:16px 16px 16px 72px;color:var(--ink);font-weight:900;text-align:left;
+  box-shadow:0 8px 20px rgba(10,40,95,.045);position:relative;display:flex;flex-direction:column;justify-content:center;
+}
+.workflow-tab::before{
+  content:attr(data-step);position:absolute;left:18px;top:50%;transform:translateY(-50%);
+  width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:#f1f5fb;color:var(--crimson-dark);font-weight:900;font-size:16px;
+}
+.workflow-tab strong{font-size:16px;line-height:1.1;letter-spacing:-.02em}
+.workflow-tab span{font-size:11.5px;color:var(--muted);margin-top:5px;font-weight:700;line-height:1.35}
+.workflow-tab:hover{border-color:var(--crimson-line);transform:translateY(-1px)}
+.workflow-tab.active{background:linear-gradient(180deg,#fff,#fff7f9);border-color:var(--crimson);box-shadow:inset 0 0 0 1px rgba(159,18,57,.12),0 8px 20px rgba(10,40,95,.045)}
+.workflow-tab.active::before{background:var(--crimson);color:#fff}
+.stage-intro{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:18px;
+  border:1px solid var(--line);border-radius:var(--radius-lg);background:#fff;
+  padding:24px 26px;margin-bottom:18px;
+}
+.stage-kicker{font-size:12px;text-transform:uppercase;letter-spacing:.18em;color:var(--crimson);font-weight:900;margin-bottom:9px}
+.stage-intro h2{margin:0 0 8px;font-size:32px;line-height:1.05;letter-spacing:-.04em}
+.stage-intro p{margin:0;color:var(--muted);font-size:15px;line-height:1.55}
+.planning-type select{font-weight:800;font-size:16px;border-color:var(--crimson-line)}
+.plan-type-description{margin-top:8px;padding:10px 12px;border-radius:14px;background:#fff7f9;border:1px solid var(--crimson-line);color:var(--crimson-dark);font-weight:700}
+.setup-details{padding:0;overflow:hidden}
+.setup-details summary{
+  list-style:none;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:14px;cursor:pointer;
+}
+.setup-details summary::-webkit-details-marker{display:none}
+.setup-details summary h3{margin:0 0 5px;font-size:15px}
+.summary-chevron{
+  width:32px;height:32px;border-radius:12px;
+  border:1.5px solid var(--line);background:#fff;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:14px;line-height:1;flex-shrink:0;
+  box-shadow:0 4px 12px rgba(16,40,71,.06);transition:.14s ease
+}
+.setup-details summary:hover .summary-chevron{border-color:var(--crimson-line);background:#fff8fa;color:var(--crimson-dark)}
+.setup-details[open] .summary-chevron{transform:rotate(180deg);border-color:var(--crimson-line);background:#fff8fa;color:var(--crimson-dark)}
+.setup-body{padding:0 16px 16px;border-top:1px solid var(--line)}
+
+.source-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}
+.source-drop{border:1.5px dashed var(--line-strong);border-radius:16px;background:linear-gradient(180deg,#fff,#fff8fa);padding:14px;color:var(--muted);font-size:12px;line-height:1.45;outline:none;transition:.14s ease}
+.source-drop strong{display:block;color:var(--ink);font-size:13px;margin-bottom:4px}
+.source-drop:focus,.source-drop.active{border-color:var(--crimson);box-shadow:0 0 0 4px rgba(159,18,57,.08);background:#fff}
+.source-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.source-item{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.source-item strong{display:block;font-size:12px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:520px}
+.source-item span{display:block;font-size:10.5px;color:var(--muted);margin-top:2px}
+.source-thumb{width:44px;height:36px;border-radius:10px;border:1px solid var(--line);object-fit:cover;background:#fff8fa;flex-shrink:0}
+.source-file-left{display:flex;align-items:center;gap:10px;min-width:0}
+.source-icon{width:44px;height:36px;border-radius:10px;border:1px solid var(--line);background:#fff8fa;color:var(--crimson);font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+@media (max-width:760px){.source-tools{grid-template-columns:1fr}.source-item{align-items:flex-start}.source-item strong{max-width:calc(100vw - 170px)}}
+.segmented{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg-btn{padding:10px 8px;border:1.5px solid var(--line);font-size:12px;color:var(--muted)}
+.seg-btn.active{background:var(--crimson-soft);border-color:var(--crimson);color:var(--crimson-dark)}
+.outcomes-box{border:1.5px solid var(--line);border-radius:16px;padding:12px;background:#fff;max-height:360px;overflow:auto}
+.outcome-group{border:1px solid #eadfdb;border-radius:14px;background:#fffdfc;padding:12px;margin-bottom:12px}
+.outcome-group:last-child{margin-bottom:0}
+.outcome-group-title{padding:8px 12px;border-radius:12px;background:#f7f3ef;color:var(--ink);font-size:12px;font-weight:900;margin-bottom:8px}
+.outcome-option{display:grid;grid-template-columns:22px minmax(0,1fr);align-items:start;gap:10px;padding:10px 12px;border:1px solid #efe2e2;border-radius:12px;cursor:pointer;background:#fff;margin:6px 0}
+.outcome-option:hover{background:#fff7f9;border-color:var(--crimson-line)}
+.outcome-option input{width:18px!important;height:18px!important;margin:1px 0 0 0!important;padding:0!important;accent-color:var(--crimson);box-shadow:none;justify-self:start}
+.outcome-option span{display:block;min-width:0;font-size:13px;line-height:1.45;font-weight:650;color:var(--ink)}
+.create-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.summary-card{border:1px solid var(--line);border-radius:16px;background:#fff;padding:12px}
+.summary-card b{display:block;font-size:12px;margin-bottom:4px}.summary-card span{display:block;font-size:12px;color:var(--muted);line-height:1.35}
+.library-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.saved-item{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.saved-item strong{font-size:13px}.saved-item span{font-size:11px;color:var(--muted);display:block;margin-top:3px}
+
+/* 5. Editor + preview */
+.workspace-top{display:flex;justify-content:space-between;gap:16px;margin-bottom:14px}
+.workspace-top h2{margin:0;font-size:18px}.workspace-top p{margin:5px 0 0;color:var(--muted);font-size:12px}
+.editor-preview{display:grid;grid-template-columns:minmax(340px,440px) minmax(0,1fr);gap:14px;position:relative}
+.editor-side{min-width:0;display:flex;flex-direction:column;gap:10px}
+.editor-local-tools{border:1px solid var(--line);border-radius:18px;background:#fff;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.editor-local-tools strong{font-size:12px}.editor-local-tools .pill-row{margin-left:auto}
+.duration-custom,.count-custom{margin-top:8px}
+.editor{border:1px solid var(--line);border-radius:20px;padding:14px;background:#fbfdff;min-height:calc(100vh - 390px);max-height:calc(100vh - 390px);overflow:auto}
+.editor-card{border:1px solid var(--line);background:#fff;border-radius:16px;padding:12px;margin-bottom:10px}
+.editor-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}
+.editor-card-head strong{font-size:13px}.editor-card-head span{font-size:11px;color:var(--muted);display:block;margin-top:2px}
+details.editor-card{padding:0;overflow:hidden}
+details.editor-card > summary.editor-card-head{list-style:none;cursor:pointer;margin-bottom:0;padding:13px 14px;align-items:center;transition:.14s ease;background:linear-gradient(180deg,#fff 0%,#fbfdff 100%)}
+details.editor-card > summary.editor-card-head::-webkit-details-marker{display:none}
+details.editor-card > summary.editor-card-head:hover{background:#fff8fa}
+.editor-card-title-wrap{min-width:0;display:flex;flex-direction:column;gap:2px}
+.editor-card-chevron{
+  width:32px;height:32px;border-radius:12px;
+  border:1.5px solid var(--line);background:#fff;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:14px;line-height:1;flex-shrink:0;
+  box-shadow:0 4px 12px rgba(16,40,71,.06);transition:.14s ease
+}
+details.editor-card > summary:hover .editor-card-chevron{border-color:var(--crimson-line);background:#fff8fa;color:var(--crimson-dark)}
+details.editor-card[open] > summary .editor-card-chevron{transform:rotate(180deg);border-color:var(--crimson-line);background:#fff8fa;color:var(--crimson-dark)}
+.editor-card-body{padding:12px 14px 14px;border-top:1px solid var(--line)}
+.editor-card-body > .field:last-child{margin-bottom:0}
+.empty-editor{border:1.5px dashed var(--line-strong);border-radius:18px;padding:36px 22px;text-align:center;color:var(--muted);background:#f8fbff}
+.empty-editor strong{display:block;color:var(--ink);font-size:16px;margin-bottom:8px}
+.preview-wrap{
+  border:1px solid var(--line);border-radius:20px;padding:12px;
+  background:linear-gradient(45deg,rgba(238,228,223,.55) 25%,transparent 25%),linear-gradient(-45deg,rgba(238,228,223,.55) 25%,transparent 25%),linear-gradient(45deg,transparent 75%,rgba(238,228,223,.55) 75%),linear-gradient(-45deg,transparent 75%,rgba(238,228,223,.55) 75%);
+  background-size:18px 18px;background-position:0 0,0 9px,9px -9px,-9px 0;
+  min-height:calc(100vh - 340px);max-height:calc(100vh - 340px);overflow:auto;
+}
+.preview-page{width:min(794px,calc(100% - 8px));max-width:794px;min-height:1123px;margin:0 auto 18px;background:#fff;box-shadow:0 16px 42px rgba(9,28,61,.16);padding:42px 48px 68px}
+.preview-head{display:flex;justify-content:space-between;gap:12px;border-bottom:2px solid #e1ebf7;padding-bottom:14px;margin-bottom:20px}
+.kicker{font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--crimson);margin-bottom:8px;display:inline-block}
+.preview-page h1{font-size:28px;line-height:1.1;margin:0;letter-spacing:-.04em}
+.preview-meta{margin-top:8px;font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.preview-badge{display:inline-flex;align-items:center;border:1px solid var(--line);background:#fff8fa;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:800;height:max-content}
+.print-section{border:1.5px solid var(--line);border-radius:18px;padding:14px 15px;margin-bottom:12px;break-inside:avoid;background:#fff}
+.print-section.accent{background:#fff8fa;border-left:5px solid var(--crimson)}
+.print-section h3{margin:0 0 8px;font-size:14px;color:var(--ink)}
+.print-section p,.print-section li{font-size:13px;line-height:1.6;color:#27456f;white-space:pre-wrap}
+.print-section ul,.print-section ol{margin:0;padding-left:20px}
+table{width:100%;border-collapse:collapse;font-size:12px;line-height:1.45}th,td{border:1px solid #dce8f6;padding:8px;text-align:left;vertical-align:top}th{background:#f8eeeb;color:var(--ink);font-weight:900}
+.unit-sequence-table{table-layout:fixed;font-size:11.25px;line-height:1.38}
+.unit-sequence-table th,.unit-sequence-table td{padding:7px 8px}
+.unit-sequence-table .col-lesson{width:18%}
+.unit-sequence-table .col-focus{width:24%}
+.unit-sequence-table .col-activities{width:40%}
+.unit-sequence-table .col-evidence{width:18%}
+.compact-list{margin:0;padding-left:15px}
+.compact-list li{margin:0 0 3px;line-height:1.35}
+.compact-list li:last-child{margin-bottom:0}
+.unit-lesson-card{border:1px solid #dce8f6;border-radius:14px;background:#fff;margin:0 0 10px;overflow:hidden;break-inside:avoid;page-break-inside:avoid}
+.unit-lesson-card:last-child{margin-bottom:0}
+.unit-lesson-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;background:#f8eeeb;border-bottom:1px solid #dce8f6;padding:10px 12px}
+.unit-lesson-title{font-weight:900;color:var(--ink);font-size:12.5px;line-height:1.35}
+.unit-lesson-duration{font-size:11px;color:var(--muted);font-weight:800;white-space:nowrap}
+.unit-lesson-grid{display:grid;grid-template-columns:1fr;gap:0}
+.unit-lesson-block{padding:10px 12px;border-bottom:1px solid #edf1f7}
+.unit-lesson-block:last-child{border-bottom:0}
+.unit-lesson-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:900;color:var(--crimson);margin-bottom:5px}
+.unit-lesson-body{font-size:12.5px;line-height:1.5;color:#27456f}
+.unit-lesson-body .compact-list{padding-left:18px}
+.unit-lesson-body .compact-list li{margin-bottom:4px;line-height:1.45}
+.unit-lesson-export-section{padding:0;overflow:hidden}
+.unit-lesson-export-section .unit-lesson-card{border:0;border-radius:18px;margin:0}
+.lesson-sequence-title p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ai-overlay{display:none;position:absolute;inset:0;align-items:flex-start;justify-content:center;pointer-events:none;z-index:10}.editor-preview.busy .ai-overlay{display:flex}
+.ai-box{margin-top:10px;display:flex;gap:12px;padding:14px 18px;border-radius:18px;background:rgba(255,255,255,.96);border:1.5px solid var(--crimson-line);box-shadow:0 18px 34px rgba(18,50,95,.16)}
+.spinner{width:24px;height:24px;border-radius:50%;border:3px solid #f1d4da;border-top-color:var(--crimson);animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.modal{display:none;position:fixed;inset:0;background:rgba(18,50,95,.42);z-index:9000;align-items:center;justify-content:center;padding:20px}.modal.open{display:flex}
+.modal-card{width:min(780px,100%);max-height:min(88vh,900px);background:#fff;border:1px solid #dce8f6;border-radius:24px;box-shadow:0 24px 60px rgba(10,40,95,.22);display:flex;flex-direction:column;overflow:hidden}
+.modal-head{padding:18px 20px;border-bottom:1px solid #e1ebf7;display:flex;justify-content:space-between;gap:16px}.modal-head h3{margin:0 0 6px;font-size:24px}.modal-body{padding:18px 20px;overflow:auto}
+.maintenance-note{border-color:var(--crimson-line);background:var(--crimson-soft)}
+
+.editor,.preview-wrap{contain:layout paint}
+.preview-page{contain:layout paint}
+
+/* 6. Responsive + print */
+@media(max-width:1180px){.editor-preview{grid-template-columns:1fr}.editor,.preview-wrap{max-height:none;min-height:420px}}
+@media(max-width:900px){.workflow-tabs,.grid-2,.grid-3,.two-col,.segmented,.create-summary{grid-template-columns:1fr}.workflow-tab{min-height:68px}.stage-intro{display:block}.stage-intro .small-btn{margin-top:12px}.workspace-top{display:block}.workspace-top .pill-row{margin-top:10px}}
+@media(max-width:760px){.app{padding:12px}.topbar{flex-direction:column;align-items:flex-start}.top-actions{width:100%}.preview-page{width:100%;min-height:auto;padding:28px 22px 56px}}
+@media print{body{background:#fff}.app{padding:0;max-width:none}.topbar,.workflow-tabs,.screen:not(#screen-edit),.workspace-top,.editor-side,.editor,.editor-local-tools,.section.edit-tools{display:none!important}.main-panel{display:block!important;padding:0;border:0!important;box-shadow:none!important}.editor-preview{display:block!important}.preview-wrap{display:block!important;border:0;padding:0;background:#fff;min-height:auto;max-height:none;overflow:visible}.preview-page{width:auto;max-width:none;min-height:auto;margin:0;box-shadow:none;page-break-after:always}.preview-page:last-child{page-break-after:auto}.print-section{break-inside:avoid;page-break-inside:avoid}.export-optional{display:none!important}}
+</style>
+
+<!-- SylCycle cloud: Firebase + shared auth -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="sylcycle-auth.js"></script>
+
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-badge">CP</div>
+      <div>
+        <h1>Cycle<em>Planner</em></h1>
+        <p>Focused planning workspace for Cycle 3 lessons, units and scope maps.</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="chip" id="typeChip">Lesson plan</span>
+      <button class="small-btn" data-go="library">Library</button>
+      <button class="small-btn" data-go="settings">Settings</button>
+    </div>
+  </header>
+
+  <nav class="workflow-tabs" aria-label="CyclePlanner workflow">
+    <button type="button" class="workflow-tab active" data-step="1" data-go="setup"><strong>Planning Mode</strong><span>Choose shape, setup & curriculum</span></button>
+    <button type="button" class="workflow-tab" data-step="2" data-go="create"><strong>Create</strong><span>Start blank, scaffold, template or AI</span></button>
+    <button type="button" class="workflow-tab" data-step="3" data-go="edit"><strong>Edit & Review</strong><span>Edit parts, preview, export</span></button>
+  </nav>
+
+  <section class="screen active" id="screen-setup">
+    <div class="panel main-panel">
+      <div class="stage-intro">
+        <div>
+          <div class="stage-kicker">Step 1</div>
+          <h2>Planning Mode</h2>
+          <p>Choose the planning shape, add the practical setup, then lock the curriculum behaviour. Nothing else lives here.</p>
+        </div>
+        <button type="button" class="small-btn primary" data-go="create">Next: Create</button>
+      </div>
+
+      <div class="section planning-type">
+        <h3>Choose your planning</h3>
+        <p class="sub">Select one planning shape. The rest of the workflow follows this choice.</p>
+        <div class="field" style="margin-top:14px">
+          <label for="planningTypeSelect">Planning type</label>
+          <select id="planningTypeSelect">
+            <option value="lesson">Lesson plan — single lesson</option>
+            <option value="unit">Unit plan — sequence of lessons</option>
+            <option value="sequence">Scope & sequence — broad map</option>
+          </select>
+        </div>
+        <p class="sub plan-type-description" id="planTypeDescription">A detailed single lesson plan with flow, evidence, support, extension and light resources.</p>
+      </div>
+
+      <details class="section setup-details" id="setupDetails" open>
+        <summary>
+          <div>
+            <h3 id="setupTitle">Lesson setup</h3>
+            <p class="sub">The practical brief the planner needs before anything is created.</p>
+          </div>
+          <span class="summary-chevron" aria-hidden="true">⌄</span>
+        </summary>
+        <div class="setup-body">
+          <div class="grid-2 setup-grid" style="margin-top:14px">
+            <div class="field">
+              <label for="yearLevel">Year level</label>
+              <select id="yearLevel"><option>CM1</option><option>CM2</option><option>CM1/CM2</option></select>
+            </div>
+            <div class="field setup-option" id="lessonLengthOption">
+              <label for="durationPreset">Lesson length</label>
+              <select id="durationPreset">
+                <option value="15 min">15 minutes</option>
+                <option value="30 min">30 minutes</option>
+                <option value="45 min">45 minutes</option>
+                <option value="60 min">60 minutes</option>
+                <option value="custom">Custom…</option>
+              </select>
+              <input id="durationCustom" class="duration-custom hidden" placeholder="Custom length, e.g. 75 min, 90 min">
+              <input id="durationInput" type="hidden" value="60 min">
+            </div>
+            <div class="field setup-option hidden" id="unitLessonOption">
+              <label for="unitLessonPreset">Number of lessons</label>
+              <select id="unitLessonPreset">
+                <option value="3">3 lessons</option>
+                <option value="4">4 lessons</option>
+                <option value="5">5 lessons</option>
+                <option value="6">6 lessons</option>
+                <option value="8">8 lessons</option>
+                <option value="10">10 lessons</option>
+                <option value="custom">Custom…</option>
+              </select>
+              <input id="unitLessonCustom" class="count-custom hidden" placeholder="Custom number, e.g. 7, 12">
+              <input id="unitLessonCount" type="hidden" value="6">
+            </div>
+            <div class="field setup-option hidden" id="sequenceWeekOption">
+              <label for="sequenceWeekPreset">Number of weeks</label>
+              <select id="sequenceWeekPreset">
+                <option value="3">3 weeks</option>
+                <option value="4">4 weeks</option>
+                <option value="5">5 weeks</option>
+                <option value="6">6 weeks</option>
+                <option value="8">8 weeks</option>
+                <option value="10">10 weeks</option>
+                <option value="12">12 weeks</option>
+                <option value="custom">Custom…</option>
+              </select>
+              <input id="sequenceWeekCustom" class="count-custom hidden" placeholder="Custom number, e.g. 7, 14">
+              <input id="sequenceWeekCount" type="hidden" value="6">
+            </div>
+          </div>
+          <div class="field">
+            <label for="briefInput">Prompt / planning brief</label>
+            <textarea id="briefInput" placeholder="e.g. A CM1 English Literacy lesson on using evidence to justify inferences, linked to Sherlock Sam."></textarea>
+          </div>
+          <div class="field">
+            <label for="extraContextInput">Extra context</label>
+            <textarea id="extraContextInput" placeholder="Class needs, previous lesson, timing constraints, text already used..."></textarea>
+          </div>
+        </div>
+      </details>
+
+      <details class="section setup-details" id="sourceDetails" open>
+        <summary>
+          <div>
+            <h3>Source prompt material</h3>
+            <p class="sub">Optional PDF or image references for the AI to use when creating the plan.</p>
+          </div>
+          <span class="summary-chevron" aria-hidden="true">⌄</span>
+        </summary>
+        <div class="setup-body">
+          <input id="sourcePdfInput" class="hidden" type="file" accept="application/pdf,.pdf">
+          <input id="sourceImageInput" class="hidden" type="file" accept="image/*" multiple>
+          <div class="source-tools">
+            <button type="button" class="small-btn" data-action="choose-source-pdf">Upload PDF</button>
+            <button type="button" class="small-btn" data-action="choose-source-image">Upload image</button>
+            <button type="button" class="small-btn" data-action="paste-source-image">Paste image</button>
+          </div>
+          <div class="source-drop" id="sourcePasteZone" tabindex="0">
+            <strong>Paste screenshot or image here</strong>
+            Click this box and press Ctrl/Cmd + V, or use the Paste image button above.
+          </div>
+          <div class="field" style="margin-top:12px">
+            <label for="sourceDetailsInput">Source details / instructions</label>
+            <textarea id="sourceDetailsInput" placeholder="Tell the AI how to use the uploaded material: extract the structure, follow this topic, adapt page 2 only, use the image as inspiration, etc."></textarea>
+          </div>
+          <div class="source-list" id="sourceFileList"></div>
+          <p class="tiny" style="margin-top:8px">Files are used as prompt context for AI generation. They are not saved permanently in local storage.</p>
+        </div>
+      </details>
+
+      <div class="section">
+        <h3>Curriculum</h3>
+        <p class="sub">Same Cycle 3 spine as CycleStudio and CycleAssess. No invented LO nonsense.</p>
+        <div class="field">
+          <label>Curriculum mode</label>
+          <div class="segmented" id="curriculumModeButtons">
+            <button type="button" class="seg-btn" data-curr="ai_both">AI chooses all</button>
+            <button type="button" class="seg-btn" data-curr="manual_domain_ai_lo">Domain + AI LOs</button>
+            <button type="button" class="seg-btn" data-curr="manual_both">Teacher chooses</button>
+          </div>
+        </div>
+        <div id="domainArea" class="field hidden">
+          <label for="domainSelect">Cycle 3 domain</label>
+          <select id="domainSelect"></select>
+        </div>
+        <div id="outcomeArea" class="field hidden">
+          <label>Learning outcomes</label>
+          <div class="outcomes-box" id="outcomesBox"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="screen-create">
+    <div class="panel main-panel">
+      <div class="stage-intro">
+        <div>
+          <div class="stage-kicker">Step 2</div>
+          <h2>Create</h2>
+          <p>Pick how this plan begins. After any creation action, you move to Edit & Review.</p>
+        </div>
+        <button type="button" class="small-btn" data-go="setup">Back to setup</button>
+      </div>
+
+      <div class="create-summary" id="createSummary"></div>
+
+      <div class="section">
+        <h3>Create</h3>
+        <p class="sub">Work from scratch, a scaffold, a saved template, or let AI draft the bones.</p>
+        <div class="grid-3" style="margin-bottom:10px">
+          <button class="btn secondary" data-action="start-blank">Start blank</button>
+          <button class="btn secondary" data-action="build-scaffold">Use planning scaffold</button>
+          <button class="btn outline-crimson" data-action="open-templates">Start from template</button>
+        </div>
+        <button class="btn crimson" id="generateBtn" data-action="generate">Generate with AI</button>
+        <div class="create-loading" id="createLoading" aria-live="polite">
+          <div class="spinner"></div>
+          <div>
+            <strong id="createLoadingTitle">Generating…</strong>
+            <p id="createLoadingText">This can take a little while for units and scope maps.</p>
+          </div>
+        </div>
+        <div class="status" id="statusBox"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="screen-edit">
+    <div class="panel main-panel">
+      <div class="workspace-top">
+        <div>
+          <h2 id="workspaceTitle">Lesson workspace</h2>
+          <p>Edit individual parts. Sections now collapse so the editor does not turn into a scroll swamp. Preview updates live; export uses the preview.</p>
+        </div>
+        <div class="pill-row">
+          <button class="small-btn" data-go="create">Back to create</button>
+          <button class="small-btn" data-action="save-history">Save</button>
+          <button class="small-btn" data-action="save-template">Save template</button>
+          <button class="small-btn" data-action="copy-text">Copy</button>
+          <button class="small-btn export" data-action="export-pdf">Export PDF</button>
+          <button class="small-btn" data-action="print">Print</button>
+        </div>
+      </div>
+
+      <div class="section edit-tools">
+        <h3>Refine</h3>
+        <p class="sub">Whole-plan actions live here. Section-specific tools now sit inside the relevant editor sections.</p>
+        <div class="field">
+          <label for="modifyRequest">Modify with AI</label>
+          <textarea id="modifyRequest" placeholder="Tell the AI exactly what to change. Example: Make the hook shorter, add more EAL support, replace the exit ticket, or make the assessment evidence more specific."></textarea>
+        </div>
+        <div class="grid-3" style="margin-bottom:10px">
+          <button class="btn crimson" data-action="modify-ai">Modify with AI</button>
+          <button class="btn secondary" data-action="make-formal">Make formal</button>
+          <button class="btn secondary" data-action="make-quick">Make quick</button>
+        </div>
+        <div class="grid-3">
+          <button class="btn secondary" data-action="copy-studio-brief">Copy CycleStudio brief</button>
+          <button class="btn secondary" data-action="clear-modify">Clear AI request</button>
+          <button class="btn secondary" data-go="setup">Adjust setup</button>
+        </div>
+        <div class="status" id="editStatusBox"></div>
+      </div>
+
+      <div class="editor-preview" id="editorPreview">
+        <div class="ai-overlay">
+          <div class="ai-box">
+            <div class="spinner"></div>
+            <div><strong id="busyTitle">Working…</strong><div class="tiny" id="busyText">The AI is drafting the plan.</div></div>
+          </div>
+        </div>
+        <div class="editor-side">
+          <div class="editor-local-tools">
+            <strong>Editor sections</strong>
+            <div class="pill-row">
+              <button class="small-btn" data-action="expand-editor">Expand all</button>
+              <button class="small-btn" data-action="collapse-editor">Collapse all</button>
+            </div>
+          </div>
+          <div class="editor" id="editor"></div>
+        </div>
+        <div class="preview-wrap"><div id="preview"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="screen-library">
+    <div class="panel main-panel">
+      <div class="workspace-top">
+        <div><h2>Library</h2><p>Saved plans and templates. Local storage only.</p></div>
+        <div class="pill-row"><button class="small-btn" data-go="setup">Back to planner</button><button class="small-btn danger" data-action="clear-library">Clear all</button></div>
+      </div>
+      <div class="library-grid">
+        <div class="section"><h3>History</h3><p class="sub">Recent saved/generated plans.</p><div id="historyList"></div></div>
+        <div class="section"><h3>Templates</h3><p class="sub">Reusable plan structures.</p><div id="templateList"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="screen-settings">
+    <div class="panel main-panel">
+      <div class="workspace-top">
+        <div><h2>Settings</h2><p>Stored locally on this device.</p></div>
+        <div class="pill-row"><button class="small-btn" data-go="setup">Back to planner</button><button class="small-btn primary" data-action="save-settings">Save settings</button></div>
+      </div>
+      <div class="section">
+        <div class="grid-2">
+          <div class="field"><label for="apiKey">Anthropic API key</label><input id="apiKey" type="password" placeholder="sk-ant-api03-…"></div>
+          <div class="field"><label for="modelName">Model ID</label><input id="modelName" placeholder="claude-opus-4-5"></div>
+        </div>
+        <div class="field"><label for="defaultContext">Default planning context</label><textarea id="defaultContext" placeholder="International French School. Cycle 3. English taught within French curriculum context. Prefer concise, practical teacher notes."></textarea></div>
+        <p class="tiny">The default context is sent with AI planning requests so you do not keep retyping the same setup.</p>
+        <p class="tiny"><strong>Build:</strong> refactor/optimise checkpoint. Keep doing this before adding large features.</p>
+      </div>
+      <div class="section maintenance-note">
+        <h3>Refactor checkpoint</h3>
+        <p class="sub">When the app gains a major feature, pause before the next one and clean the structure. Tiny refactors now; no spaghetti archaeology later.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="modal" id="templateModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div><h3>Start from template</h3><p class="sub">Pick a saved template for this planning type.</p></div>
+      <button class="small-btn" data-action="close-templates">Close</button>
+    </div>
+    <div class="modal-body" id="templateModalList"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+/* =============================================================
+   CyclePlanner JS — organised by responsibility (refactor/optimise pass 2)
+   1. Data + state
+   2. Utilities + storage
+   3. Curriculum rendering
+   4. Plan factory + normalisation
+   5. Navigation + setup
+   6. Editor rendering
+   7. Preview rendering
+   8. AI actions
+   9. Library + settings
+   10. Event binding
+   ============================================================= */
+
+/* 1. Data + state */
+const DOMAIN_LIBRARY = {"Mathematics": {"Number, Calculation and Problem Solving": ["Read, write, compare, order and represent whole numbers", "Read, write, compare, order and represent fractions and decimal numbers", "Use place value to understand numbers and support calculation", "Recall and apply key number facts and mental calculation strategies", "Use the four operations accurately in written and mental calculation", "Choose efficient calculation methods and explain mathematical thinking", "Solve one-step and multi-step problems involving numbers and operations"], "Algebra": ["Recognise, describe and extend numerical and pictorial patterns", "Find and explain rules in number sequences", "Use symbols, words, diagrams or bar models to represent unknown quantities", "Reason about equality and equivalence", "Use simple pre-algebraic thinking to solve problems with an unknown value"], "Measurement": ["Estimate, compare, convert and use common units of length, mass and capacity", "Measure and calculate perimeter", "Measure, compare and calculate area", "Recognise, compare and use angles", "Read, use and solve problems involving time, dates and durations", "Use measurement knowledge to solve practical problems"], "Geometry and Space": ["Recognise, describe, classify and draw common 2D shapes", "Recognise, describe and classify common 3D solids", "Use geometric vocabulary accurately", "Use instruments and constructions carefully and precisely", "Identify and use lines, angles, parallelism, perpendicularity and symmetry", "Represent, describe and reason about positions and movement in space"], "Data Handling and Probability": ["Read, interpret and construct tables, charts and graphs", "Extract, compare and use information from data displays", "Organise and present data clearly", "Ask and answer questions using data", "Describe simple situations involving chance using appropriate language", "Compare likelihood in simple probability contexts"], "Proportionality": ["Recognise simple proportional situations", "Use multiplicative reasoning in scaling and comparison problems", "Solve simple problems involving equal rates or correspondences", "Use proportionality in contexts such as price, quantity, measure or geometry"], "Computational Thinking": ["Follow, describe and create simple step-by-step instructions", "Use logic to predict, check and correct sequences of actions", "Break a problem into smaller parts", "Recognise and use repetition, patterns and simple algorithms", "Develop reasoning linked to mathematical problem solving with or without digital tools"]}, "French": ["Read aloud fluently and expressively from an appropriate text", "Understand and interpret a literary or informational text", "Write a structured, coherent and correctly punctuated text", "Spell high-frequency words correctly and apply grammatical agreement", "Conjugate verbs in the studied tenses (present, compound past, imperfect and future)", "Identify the word class and grammatical function of words in a sentence", "Expand vocabulary through word building, derivation and context", "Take part in spoken exchanges while respecting communication rules", "Produce writing linked to a text read (continuation, transformation or summary)", "Use punctuation and logical connectives effectively"], "English Literacy": {"Reading": ["Read aloud accurately, fluently and expressively", "Read silently with stamina, focus and understanding", "Use reading strategies to understand explicit meaning", "Infer implicit meaning and justify ideas with evidence from the text", "Read and interpret literary texts, informational texts and documents across subjects"], "Writing": ["Write regularly for different purposes: to narrate, describe, explain, summarise and respond", "Use writing as a tool for thinking, organising ideas and learning across subjects", "Plan writing before drafting", "Draft, revise and improve writing using rereading, feedback and successive versions", "Produce coherent texts that follow the conventions of written language"], "Oral Language": ["Listen actively and understand short and longer spoken texts or instructions", "Speak clearly and in an organised way to explain, recount, present information or express a point of view", "Take part in discussions and debates respectfully and effectively", "Adapt speech to audience, purpose and situation", "Use voice, language and body effectively to be heard and understood"], "Vocabulary": ["Build and deepen vocabulary across all subjects", "Use context, morphology and reference tools to work out the meaning of unfamiliar words", "Make links between words through word families, meaning and usage", "Understand and use synonyms, antonyms and multiple-meaning words", "Reuse new vocabulary accurately in speaking and writing"], "Grammar and Grammatical Spelling": ["Identify and use the main parts of a simple sentence", "Recognise sentence types and forms and use them appropriately", "Identify word classes and the main functions of words and groups of words", "Apply agreement accurately within the noun group and between subject and verb", "Use and control the main verb forms and tenses studied in Cycle 3", "Use punctuation and sentence structure to support clarity and correctness in writing"]}, "Science and Technology": {"Scientific Inquiry and Communication": ["Ask questions, observe carefully and suggest possible explanations", "Plan and carry out simple investigations, tests or observations", "Use appropriate tools, methods and simple measurements", "Record results clearly using notes, tables, drawings, diagrams or graphs", "Compare observations with predictions and explain findings", "Use scientific vocabulary accurately in speaking and writing", "Work responsibly, safely and cooperatively during scientific and technical activities"], "Matter, Movement, Energy and Information": ["Describe and compare the properties of materials and changes in matter", "Observe and explain movement using simple ideas about forces and motion", "Recognise simple forms, sources and uses of energy", "Identify how light, sound or electrical signals can carry information", "Use observations and simple models to explain everyday physical phenomena"], "Living Things, Diversity and Life Functions": ["Recognise that living things share common characteristics", "Describe the diversity of living things and classify them using simple criteria", "Identify the main functions of living things, including growth, nutrition and reproduction", "Understand that living things interact with each other and with their environment", "Use observations to explain similarities, differences and changes in living things over time"], "Materials and Technical Objects": ["Identify needs, functions and uses of everyday objects", "Describe how simple technical objects are made and how they work", "Compare materials, components and simple technical solutions", "Design, build or improve a simple object or model to meet a need", "Explain choices made when creating or testing a technical solution"], "Earth and Environment": ["Describe the main features of Earth and its place in the solar system", "Identify components of an environment and describe relationships between living things and their habitat", "Observe changes in weather, seasons and natural environments", "Recognise that human activity affects environments and living things", "Use scientific knowledge to think about health, sustainability and environmental responsibility"]}, "History and Geography": {"History Skills and Historical Thinking": ["Place key events, periods and people in chronological order", "Use timelines and other representations of time to build historical understanding", "Remember and use key historical reference points from the programme", "Ask questions, make simple hypotheses and justify ideas in history", "Recognise a historical source, extract relevant information and identify point of view", "Use appropriate historical vocabulary in speaking, writing and discussion", "Work with others to investigate, discuss and present historical learning"], "Geography Skills and Geographical Thinking": ["Name and locate major places and geographical reference points", "Locate and describe places and spaces at different scales", "Use maps, plans, photographs and digital tools to understand places", "Use the idea of scale to compare local, national, European and global spaces", "Ask geographical questions, investigate evidence and justify ideas", "Use appropriate geographical vocabulary in speaking, writing and discussion", "Work with others to investigate, discuss and present geographical learning"], "CM1 History Themes": ["And before France? Ancient traces, early settlement and inherited worlds", "The age of kings: royal power, the kingdom of France and major medieval figures", "The time of Revolution and Empire: 1789, the nation and Napoleon"], "CM2 History Themes": ["The age of the Republic: symbols, rights, duties and republican schooling", "Industrial France: energy, machines, work, cities and rural change", "France from the world wars to the European Union"], "CM1 Geography Themes": ["Discovering the place or places where I live", "Living, working, learning and enjoying leisure in France", "Consuming in France: water, energy and food"], "CM2 Geography Themes": ["Moving around: daily travel, long-distance travel and sustainable mobility", "Communicating across the world through the Internet", "Living better: nature in the city, recycling and eco-districts"]}, "Civics and Moral Education": ["Understand and respect the rules of collective life", "Identify rights and responsibilities as a student and citizen", "Understand the values and principles of the French Republic", "Take part in debates by listening carefully and giving reasons", "Recognise and reject discrimination and stereotypes", "Understand the idea of the common good and shared interest", "Explain the role of democratic institutions", "Develop moral judgement and the ability to make ethical choices"], "Visual Arts": ["Create an artwork by exploring different materials and techniques", "Express an artistic intention and put it into practice", "Analyse and describe a work of art using appropriate vocabulary", "Make links between artworks from different periods and cultures", "Experiment with the effects of gesture, tools and surfaces", "Use the properties of colour, shape, light and texture", "Present and explain artistic choices orally"], "Music": ["Sing as part of a group with accurate pitch and rhythm", "Identify the features of a musical work such as tempo, timbre and pitch", "Listen to and compare musical works from different styles and periods", "Read and use graphic representations of sound", "Improvise or compose a short musical sequence", "Use appropriate musical vocabulary to describe a piece of music"], "PE": ["Perform a measurable physical action involving speed, distance or accuracy", "Adapt movement to different environments such as swimming, climbing or orienteering", "Cooperate and compete individually or as part of a team", "Respect the rules of a game or team sport", "Create and perform expressive or artistic movement sequences", "Keep yourself and others safe during physical activity"], "Modern Languages": ["Understand simple spoken messages and short documents", "Read and understand short texts appropriate to A1 or A2 level", "Speak in a short prepared way about familiar topics", "Interact orally in simple everyday exchanges", "Write sentences or a short text using basic rules accurately", "Identify cultural elements linked to the countries of the language being studied", "Use basic vocabulary and grammatical structures"]};
+const DOMAIN_NAMES = Object.keys(DOMAIN_LIBRARY);
+const APP_VERSION = '0.2.1-refactor-optimised';
+
+const PLAN_LABELS = {
+  lesson:'Lesson plan',
+  unit:'Unit plan',
+  sequence:'Scope & sequence'
+};
+const PLAN_DESCRIPTIONS = {
+  lesson:'A detailed single lesson plan with flow, evidence, support, extension and light resources.',
+  unit:'A connected sequence of lessons with shared outcomes, lesson-by-lesson focus and assessment evidence.',
+  sequence:'A broad map across weeks or blocks, useful for coverage, pacing and scope planning.'
+};
+const STORAGE = {
+  prefs:'cycleplanner_refactor_prefs_v1',
+  current:'cycleplanner_refactor_current_v1',
+  history:'cycleplanner_refactor_history_v1',
+  templates:'cycleplanner_refactor_templates_v1'
+};
+const EXPORT_PAGE = Object.freeze({
+  cssWidth:794,
+  cssHeight:1123,
+  pdfWidth:210,
+  pdfHeight:297,
+  marginBottom:18
+});
+const SAVE_DEBOUNCE_MS = 300;
+const DEFAULT_PREFS = {
+  yearLevel:'CM1',
+  duration:'60 min',
+  unitLessonCount:'6',
+  sequenceWeekCount:'6',
+  brief:'',
+  extraContext:'',
+  sourceDetails:'',
+  planningType:'lesson',
+  curriculumMode:'ai_both',
+  domain:'English Literacy',
+  apiKey:'',
+  modelName:'claude-opus-4-5',
+  defaultContext:'International French School. Cycle 3. English taught within French curriculum context. Prefer concise, practical teacher notes.'
+};
+const state = {
+  tab:'setup',
+  type:'lesson',
+  curriculumMode:'ai_both',
+  selectedOutcomes:[],
+  sourceFiles:[],
+  plan:null
+};
+
+/* 2. Utilities + storage */
+const qs = id => document.getElementById(id);
+const qsa = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+function debounce(fn, delay=SAVE_DEBOUNCE_MS){
+  let timer = 0;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+function clonePlain(value){
+  return value == null ? value : JSON.parse(JSON.stringify(value));
+}
+function clampInt(value, min=1, max=40, fallback=1){
+  const parsed = parseInt(value, 10);
+  if(!Number.isFinite(parsed)) return fallback;
+  return Math.max(min, Math.min(max, parsed));
+}
+function cleanText(value=''){
+  return String(value || '')
+    .replace(/\r\n/g,'\n')
+    .replace(/([,;:!?])(?=\S)/g,'$1 ')
+    .replace(/\.([A-Z])/g,'. $1')
+    .replace(/[ \t]+/g,' ')
+    .replace(/\n[ \t]+/g,'\n')
+    .replace(/\n{3,}/g,'\n\n')
+    .trim();
+}
+function esc(value=''){
+  return cleanText(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
+}
+function nl(value=''){
+  return esc(value).replace(/\n/g,'<br>');
+}
+function splitCompactSteps(value='', limit=4){
+  const text = cleanText(value)
+    // Turn numbered list markers into line breaks before splitting.
+    .replace(/(^|\n|\s)\d+[.)]\s+/g, '\n')
+    // Remove orphan bullets such as "• 1" or a line containing only "2".
+    .replace(/(^|\n)\s*(?:[-•]\s*)?\d+\s*(?=\n|$)/g, '\n')
+    .trim();
+  if(!text) return [];
+  const parts = text
+    .split(/(?:\n+|\s*;\s*|(?<=[.!?])\s+(?=[A-Z]))/g)
+    .map(part => part.trim()
+      .replace(/^[-•]\s*/, '')
+      .replace(/^\d+[.)]?\s*/, '')
+      .replace(/[.;]$/,'')
+      .trim())
+    .filter(part => part && !/^\d+$/.test(part));
+  if(parts.length <= 1) return parts.length ? parts : [text];
+  return parts.slice(0, limit);
+}
+function compactCell(value='', limit=4){
+  const text = cleanText(value);
+  if(!text) return '';
+  const parts = splitCompactSteps(text, limit);
+  if(parts.length > 1){
+    return `<ul class="compact-list">${parts.map(part=>`<li>${esc(part)}</li>`).join('')}</ul>`;
+  }
+  return nl(text);
+}
+function listHtml(items=[]){
+  return items.length ? `<ul>${items.map(item=>`<li>${esc(item)}</li>`).join('')}</ul>` : '<p class="tiny">None yet.</p>';
+}
+function readJSON(key, fallback){
+  try{return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));}
+  catch(err){return fallback;}
+}
+function writeJSON(key, value){
+  try{ localStorage.setItem(key, JSON.stringify(value)); }
+  catch(err){ console.warn('CyclePlanner storage write failed:', err); }
+  if(window.SylCycle) SylCycle.cloudSave(key, value);
+}
+function unique(items=[]){
+  return [...new Set(items.filter(Boolean))];
+}
+function splitLines(value=''){
+  return String(value).split('\n').map(x=>x.trim()).filter(Boolean);
+}
+function joinLines(items=[]){
+  return (items || []).join('\n');
+}
+function makeId(){
+  return window.crypto?.randomUUID ? window.crypto.randomUUID() : `cp_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+function fileToDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+function sourceKind(file){
+  const type = file?.type || '';
+  if(type.includes('pdf') || /\.pdf$/i.test(file?.name || '')) return 'pdf';
+  if(type.startsWith('image/')) return 'image';
+  return 'file';
+}
+async function addSourceFile(file){
+  if(!file) return false;
+  const kind = sourceKind(file);
+  if(kind !== 'pdf' && kind !== 'image') return false;
+  const dataUrl = await fileToDataUrl(file);
+  state.sourceFiles.push({
+    id: makeId(),
+    name: file.name || (kind === 'pdf' ? 'Uploaded PDF' : 'Uploaded image'),
+    kind,
+    mimeType: file.type || (kind === 'pdf' ? 'application/pdf' : 'image/png'),
+    dataUrl,
+    base64: String(dataUrl).split(',')[1] || ''
+  });
+  renderSourceFiles();
+  return true;
+}
+async function addSourceFiles(files){
+  let added = 0;
+  for(const file of Array.from(files || [])){
+    if(await addSourceFile(file)) added++;
+  }
+  return added;
+}
+function removeSourceFile(id){
+  state.sourceFiles = state.sourceFiles.filter(file => file.id !== id);
+  renderSourceFiles();
+}
+function renderSourceFiles(){
+  const root = qs('sourceFileList');
+  if(!root) return;
+  if(!state.sourceFiles.length){
+    root.innerHTML = '<p class="tiny">No source files added yet.</p>';
+    return;
+  }
+  root.innerHTML = state.sourceFiles.map(file=>`
+    <div class="source-item">
+      <div class="source-file-left">
+        ${file.kind === 'image' ? `<img class="source-thumb" src="${file.dataUrl}" alt="${esc(file.name)}">` : `<div class="source-icon">PDF</div>`}
+        <div><strong>${esc(file.name)}</strong><span>${file.kind === 'pdf' ? 'PDF source' : 'Image source'} · used for AI generation</span></div>
+      </div>
+      <button type="button" class="mini-btn danger" data-source-remove="${esc(file.id)}">Remove</button>
+    </div>
+  `).join('');
+}
+async function addSourceImagesFromClipboardItems(items){
+  let added = 0;
+  for(const item of Array.from(items || [])){
+    if(item.kind === 'file' && String(item.type || '').startsWith('image/')){
+      const file = item.getAsFile?.();
+      if(file && await addSourceFile(file)) added++;
+    }
+  }
+  return added;
+}
+async function addSourceImagesFromClipboardApi(items){
+  let added = 0;
+  for(const item of Array.from(items || [])){
+    const imageType = (item.types || []).find(type => type.startsWith('image/'));
+    if(!imageType) continue;
+    const blob = await item.getType(imageType);
+    const file = new File([blob], `Pasted source image ${state.sourceFiles.length + added + 1}.${imageType.split('/')[1] || 'png'}`, {type:imageType});
+    if(await addSourceFile(file)) added++;
+  }
+  return added;
+}
+function setStatus(message, kind='ok', target='statusBox'){
+  const box = qs(target);
+  if(!box) return;
+  box.textContent = message;
+  box.className = `status show ${kind}`;
+}
+function clearStatus(){
+  ['statusBox','editStatusBox'].forEach(id=>{
+    const box = qs(id);
+    if(box){ box.textContent=''; box.className='status'; }
+  });
+}
+function setBusy(on, title='Working…', text='One reasonably obedient robot is thinking.'){
+  qs('editorPreview')?.classList.toggle('busy', !!on);
+  if(qs('busyTitle')) qs('busyTitle').textContent = title;
+  if(qs('busyText')) qs('busyText').textContent = text;
+}
+
+let previewRenderFrame = 0;
+function persistCurrentPlan(){
+  if(state.plan) writeJSON(STORAGE.current, clonePlain(state.plan));
+}
+const persistCurrentPlanSoon = debounce(persistCurrentPlan);
+function schedulePreviewUpdate(){
+  if(previewRenderFrame) cancelAnimationFrame(previewRenderFrame);
+  previewRenderFrame = requestAnimationFrame(()=>{
+    previewRenderFrame = 0;
+    renderPreview();
+    persistCurrentPlanSoon();
+  });
+}
+function renderAllAndPersist(){
+  renderAll();
+  persistCurrentPlan();
+}
+
+function getGenerationLabel(){
+  if(state.type === 'unit') return `${getUnitLessonCount()}-lesson unit plan`;
+  if(state.type === 'sequence') return `${getSequenceWeekCount()}-week scope & sequence`;
+  return `${getDurationValue()} lesson plan`;
+}
+function setCreateBusy(on, title='Generating…', text='This can take a little while.'){
+  const box = qs('createLoading');
+  const btn = qs('generateBtn');
+  if(box) box.classList.toggle('show', !!on);
+  if(qs('createLoadingTitle')) qs('createLoadingTitle').textContent = title;
+  if(qs('createLoadingText')) qs('createLoadingText').textContent = text;
+  if(btn){
+    btn.disabled = !!on;
+    btn.textContent = on ? 'Generating…' : 'Generate with AI';
+  }
+}
+function getPrefs(){
+  return {...DEFAULT_PREFS, ...readJSON(STORAGE.prefs, {})};
+}
+function collectPrefs(){
+  return {
+    ...getPrefs(),
+    yearLevel:qs('yearLevel').value,
+    duration:getDurationValue(),
+    unitLessonCount:getUnitLessonCount(),
+    sequenceWeekCount:getSequenceWeekCount(),
+    brief:qs('briefInput').value,
+    extraContext:qs('extraContextInput').value,
+    sourceDetails:qs('sourceDetailsInput')?.value || '',
+    planningType:qs('planningTypeSelect').value,
+    curriculumMode:state.curriculumMode,
+    domain:qs('domainSelect').value,
+    apiKey:qs('apiKey').value,
+    modelName:qs('modelName').value || 'claude-opus-4-5',
+    defaultContext:qs('defaultContext').value
+  };
+}
+function savePrefs(){
+  writeJSON(STORAGE.prefs, collectPrefs());
+}
+const savePrefsSoon = debounce(savePrefs);
+function loadPrefs(){
+  const p = getPrefs();
+  qs('yearLevel').value = p.yearLevel;
+  setDurationUI(p.duration);
+  setCountUI('unitLesson', p.unitLessonCount || '6');
+  setCountUI('sequenceWeek', p.sequenceWeekCount || '6');
+  qs('briefInput').value = p.brief;
+  qs('extraContextInput').value = p.extraContext;
+  if(qs('sourceDetailsInput')) qs('sourceDetailsInput').value = p.sourceDetails || '';
+  qs('planningTypeSelect').value = p.planningType;
+  qs('apiKey').value = p.apiKey;
+  qs('modelName').value = p.modelName;
+  qs('defaultContext').value = p.defaultContext;
+  state.type = p.planningType;
+  state.curriculumMode = p.curriculumMode;
+}
+const STANDARD_DURATIONS = ['15 min','30 min','45 min','60 min'];
+function getDurationValue(){
+  const preset = qs('durationPreset')?.value || '';
+  if(preset === 'custom') return (qs('durationCustom')?.value || '').trim() || 'Custom';
+  if(preset) return preset;
+  return qs('durationInput')?.value || '60 min';
+}
+function setDurationUI(value='60 min'){
+  const clean = String(value || '60 min').trim();
+  const preset = qs('durationPreset');
+  const custom = qs('durationCustom');
+  const hidden = qs('durationInput');
+  if(!preset || !custom || !hidden) return;
+  if(STANDARD_DURATIONS.includes(clean)){
+    preset.value = clean;
+    custom.value = '';
+    custom.classList.add('hidden');
+    hidden.value = clean;
+  }else{
+    preset.value = 'custom';
+    custom.value = clean;
+    custom.classList.remove('hidden');
+    hidden.value = clean;
+  }
+}
+function syncDurationUI(){
+  const preset = qs('durationPreset');
+  const custom = qs('durationCustom');
+  const hidden = qs('durationInput');
+  if(!preset || !custom || !hidden) return;
+  custom.classList.toggle('hidden', preset.value !== 'custom');
+  hidden.value = getDurationValue();
+}
+function handleDurationChange(){
+  syncDurationUI();
+  savePrefs();
+  renderCreateSummary();
+  if(state.plan){
+    state.plan.duration = getDurationValue();
+    schedulePreviewUpdate();
+  }
+}
+
+const STANDARD_UNIT_LESSON_COUNTS = ['3','4','5','6','8','10'];
+const STANDARD_SEQUENCE_WEEK_COUNTS = ['3','4','5','6','8','10','12'];
+function getCountValue(kind){
+  const preset = qs(`${kind}Preset`)?.value || '';
+  const custom = qs(`${kind}Custom`)?.value || '';
+  const hidden = qs(`${kind}Count`);
+  if(preset === 'custom') return String(custom || hidden?.value || '').trim() || '6';
+  if(preset) return preset;
+  return hidden?.value || '6';
+}
+function getUnitLessonCount(){ return getCountValue('unitLesson'); }
+function getSequenceWeekCount(){ return getCountValue('sequenceWeek'); }
+function setCountUI(kind, value='6'){
+  const clean = String(value || '6').trim();
+  const preset = qs(`${kind}Preset`);
+  const custom = qs(`${kind}Custom`);
+  const hidden = qs(`${kind}Count`);
+  if(!preset || !custom || !hidden) return;
+  const standard = kind === 'sequenceWeek' ? STANDARD_SEQUENCE_WEEK_COUNTS : STANDARD_UNIT_LESSON_COUNTS;
+  if(standard.includes(clean)){
+    preset.value = clean;
+    custom.value = '';
+    custom.classList.add('hidden');
+    hidden.value = clean;
+  }else{
+    preset.value = 'custom';
+    custom.value = clean;
+    custom.classList.remove('hidden');
+    hidden.value = clean;
+  }
+}
+function syncCountUI(kind){
+  const preset = qs(`${kind}Preset`);
+  const custom = qs(`${kind}Custom`);
+  const hidden = qs(`${kind}Count`);
+  if(!preset || !custom || !hidden) return;
+  custom.classList.toggle('hidden', preset.value !== 'custom');
+  hidden.value = getCountValue(kind);
+}
+function handleCountChange(kind){
+  syncCountUI(kind);
+  savePrefs();
+  renderCreateSummary();
+  if(state.plan){
+    if(kind === 'unitLesson') state.plan.lessonCount = getUnitLessonCount();
+    if(kind === 'sequenceWeek') state.plan.weekCount = getSequenceWeekCount();
+    schedulePreviewUpdate();
+  }
+}
+function getPlanningScaleText(type=state.type){
+  if(type === 'unit') return `${getUnitLessonCount()} lessons`;
+  if(type === 'sequence') return `${getSequenceWeekCount()} weeks`;
+  return getDurationValue();
+}
+function syncSetupControls(type=state.type){
+  qs('lessonLengthOption')?.classList.toggle('hidden', type !== 'lesson');
+  qs('unitLessonOption')?.classList.toggle('hidden', type !== 'unit');
+  qs('sequenceWeekOption')?.classList.toggle('hidden', type !== 'sequence');
+}
+function setNested(root, path, value){
+  const parts = path.split('.');
+  let obj = root;
+  for(let i=0;i<parts.length-1;i++){
+    const key = parts[i];
+    if(obj[key] === undefined || obj[key] === null) obj[key] = /^\d+$/.test(parts[i+1]) ? [] : {};
+    obj = obj[key];
+  }
+  obj[parts[parts.length - 1]] = value;
+}
+
+/* 3. Curriculum rendering */
+function getGrouped(domain){
+  const entry = DOMAIN_LIBRARY[domain];
+  return entry && !Array.isArray(entry) && typeof entry === 'object' ? entry : null;
+}
+function getFlat(domain){
+  const entry = DOMAIN_LIBRARY[domain];
+  if(Array.isArray(entry)) return entry;
+  if(entry && typeof entry === 'object') return Object.values(entry).flat();
+  return [];
+}
+const MATCH_STOPWORDS = new Set(['and','the','for','with','from','into','their','them','this','that','these','those','using','use','your','about','across','within','between','through','around','while','where','when','what','which','over','under','such','than','then','they','have','has','had','its','our','out','off','all','too','can','may','how','will','are','was','were']);
+function normaliseForMatch(value=''){
+  return String(value || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/&/g,' and ')
+    .replace(/[^a-z0-9]+/g,' ')
+    .trim();
+}
+function meaningfulTokens(value=''){
+  return unique(normaliseForMatch(value).split(/\s+/).filter(t => t && t.length > 2 && !MATCH_STOPWORDS.has(t)));
+}
+function scoreTextAgainstTokens(textNorm, tokens){
+  let score = 0;
+  (tokens || []).forEach(token => { if(textNorm.includes(token)) score += token.length >= 7 ? 2.3 : 1.25; });
+  return score;
+}
+function canonicalDomain(value=''){
+  const raw = String(value || '').trim();
+  if(!raw) return '';
+  if(DOMAIN_NAMES.includes(raw)) return raw;
+  const norm = normaliseForMatch(raw);
+  return DOMAIN_NAMES.find(name => normaliseForMatch(name) === norm) || DOMAIN_NAMES.find(name => normaliseForMatch(name).includes(norm) || norm.includes(normaliseForMatch(name))) || '';
+}
+function domainKeywordSeed(domain){
+  switch(domain){
+    case 'Science and Technology': return ['science','scientific','light','shadow','shadows','source','sources','torch','opaque','transparent','translucent','energy','sound','electricity','force','motion','material','materials','experiment','investigation','observe','observations','model'];
+    case 'English Literacy': return ['reading','read','writing','write','sentence','grammar','spelling','punctuation','vocabulary','inference','comprehension','text','author'];
+    case 'Mathematics': return ['number','calculate','calculation','fraction','decimal','measure','measurement','geometry','shape','angle','area','perimeter','graph','data'];
+    case 'History and Geography': return ['history','geography','map','place','settlement','land','resource','resources','timeline','travel','region','country'];
+    case 'Civics and Moral Education': return ['citizen','rights','responsibilities','rules','debate','republic','discrimination','ethical'];
+    case 'Visual Arts': return ['art','artist','artwork','colour','color','shape','texture','painting','drawing'];
+    case 'Music': return ['music','rhythm','tempo','pitch','sound','sing','compose'];
+    case 'PE': return ['sport','physical','movement','team','game','fitness'];
+    case 'Modern Languages': return ['language','speaking','listening','cultural','vocabulary'];
+    default: return [];
+  }
+}
+function inferDomainFromPlan(plan={}){
+  const textNorm = normaliseForMatch(JSON.stringify(plan || {}));
+  if(!textNorm) return '';
+  let best = '';
+  let bestScore = -Infinity;
+  DOMAIN_NAMES.forEach(domain => {
+    let score = scoreTextAgainstTokens(textNorm, meaningfulTokens(domain)) * 1.3;
+    score += scoreTextAgainstTokens(textNorm, domainKeywordSeed(domain)) * 1.8;
+    getFlat(domain).forEach(outcome => { score += Math.min(7, scoreTextAgainstTokens(textNorm, meaningfulTokens(outcome)) * .38); });
+    if(score > bestScore){ bestScore = score; best = domain; }
+  });
+  return bestScore > 1 ? best : '';
+}
+function chooseOutcomesForPlan(domain, plan={}, maxCount=3){
+  const allowed = getFlat(domain);
+  if(!allowed.length) return [];
+  const textNorm = normaliseForMatch(JSON.stringify(plan || {}));
+  const ranked = allowed.map(outcome => {
+    let score = scoreTextAgainstTokens(textNorm, meaningfulTokens(outcome));
+    if(domain === 'Science and Technology' && /\b(light|shadow|shadows|torch|source|sources)\b/.test(textNorm)){
+      if(/observations? and simple models|everyday physical phenomena/i.test(outcome)) score += 9;
+      if(/scientific vocabulary/i.test(outcome)) score += 7;
+      if(/Ask questions/i.test(outcome)) score += 5;
+      if(/Plan and carry out/i.test(outcome)) score += 4;
+      if(/light, sound or electrical signals/i.test(outcome)) score += 3;
+    }
+    return {outcome, score};
+  }).sort((a,b)=>b.score-a.score);
+  return ranked.filter(x=>x.score > 0).slice(0, maxCount).map(x=>x.outcome);
+}
+function repairCurriculum(plan){
+  if(!plan) return plan;
+  const inferred = inferDomainFromPlan(plan);
+  const current = canonicalDomain(plan.domain);
+  const hasUsefulOutcomes = Array.isArray(plan.learningOutcomes) && plan.learningOutcomes.length > 0;
+  if(state.curriculumMode === 'ai_both'){
+    if(inferred && (!current || !hasUsefulOutcomes || (current === 'English Literacy' && inferred !== 'English Literacy'))){
+      plan.domain = inferred;
+    }else{
+      plan.domain = current || inferred || '';
+    }
+    if(!plan.learningOutcomes?.length && plan.domain){
+      plan.learningOutcomes = chooseOutcomesForPlan(plan.domain, plan, plan.type === 'unit' ? 4 : 3);
+    }
+  }else{
+    plan.domain = current || qs('domainSelect')?.value || '';
+  }
+  return plan;
+}
+function populateDomains(){
+  qs('domainSelect').innerHTML = DOMAIN_NAMES.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
+}
+function renderCurriculumMode(){
+  qsa('[data-curr]').forEach(btn=>btn.classList.toggle('active', btn.dataset.curr === state.curriculumMode));
+  qs('domainArea').classList.toggle('hidden', state.curriculumMode === 'ai_both');
+  qs('outcomeArea').classList.toggle('hidden', state.curriculumMode !== 'manual_both');
+  if(state.curriculumMode === 'manual_both') renderOutcomePicker();
+}
+function renderOutcomePicker(){
+  const domain = qs('domainSelect').value;
+  const selected = new Set(state.selectedOutcomes);
+  const grouped = getGrouped(domain);
+  const row = outcome => `
+    <label class="outcome-option">
+      <input type="checkbox" data-outcome="${esc(outcome)}" ${selected.has(outcome) ? 'checked' : ''}>
+      <span>${esc(outcome)}</span>
+    </label>`;
+  qs('outcomesBox').innerHTML = grouped
+    ? Object.entries(grouped).map(([strand,outcomes])=>`<div class="outcome-group"><div class="outcome-group-title">${esc(strand)}</div>${outcomes.map(row).join('')}</div>`).join('')
+    : getFlat(domain).map(row).join('');
+}
+function applyCurriculumToPlan(){
+  if(!state.plan) return;
+  if(state.curriculumMode === 'ai_both') return;
+  state.plan.domain = qs('domainSelect').value;
+  if(state.curriculumMode === 'manual_both') state.plan.learningOutcomes = [...state.selectedOutcomes];
+}
+function catalogue(domain=''){
+  const domains = domain && DOMAIN_LIBRARY[domain] ? [domain] : DOMAIN_NAMES;
+  return domains.map(name=>{
+    const grouped = getGrouped(name);
+    if(grouped){
+      return `${name}:\n` + Object.entries(grouped).map(([strand,outcomes])=>`  ${strand}:\n` + outcomes.map(o=>`    - "${o}"`).join('\n')).join('\n');
+    }
+    return `${name}:\n` + getFlat(name).map(o=>`  - "${o}"`).join('\n');
+  }).join('\n\n');
+}
+
+/* 4. Plan factory + normalisation */
+function baseFields(type){
+  return {
+    type,
+    title:'Untitled ' + PLAN_LABELS[type].toLowerCase(),
+    yearLevel:qs('yearLevel')?.value || 'CM1',
+    duration:getDurationValue(),
+    lessonCount: type === 'unit' ? getUnitLessonCount() : '',
+    weekCount: type === 'sequence' ? getSequenceWeekCount() : '',
+    domain: state.curriculumMode === 'ai_both' ? '' : qs('domainSelect')?.value || '',
+    learningOutcomes: state.curriculumMode === 'manual_both' ? [...state.selectedOutcomes] : [],
+    context:qs('extraContextInput')?.value || ''
+  };
+}
+function blankPlan(type=state.type){
+  if(type === 'unit'){
+    return {
+      ...baseFields('unit'),
+      lessonCount:getUnitLessonCount(),
+      overview:'',
+      drivingQuestion:'',
+      vocabulary:[],
+      lessons:[],
+      differentiation:{support:'',extension:'',eal:''},
+      finalAssessment:'',
+      cycleAssessHooks:{evidenceToCollect:''},
+      notes:''
+    };
+  }
+  if(type === 'sequence'){
+    return {
+      ...baseFields('sequence'),
+      weekCount:getSequenceWeekCount(),
+      overview:'',
+      termOrBlock:'',
+      weeks:[],
+      coverageNotes:'',
+      cycleAssessHooks:{coverageNotes:''},
+      notes:''
+    };
+  }
+  return {
+    ...baseFields('lesson'),
+    subject:'',
+    objectives:[],
+    materials:[],
+    vocabulary:[],
+    priorKnowledge:'',
+    lessonFlow:[],
+    differentiation:{support:'',extension:'',eal:''},
+    keyQuestions:[],
+    exitTicket:'',
+    misconceptionCheck:'',
+    assessment:{evidence:'',successCriteria:[],nextSteps:''},
+    cycleAssessHooks:{evidenceToCollect:''},
+    studioHandOffIdea:'',
+    reflection:''
+  };
+}
+function scaffoldPlan(type=state.type){
+  const plan = blankPlan(type);
+  if(type === 'lesson'){
+    plan.objectives = ['Add the main student-friendly learning objective.'];
+    plan.materials = ['Add slides, worksheet, text, manipulatives or digital tools.'];
+    plan.vocabulary = ['Add key vocabulary.'];
+    plan.priorKnowledge = 'Add what students should already know, plus likely misconceptions.';
+    plan.lessonFlow = [
+      {phase:'Hook',duration:'5 min',teacherRole:'Activate prior knowledge and introduce the lesson purpose.',studentTask:'Respond to a quick question, image, example or problem.',notes:'Keep this short and useful; no circus required.'},
+      {phase:'Explicit teaching / modelling',duration:'10 min',teacherRole:'Model the skill, strategy or knowledge clearly. Think aloud where useful.',studentTask:'Listen, notice the steps, answer quick checks.',notes:'Add examples or teacher language here.'},
+      {phase:'Guided practice',duration:'15 min',teacherRole:'Guide students through examples and check understanding.',studentTask:'Try the skill with support, discuss answers, correct mistakes.',notes:'Add mini whiteboard, partner talk or shared task details.'},
+      {phase:'Independent / paired practice',duration:'20 min',teacherRole:'Circulate, question, support and extend.',studentTask:'Complete the main task independently or with a partner.',notes:'Add what early finishers or support pupils do.'},
+      {phase:'Plenary / exit ticket',duration:'10 min',teacherRole:'Review the learning and collect quick evidence.',studentTask:'Answer the exit ticket or explain what they learned.',notes:'Use this evidence for next steps or CycleAssess.'}
+    ];
+    plan.differentiation = {
+      support:'Add scaffolds, worked examples, sentence stems, reduced load or adult support.',
+      extension:'Add a deeper reasoning, transfer or challenge task.',
+      eal:'Add vocabulary support, visuals, sentence frames or language rehearsal.'
+    };
+    plan.keyQuestions = ['What do we already know that can help?', 'What strategy or evidence can we use?', 'How do we know this answer or idea works?'];
+    plan.assessment = {
+      evidence:'Add what you will look/listen for during the lesson.',
+      successCriteria:['I can explain the main skill or idea.', 'I can complete the task using the strategy taught.', 'I can justify my answer with evidence, examples or reasoning.'],
+      nextSteps:'Add likely follow-up teaching based on what students show.'
+    };
+    plan.exitTicket = 'Add one quick question or task that shows whether students met the objective.';
+    plan.misconceptionCheck = 'Add one likely misunderstanding and how you will catch it quickly.';
+    plan.cycleAssessHooks = {evidenceToCollect:'Add the evidence you could later record in CycleAssess.'};
+  }else if(type === 'unit'){
+    plan.overview = 'Add the big-picture purpose of the unit.';
+    plan.drivingQuestion = 'Add the central question or enquiry thread.';
+    plan.vocabulary = ['Add recurring unit vocabulary.'];
+    const lessonCount = clampInt(getUnitLessonCount(), 1, 24, 6);
+    plan.lessonCount = String(lessonCount);
+    plan.lessons = Array.from({length:lessonCount},(_,i)=>({title:`Lesson ${i+1}`,duration:'60 min',focus:'Add lesson focus',activities:'Add main learning activities',assessmentEvidence:'Add what evidence this lesson produces'}));
+    plan.differentiation = {support:'Add unit-level support.', extension:'Add unit-level extension.', eal:'Add language support across the unit.'};
+    plan.finalAssessment = 'Add the final task, product, performance or assessment evidence.';
+    plan.cycleAssessHooks = {evidenceToCollect:'Add which outcomes/evidence could feed CycleAssess.'};
+  }else{
+    plan.overview = 'Add the purpose of this scope map.';
+    plan.termOrBlock = 'Add term/block name.';
+    const weekCount = clampInt(getSequenceWeekCount(), 1, 40, 6);
+    plan.weekCount = String(weekCount);
+    plan.weeks = Array.from({length:weekCount},(_,i)=>({week:`Week ${i+1}`,focus:'Add weekly focus',domain:'Add domain',lessons:'Add lessons or activities',assessment:'Add assessment/evidence'}));
+    plan.coverageNotes = 'Add coverage notes, gaps or sequencing decisions.';
+    plan.cycleAssessHooks = {coverageNotes:'Add future CycleAssess coverage link.'};
+  }
+  return plan;
+}
+
+function isBlankText(value){
+  return !String(value || '').trim();
+}
+function inferUnitFocus(title=''){
+  const t = String(title || '').toLowerCase();
+  if(t.includes('energy')) return 'Compare how France and Singapore source and use energy, including renewable and non-renewable examples.';
+  if(t.includes('water') || t.includes('newater')) return 'Explore how water is sourced, conserved and recycled, using Singapore and France as comparison points.';
+  if(t.includes('food') || t.includes('come from')) return 'Investigate where food comes from and how local, imported and fair-trade choices affect sustainability.';
+  if(t.includes('shadow')) return 'Explore how shadows form and change when light is blocked by objects.';
+  if(t.includes('light')) return 'Build understanding of light sources, light travel and evidence from simple observations.';
+  return title ? `Develop the main ideas from “${title}” through comparison, discussion and recorded evidence.` : 'Develop one focused step in the unit sequence.';
+}
+function inferUnitActivities(title=''){
+  const t = String(title || '').toLowerCase();
+  if(t.includes('energy')) return 'Sort energy sources into renewable and non-renewable categories; compare France and Singapore examples using images or short data cards; complete a comparison table.';
+  if(t.includes('water') || t.includes('newater')) return 'Analyse a simple diagram or photo set showing water supply; discuss conservation choices; create a labelled diagram or mini poster explaining one solution.';
+  if(t.includes('food') || t.includes('come from')) return 'Map where selected foods come from; sort local/imported/fair-trade examples; discuss food miles and write a short sustainability reflection.';
+  if(t.includes('shadow')) return 'Use torches and objects to test shadow formation; draw labelled observations; discuss what changes when distance or angle changes.';
+  if(t.includes('light')) return 'Observe light sources; sort examples; complete a simple investigation or model and record findings with key vocabulary.';
+  return 'Introduce the focus with a short stimulus; investigate or compare examples in pairs/groups; record findings through a table, diagram, short explanation or exit ticket.';
+}
+function expectedUnitLessonCount(plan=state.plan){
+  return clampInt(plan?.lessonCount || getUnitLessonCount(), 1, 24, clampInt(getUnitLessonCount(), 1, 24, 6));
+}
+function unitPlaceholderLesson(plan, index, total){
+  const titleSeed = cleanText(plan?.title || 'this unit');
+  const isLast = index + 1 === total;
+  return {
+    title: isLast ? `Lesson ${index + 1}: Synthesis and final task` : `Lesson ${index + 1}: Complete the unit sequence`,
+    duration: cleanText(plan?.duration || '45 min'),
+    focus: isLast
+      ? `Consolidate the key learning from ${titleSeed} and prepare final evidence.`
+      : `Develop the next key idea in ${titleSeed} so the ${total}-lesson sequence is complete.`,
+    activities: isLast
+      ? 'Review the unit vocabulary and key ideas; complete the final diagram, poster, explanation or reflection; share one piece of evidence.'
+      : 'Recall prior learning; investigate or compare a new example; record findings in a table, diagram or short explanation.',
+    assessmentEvidence: isLast
+      ? 'Final product, exit ticket, labelled diagram, explanation or teacher observation linked to the unit outcomes.'
+      : 'Completed task, discussion evidence, recorded observations or exit ticket linked to the lesson focus.'
+  };
+}
+function addQualityWarning(plan, message){
+  if(!plan) return;
+  if(!Array.isArray(plan._qualityWarnings)) plan._qualityWarnings = [];
+  if(!plan._qualityWarnings.includes(message)) plan._qualityWarnings.push(message);
+}
+function repairUnitLessonRows(plan){
+  if(!Array.isArray(plan.lessons)) plan.lessons = [];
+  const targetCount = expectedUnitLessonCount(plan);
+  const originalCount = plan.lessons.length;
+  if(originalCount < targetCount){
+    addQualityWarning(plan, `AI returned ${originalCount} lesson${originalCount === 1 ? '' : 's'} for a ${targetCount}-lesson unit. Missing lesson cards were added as placeholders.`);
+    while(plan.lessons.length < targetCount){
+      plan.lessons.push(unitPlaceholderLesson(plan, plan.lessons.length, targetCount));
+    }
+  }else if(originalCount > targetCount){
+    addQualityWarning(plan, `AI returned ${originalCount} lessons for a ${targetCount}-lesson unit. Extra rows were trimmed to match the selected setup.`);
+    plan.lessons = plan.lessons.slice(0, targetCount);
+  }
+  plan.lessonCount = String(targetCount);
+  plan.lessons = plan.lessons.map((lesson, index) => {
+    const row = {...unitPlaceholderLesson(plan, index, targetCount), ...(lesson || {})};
+    row.title = cleanText(row.title || `Lesson ${index + 1}`);
+    row.duration = cleanText(row.duration || plan.duration || '45 min');
+    row.focus = cleanText(row.focus);
+    row.activities = cleanText(row.activities);
+    row.assessmentEvidence = cleanText(row.assessmentEvidence);
+    if(isBlankText(row.focus)) row.focus = inferUnitFocus(row.title);
+    if(isBlankText(row.activities)) row.activities = inferUnitActivities(row.title);
+    if(isBlankText(row.assessmentEvidence)) row.assessmentEvidence = 'Exit ticket, completed task, discussion evidence or teacher observation linked to the lesson focus.';
+    return row;
+  });
+}
+function repairSequenceWeekRows(plan){
+  if(!Array.isArray(plan.weeks)) plan.weeks = [];
+  plan.weeks = plan.weeks.map((week, index) => {
+    const row = {...(week || {})};
+    row.week = String(row.week || `Week ${index + 1}`).trim();
+    if(isBlankText(row.focus)) row.focus = 'Add a clear weekly learning focus.';
+    if(isBlankText(row.domain)) row.domain = plan.domain || 'Domain to confirm';
+    if(isBlankText(row.lessons)) row.lessons = 'Outline the key lessons, tasks or learning activities for this week.';
+    if(isBlankText(row.assessment)) row.assessment = 'Identify evidence to collect during or at the end of the week.';
+    return row;
+  });
+}
+
+function normalisePlan(input, type=state.type){
+  const base = blankPlan(type);
+  const plan = {...base, ...(input || {})};
+  plan.type = type;
+  plan.yearLevel ||= base.yearLevel;
+  plan.duration ||= base.duration;
+  plan.learningOutcomes = Array.isArray(plan.learningOutcomes) ? plan.learningOutcomes : [];
+  repairCurriculum(plan);
+  if(type === 'lesson'){
+    plan.objectives = Array.isArray(plan.objectives) ? plan.objectives : [];
+    plan.materials = Array.isArray(plan.materials) ? plan.materials : [];
+    plan.vocabulary = Array.isArray(plan.vocabulary) ? plan.vocabulary : [];
+    plan.lessonFlow = Array.isArray(plan.lessonFlow) ? plan.lessonFlow : [];
+    plan.keyQuestions = Array.isArray(plan.keyQuestions) ? plan.keyQuestions : [];
+    plan.misconceptionCheck = typeof plan.misconceptionCheck === 'string' ? plan.misconceptionCheck : (plan.misconceptions || '');
+    plan.differentiation = {...base.differentiation, ...(plan.differentiation || {})};
+    plan.assessment = {...base.assessment, ...(plan.assessment || {})};
+    plan.assessment.successCriteria = Array.isArray(plan.assessment.successCriteria) ? plan.assessment.successCriteria : [];
+    plan.studioHandOffIdea = typeof plan.studioHandOffIdea === 'string' ? plan.studioHandOffIdea : (plan.cycleStudioHandOff || plan.cycleStudioBrief || '');
+    if(!plan.studioHandOffIdea && /^\s*CycleStudio hand-?off idea:/i.test(plan.reflection || '')){
+      plan.studioHandOffIdea = String(plan.reflection).replace(/^\s*CycleStudio hand-?off idea:\s*/i, '').trim();
+      plan.reflection = '';
+    }
+    plan.cycleAssessHooks = {...base.cycleAssessHooks, ...(plan.cycleAssessHooks || {})};
+  }
+  if(type === 'unit'){
+    // The setup selection is the source of truth. If the user asked for 5 lessons,
+    // the plan must contain 5 lesson cards, even if the AI tried to return fewer.
+    plan.lessonCount = String(clampInt(getUnitLessonCount(), 1, 24, 6));
+    plan.vocabulary = Array.isArray(plan.vocabulary) ? plan.vocabulary : [];
+    plan.lessons = Array.isArray(plan.lessons) ? plan.lessons : [];
+    repairUnitLessonRows(plan);
+    plan.differentiation = {...base.differentiation, ...(plan.differentiation || {})};
+    plan.cycleAssessHooks = {...base.cycleAssessHooks, ...(plan.cycleAssessHooks || {})};
+  }
+  if(type === 'sequence'){
+    plan.weekCount = plan.weekCount || String((plan.weeks || []).length || getSequenceWeekCount());
+    plan.weeks = Array.isArray(plan.weeks) ? plan.weeks : [];
+    repairSequenceWeekRows(plan);
+    plan.cycleAssessHooks = {...base.cycleAssessHooks, ...(plan.cycleAssessHooks || {})};
+  }
+  return plan;
+}
+
+/* 5. Navigation + setup */
+function goTab(tab){
+  state.tab = tab;
+  qsa('.screen').forEach(screen=>screen.classList.toggle('active', screen.id === `screen-${tab}`));
+  qsa('.workflow-tab').forEach(btn=>btn.classList.toggle('active', btn.dataset.go === tab));
+  if(tab === 'create') renderCreateSummary();
+  if(tab === 'library') renderLibrary();
+  if(tab === 'edit') renderAll();
+}
+function selectPlanningType(type){
+  state.type = type;
+  qs('planningTypeSelect').value = type;
+  qs('typeChip').textContent = PLAN_LABELS[type];
+  qs('planTypeDescription').textContent = PLAN_DESCRIPTIONS[type];
+  qs('setupTitle').textContent = PLAN_LABELS[type].replace('Scope & sequence','Scope & sequence') + ' setup';
+  syncSetupControls(type);
+  savePrefs();
+  if(state.plan && state.plan.type !== type) state.plan = null;
+  renderCreateSummary();
+  renderAll();
+}
+function renderCreateSummary(){
+  const curriculumLabel = state.curriculumMode === 'ai_both' ? 'AI chooses all' : state.curriculumMode === 'manual_domain_ai_lo' ? `${qs('domainSelect').value} + AI LOs` : `${qs('domainSelect').value} · ${state.selectedOutcomes.length} LOs`;
+  qs('createSummary').innerHTML = [
+    ['Planning type', PLAN_LABELS[state.type]],
+    ['Setup', `${qs('yearLevel').value} · ${getPlanningScaleText()}`],
+    ['Curriculum', curriculumLabel]
+  ].map(([title,text])=>`<div class="summary-card"><b>${esc(title)}</b><span>${esc(text)}</span></div>`).join('');
+}
+function syncCurrentPlanSetup(){
+  if(!state.plan) return;
+  state.plan.yearLevel = qs('yearLevel').value;
+  state.plan.duration = getDurationValue();
+  if(state.plan.type === 'unit') state.plan.lessonCount = getUnitLessonCount();
+  if(state.plan.type === 'sequence') state.plan.weekCount = getSequenceWeekCount();
+  if(!state.plan.context) state.plan.context = qs('extraContextInput').value;
+  applyCurriculumToPlan();
+}
+
+/* 6. Editor rendering */
+function fieldInput(label, path, value='', type='input'){
+  const control = type === 'textarea'
+    ? `<textarea data-path="${path}">${esc(value || '')}</textarea>`
+    : `<input data-path="${path}" value="${esc(value || '')}">`;
+  return `<div class="field"><label>${esc(label)}</label>${control}</div>`;
+}
+function arrayEditor(label, path, items=[]){
+  return `<div class="field"><label>${esc(label)}</label><textarea data-array-path="${path}" placeholder="One item per line">${esc(joinLines(items))}</textarea></div>`;
+}
+function editorCard(title, sub, body, open=true){
+  return `<details class="editor-card" ${open ? 'open' : ''}>
+    <summary class="editor-card-head">
+      <div class="editor-card-title-wrap"><strong>${esc(title)}</strong><span>${esc(sub || '')}</span></div>
+      <span class="editor-card-chevron">⌄</span>
+    </summary>
+    <div class="editor-card-body">${body}</div>
+  </details>`;
+}
+function renderEditor(){
+  const root = qs('editor');
+  if(!state.plan){
+    root.innerHTML = '<div class="empty-editor"><strong>No plan yet</strong>Use Create to start blank, scaffold, template or AI.</div>';
+    return;
+  }
+  qs('workspaceTitle').textContent = `${PLAN_LABELS[state.type]} workspace`;
+  root.innerHTML = state.type === 'lesson' ? renderLessonEditor(state.plan) : state.type === 'unit' ? renderUnitEditor(state.plan) : renderSequenceEditor(state.plan);
+}
+function renderLessonEditor(p){
+  return [
+    editorCard('Basics','Title, subject, context and curriculum tags.',
+      fieldInput('Title','title',p.title) +
+      `<div class="grid-2">${fieldInput('Subject / strand','subject',p.subject)}${fieldInput('Duration','duration',p.duration)}</div>` +
+      fieldInput('Context','context',p.context,'textarea') +
+      arrayEditor('Objectives','objectives',p.objectives) +
+      arrayEditor('Materials','materials',p.materials) +
+      arrayEditor('Vocabulary','vocabulary',p.vocabulary)
+    ),
+    editorCard('Prior knowledge','What students already need or may remember.', fieldInput('Prior knowledge','priorKnowledge',p.priorKnowledge,'textarea')),
+    editorCard('Lesson flow','Editable teaching phases.', renderLessonFlow(p.lessonFlow)),
+    editorCard('Differentiation','Support, extension and language support.',
+      fieldInput('Support','differentiation.support',p.differentiation.support,'textarea') +
+      fieldInput('Extension','differentiation.extension',p.differentiation.extension,'textarea') +
+      fieldInput('EAL / language support','differentiation.eal',p.differentiation.eal,'textarea')
+    ),
+    editorCard('Light resources','Small things CyclePlanner can sensibly generate.',
+      `<div class="section-actions">
+        <button class="small-btn" data-action="key-questions">Generate key questions</button>
+        <button class="small-btn" data-action="exit-ticket">Generate exit ticket</button>
+        <button class="small-btn" data-action="misconceptions">Generate misconception check</button>
+      </div>` +
+      arrayEditor('Key questions','keyQuestions',p.keyQuestions) +
+      fieldInput('Exit ticket','exitTicket',p.exitTicket,'textarea') +
+      fieldInput('Misconception check','misconceptionCheck',p.misconceptionCheck,'textarea')
+    ),
+    editorCard('Assessment','Evidence, success criteria and next steps.',
+      fieldInput('Evidence','assessment.evidence',p.assessment.evidence,'textarea') +
+      arrayEditor('Success criteria','assessment.successCriteria',p.assessment.successCriteria) +
+      fieldInput('Next steps','assessment.nextSteps',p.assessment.nextSteps,'textarea') +
+      fieldInput('CycleAssess evidence hook','cycleAssessHooks.evidenceToCollect',p.cycleAssessHooks.evidenceToCollect,'textarea')
+    ),
+    editorCard('CycleStudio hand-off','Worksheet/resource idea to send to CycleStudio.', fieldInput('CycleStudio hand-off idea','studioHandOffIdea',p.studioHandOffIdea,'textarea')),
+    editorCard('Reflection','Teacher notes after the lesson. Usually blank until after teaching.', fieldInput('Reflection','reflection',p.reflection,'textarea'))
+  ].join('');
+}
+function renderLessonFlow(rows=[]){
+  const empty = !rows.length ? '<div class="empty-editor" style="padding:18px;margin-bottom:10px"><strong>No lesson phases yet</strong>Start blank keeps the flow empty. Use planning scaffold if you want Hook / Model / Guided practice / Independent task / Plenary created for you.</div>' : '';
+  const body = rows.map((row,i)=>`
+    <div class="editor-card" style="box-shadow:none">
+      <div class="editor-card-head"><div><strong>${esc(row.phase || `Phase ${i+1}`)}</strong><span>${esc(row.duration || '')}</span></div><button class="mini-btn danger" data-remove-row="lessonFlow" data-index="${i}">Delete</button></div>
+      <div class="grid-2">${fieldInput('Phase',`lessonFlow.${i}.phase`,row.phase)}${fieldInput('Duration',`lessonFlow.${i}.duration`,row.duration)}</div>
+      ${fieldInput('Teacher role',`lessonFlow.${i}.teacherRole`,row.teacherRole,'textarea')}
+      ${fieldInput('Student task',`lessonFlow.${i}.studentTask`,row.studentTask,'textarea')}
+      ${fieldInput('Notes',`lessonFlow.${i}.notes`,row.notes,'textarea')}
+    </div>`).join('');
+  return empty + body + '<button class="small-btn" data-add-row="lessonFlow">Add phase</button>';
+}
+function renderUnitEditor(p){
+  return [
+    editorCard('Basics','Overview and shared direction.',
+      fieldInput('Title','title',p.title) + `<div class="grid-2">${fieldInput('Number of lessons','lessonCount',p.lessonCount || (p.lessons||[]).length || getUnitLessonCount())}${fieldInput('Duration / block','duration',p.duration)}</div>` + fieldInput('Overview','overview',p.overview,'textarea') + fieldInput('Driving question','drivingQuestion',p.drivingQuestion,'textarea') + arrayEditor('Vocabulary','vocabulary',p.vocabulary)
+    ),
+    editorCard('Lesson sequence','Each row is one lesson in the unit.', renderUnitLessons(p.lessons)),
+    editorCard('Differentiation','Across the unit.', fieldInput('Support','differentiation.support',p.differentiation.support,'textarea') + fieldInput('Extension','differentiation.extension',p.differentiation.extension,'textarea') + fieldInput('EAL / language support','differentiation.eal',p.differentiation.eal,'textarea')),
+    editorCard('Assessment','Final assessment and CycleAssess hook.', fieldInput('Final assessment','finalAssessment',p.finalAssessment,'textarea') + fieldInput('CycleAssess evidence hook','cycleAssessHooks.evidenceToCollect',p.cycleAssessHooks.evidenceToCollect,'textarea') + fieldInput('Notes','notes',p.notes,'textarea'))
+  ].join('');
+}
+function renderUnitLessons(rows=[]){
+  const empty = !rows.length ? '<div class="empty-editor" style="padding:18px;margin-bottom:10px"><strong>No unit lessons yet</strong>Start blank keeps the sequence empty. Use planning scaffold if you want lesson slots created for you.</div>' : '';
+  const body = rows.map((row,i)=>`
+    <div class="editor-card" style="box-shadow:none">
+      <div class="editor-card-head"><div><strong>${esc(row.title || `Lesson ${i+1}`)}</strong><span>${esc(row.duration || '')}</span></div><button class="mini-btn danger" data-remove-row="lessons" data-index="${i}">Delete</button></div>
+      <div class="grid-2">${fieldInput('Title',`lessons.${i}.title`,row.title)}${fieldInput('Duration',`lessons.${i}.duration`,row.duration)}</div>
+      ${fieldInput('Focus',`lessons.${i}.focus`,row.focus,'textarea')}
+      ${fieldInput('Activities',`lessons.${i}.activities`,row.activities,'textarea')}
+      ${fieldInput('Assessment evidence',`lessons.${i}.assessmentEvidence`,row.assessmentEvidence,'textarea')}
+    </div>`).join('');
+  return empty + body + '<button class="small-btn" data-add-row="lessons">Add lesson</button>';
+}
+function renderSequenceEditor(p){
+  return [
+    editorCard('Basics','Broad scope map.', fieldInput('Title','title',p.title) + `<div class="grid-2">${fieldInput('Number of weeks','weekCount',p.weekCount || (p.weeks||[]).length || getSequenceWeekCount())}${fieldInput('Term / block','termOrBlock',p.termOrBlock)}</div>` + fieldInput('Overview','overview',p.overview,'textarea')),
+    editorCard('Sequence map','Week-by-week or block-by-block coverage.', renderWeeks(p.weeks)),
+    editorCard('Notes and coverage','Assessment and coverage hooks.', fieldInput('Coverage notes','coverageNotes',p.coverageNotes,'textarea') + fieldInput('CycleAssess coverage hook','cycleAssessHooks.coverageNotes',p.cycleAssessHooks.coverageNotes,'textarea') + fieldInput('Notes','notes',p.notes,'textarea'))
+  ].join('');
+}
+function renderWeeks(rows=[]){
+  const empty = !rows.length ? '<div class="empty-editor" style="padding:18px;margin-bottom:10px"><strong>No sequence blocks yet</strong>Start blank keeps the map empty. Use planning scaffold if you want six week/block slots created for you.</div>' : '';
+  const body = rows.map((row,i)=>`
+    <div class="editor-card" style="box-shadow:none">
+      <div class="editor-card-head"><div><strong>${esc(row.week || `Week ${i+1}`)}</strong><span>${esc(row.domain || '')}</span></div><button class="mini-btn danger" data-remove-row="weeks" data-index="${i}">Delete</button></div>
+      <div class="grid-2">${fieldInput('Week / block',`weeks.${i}.week`,row.week)}${fieldInput('Domain',`weeks.${i}.domain`,row.domain)}</div>
+      ${fieldInput('Focus',`weeks.${i}.focus`,row.focus,'textarea')}
+      ${fieldInput('Lessons / activities',`weeks.${i}.lessons`,row.lessons,'textarea')}
+      ${fieldInput('Assessment',`weeks.${i}.assessment`,row.assessment,'textarea')}
+    </div>`).join('');
+  return empty + body + '<button class="small-btn" data-add-row="weeks">Add week / block</button>';
+}
+function addRow(collection){
+  if(!state.plan) return;
+  const defaults = {
+    lessonFlow:{phase:'New phase',duration:'',teacherRole:'',studentTask:'',notes:''},
+    lessons:{title:`Lesson ${(state.plan.lessons||[]).length+1}`,duration:'60 min',focus:'',activities:'',assessmentEvidence:''},
+    weeks:{week:`Week ${(state.plan.weeks||[]).length+1}`,focus:'',domain:'',lessons:'',assessment:''}
+  };
+  if(!Array.isArray(state.plan[collection])) state.plan[collection] = [];
+  state.plan[collection].push(defaults[collection]);
+  renderAllAndPersist();
+}
+function removeRow(collection, index){
+  if(!state.plan?.[collection]) return;
+  state.plan[collection].splice(Number(index),1);
+  renderAllAndPersist();
+}
+
+/* 7. Preview rendering */
+function renderPreview(){
+  const root = qs('preview');
+  if(!state.plan){
+    root.innerHTML = '<div class="preview-page" style="display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted)"><div><h3 style="font-size:22px;color:var(--ink)">Plan preview</h3><p>Create a plan and it will appear here.</p></div></div>';
+    return;
+  }
+  root.innerHTML = state.type === 'lesson' ? lessonPreview(state.plan) : state.type === 'unit' ? unitPreview(state.plan) : sequencePreview(state.plan);
+}
+function previewHeader(p, label){
+  return `<div class="preview-head"><div><span class="kicker">${esc(label)}</span><h1>${esc(p.title || 'Untitled')}</h1><div class="preview-meta"><span>${esc(p.yearLevel || '')}</span><span>${esc(p.type === 'unit' ? ((p.lessonCount || (p.lessons||[]).length || '') + ' lessons') : p.type === 'sequence' ? ((p.weekCount || (p.weeks||[]).length || '') + ' weeks') : (p.duration || ''))}</span></div></div><div class="preview-badge">CyclePlanner</div></div>`;
+}
+function curriculumPreview(p){
+  return `<div class="print-section accent"><h3>Curriculum links</h3><p><strong>Domain:</strong> ${esc(p.domain || 'Not set')}</p>${listHtml(p.learningOutcomes || [])}</div>`;
+}
+function psec(title, text, accent=false, extraClass=''){
+  const classes = ['print-section'];
+  if(accent) classes.push('accent');
+  if(extraClass) classes.push(extraClass);
+  return text ? `<div class="${classes.join(' ')}"><h3>${esc(title)}</h3><p>${nl(text)}</p></div>` : '';
+}
+function lessonPreview(p){
+  return `<div class="preview-page">${previewHeader(p,'Lesson plan')}${curriculumPreview(p)}${psec('Context',p.context,true)}${(p.objectives||[]).length?`<div class="print-section"><h3>Objectives</h3>${listHtml(p.objectives)}</div>`:''}${(p.materials||[]).length?`<div class="print-section"><h3>Materials</h3>${listHtml(p.materials)}</div>`:''}${psec('Prior knowledge',p.priorKnowledge)}<div class="print-section"><h3>Lesson flow</h3><table><thead><tr><th>Phase</th><th>Time</th><th>Teacher role</th><th>Student task</th></tr></thead><tbody>${(p.lessonFlow||[]).map(row=>`<tr><td><strong>${esc(row.phase)}</strong><br>${nl(row.notes)}</td><td>${esc(row.duration)}</td><td>${nl(row.teacherRole)}</td><td>${nl(row.studentTask)}</td></tr>`).join('')}</tbody></table></div><div class="two-col">${psec('Support',p.differentiation?.support)}${psec('Extension',p.differentiation?.extension)}</div>${psec('EAL / language support',p.differentiation?.eal)}${(p.keyQuestions||[]).length?`<div class="print-section"><h3>Key questions</h3>${listHtml(p.keyQuestions)}</div>`:''}${psec('Exit ticket',p.exitTicket,true)}${psec('Misconception check',p.misconceptionCheck,true)}${psec('Assessment evidence',p.assessment?.evidence,true)}${(p.assessment?.successCriteria||[]).length?`<div class="print-section"><h3>Success criteria</h3>${listHtml(p.assessment.successCriteria)}</div>`:''}${psec('Next steps',p.assessment?.nextSteps)}${psec('CycleAssess hook',p.cycleAssessHooks?.evidenceToCollect)}${psec('CycleStudio hand-off idea',p.studioHandOffIdea,false,'export-optional')}${psec('Reflection',p.reflection)}</div>`;
+}
+function unitLessonCard(row={}, i=0){
+  return `
+    <article class="unit-lesson-card">
+      <div class="unit-lesson-head">
+        <div class="unit-lesson-title">${esc(row.title || `Lesson ${i+1}`)}</div>
+        <div class="unit-lesson-duration">${esc(row.duration || '')}</div>
+      </div>
+      <div class="unit-lesson-grid">
+        <div class="unit-lesson-block"><div class="unit-lesson-label">Focus</div><div class="unit-lesson-body">${compactCell(row.focus,3) || '—'}</div></div>
+        <div class="unit-lesson-block"><div class="unit-lesson-label">Activities</div><div class="unit-lesson-body">${compactCell(row.activities,4) || '—'}</div></div>
+        <div class="unit-lesson-block"><div class="unit-lesson-label">Evidence</div><div class="unit-lesson-body">${compactCell(row.assessmentEvidence,3) || '—'}</div></div>
+      </div>
+    </article>
+  `;
+}
+function unitLessonCards(lessons=[]){
+  if(!lessons.length) return '<p>No lessons added yet.</p>';
+  return lessons.map((row,i)=>unitLessonCard(row,i)).join('');
+}
+function unitLessonExportSections(lessons=[]){
+  if(!lessons.length) return '<div class="print-section"><h3>Lesson sequence</h3><p>No lessons added yet.</p></div>';
+  return `<div class="print-section lesson-sequence-title"><h3>Lesson sequence</h3><p>Each card is one lesson in the unit.</p></div>` +
+    lessons.map((row,i)=>`<div class="print-section unit-lesson-export-section">${unitLessonCard(row,i)}</div>`).join('');
+}
+function unitPreview(p){
+  return `<div class="preview-page">${previewHeader(p,'Unit plan')}${curriculumPreview(p)}${psec('Overview',p.overview,true)}${psec('Driving question',p.drivingQuestion)}${(p.vocabulary||[]).length?`<div class="print-section"><h3>Vocabulary</h3>${listHtml(p.vocabulary)}</div>`:''}${unitLessonExportSections(p.lessons||[])}<div class="two-col">${psec('Support',p.differentiation?.support)}${psec('Extension',p.differentiation?.extension)}</div>${psec('EAL / language support',p.differentiation?.eal)}${psec('Final assessment',p.finalAssessment,true)}${psec('CycleAssess hook',p.cycleAssessHooks?.evidenceToCollect)}${psec('Notes',p.notes)}</div>`;
+}
+function sequencePreview(p){
+  return `<div class="preview-page">${previewHeader(p,'Scope & sequence')}${psec('Overview',p.overview,true)}${psec('Term / block',p.termOrBlock)}<div class="print-section"><h3>Sequence map</h3><table><thead><tr><th>Week</th><th>Focus</th><th>Domain</th><th>Lessons / activities</th><th>Assessment</th></tr></thead><tbody>${(p.weeks||[]).map(row=>`<tr><td>${esc(row.week)}</td><td>${nl(row.focus)}</td><td>${esc(row.domain)}</td><td>${nl(row.lessons)}</td><td>${nl(row.assessment)}</td></tr>`).join('')}</tbody></table></div>${psec('Coverage notes',p.coverageNotes,true)}${psec('CycleAssess hook',p.cycleAssessHooks?.coverageNotes)}${psec('Notes',p.notes)}</div>`;
+}
+function renderAll(){
+  renderEditor();
+  renderPreview();
+  renderCreateSummary();
+  qs('typeChip').textContent = PLAN_LABELS[state.type];
+}
+
+/* 8. AI actions */
+function buildPrompt(extra=''){
+  const prefs = getPrefs();
+  const brief = qs('briefInput').value.trim();
+  const context = [prefs.defaultContext, qs('extraContextInput').value.trim()].filter(Boolean).join('\n');
+  const sourceDetails = qs('sourceDetailsInput')?.value.trim() || '';
+  const sourceSummary = state.sourceFiles.length
+    ? `Attached source files: ${state.sourceFiles.map(file => file.name).join(', ')}.`
+    : 'No source files attached.';
+  const domain = qs('domainSelect').value;
+  const schema = blankPlan(state.type);
+  const curriculumRules = state.curriculumMode === 'ai_both'
+    ? `Choose one domain exactly from this list: ${DOMAIN_NAMES.join(', ')}. Choose outcomes verbatim from this bank:\n${catalogue()}`
+    : state.curriculumMode === 'manual_domain_ai_lo'
+      ? `Use this domain exactly: ${domain}. Choose 2-4 outcomes verbatim from this bank only:\n${catalogue(domain)}`
+      : `Use this domain exactly: ${domain}. Use these outcomes exactly:\n${state.selectedOutcomes.map(x=>'- '+x).join('\n')}`;
+  return `You are CyclePlanner, planning for a teacher at an International French School using Cycle 3. Write everything in English. Style: concise, practical teacher notes.
+Planning type: ${state.type}
+Year: ${qs('yearLevel').value}
+Planning scale: ${getPlanningScaleText()}
+Teacher brief: ${brief || 'No brief provided; create a useful plan.'}
+Context: ${context}
+Source prompt material: ${sourceSummary}
+Source details/instructions: ${sourceDetails || 'None.'}
+When source files are attached, use them as planning context or inspiration. Follow the teacher's source details/instructions, but do not blindly copy unsuitable material.
+
+Curriculum rules:
+${curriculumRules}
+
+Must include light classroom resources where useful: key questions, exit ticket, misconceptionCheck, assessment evidence.
+For lesson plans, every lessonFlow row must have useful text in phase, duration, teacherRole and studentTask. Do not leave teacherRole or studentTask blank.
+If a lesson plan is based on a unit plan or source plan, align tightly to the matching lesson: objectives, activities, assessment evidence, next steps and CycleAssess hook should clearly connect to that unit sequence.
+When a lesson relies on charts, maps, picture cards, handouts or templates, list those resources clearly in Materials. If the resource is not supplied by the teacher, describe exactly what should be created in studioHandOffIdea instead of pretending it already exists.
+For geography lessons comparing water, energy, food, resources or sustainability, avoid oversimplified questions such as "Why doesn't France need NEWater?" or "countries with lots of water". Use precise place-based language: different needs, constraints, infrastructure, resources, scale and management choices.
+For unit plans, the lessons array must contain EXACTLY ${getUnitLessonCount()} lesson objects because the teacher selected ${getUnitLessonCount()} lessons. No fewer, no more. Every lesson row must include title, duration, focus, activities and assessmentEvidence. Do not leave focus or activities blank. Keep lesson-sequence cells print-friendly: focus under 22 words, activities as 2-3 concise classroom actions, and evidence under 25 words. Avoid long paragraphs inside table cells. Do not use numbered-list text such as "1. ... 2. ... 3. ..." inside activities; use short sentence fragments separated by semicolons or new lines.
+For scope and sequence plans, the weeks array must match the requested number of weeks. Every week row must include week, focus, domain, lessons and assessment.
+If the topic is scientific, choose Science and Technology, not English Literacy. Always return a non-empty domain and 2-4 exact learningOutcomes copied from the allowed bank when curriculum mode lets AI choose them.
+Bigger worksheets and resource packs should be described only in the studioHandOffIdea field. Do not put CycleStudio hand-off ideas inside reflection. Leave reflection blank unless it contains actual after-teaching reflection notes.
+${extra}
+
+Return ONLY valid JSON matching this schema:
+${JSON.stringify(schema,null,2)}`;
+}
+async function callAI(prompt, options={}){
+  const prefs = getPrefs();
+  const key = (qs('apiKey').value || prefs.apiKey || '').trim();
+  const model = (qs('modelName').value || prefs.modelName || 'claude-opus-4-5').trim();
+  if(!key){
+    goTab('settings');
+    throw new Error('Add your Anthropic API key in Settings first.');
+  }
+  const content = [];
+  const includeSources = !!options.includeSources;
+  if(includeSources){
+    state.sourceFiles.forEach(file=>{
+      if(file.kind === 'pdf'){
+        content.push({type:'document',source:{type:'base64',media_type:file.mimeType || 'application/pdf',data:file.base64}});
+      }else if(file.kind === 'image'){
+        content.push({type:'image',source:{type:'base64',media_type:file.mimeType || 'image/png',data:file.base64}});
+      }
+    });
+  }
+  content.push({type:'text',text:prompt});
+  const headers = {
+    'Content-Type':'application/json',
+    'x-api-key':key,
+    'anthropic-version':'2023-06-01',
+    'anthropic-dangerous-direct-browser-access':'true'
+  };
+  if(includeSources && state.sourceFiles.some(file => file.kind === 'pdf')) headers['anthropic-beta'] = 'pdfs-2024-09-25';
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers,
+    body:JSON.stringify({
+      model,
+      max_tokens:5000,
+      messages:[{role:'user',content}]
+    })
+  });
+  const data = await response.json().catch(()=>null);
+  if(!response.ok || data?.error) throw new Error(data?.error?.message || 'API error ' + response.status);
+  const raw = (data.content || []).map(block=>block.text || '').join('').trim().replace(/```json|```/g,'').trim();
+  try{return JSON.parse(raw);}
+  catch(err){console.error(raw);throw new Error('AI returned invalid JSON. Tiny tragedy, fixable.');}
+}
+async function generatePlan(){
+  clearStatus();
+  savePrefs();
+  const generationLabel = getGenerationLabel();
+  setCreateBusy(true, `Generating your ${generationLabel}…`, 'Units and scope maps can take 20–60 seconds. Nothing is frozen; the robot is just chewing.');
+  setStatus(`Generating your ${generationLabel}… this can take 20–60 seconds.`, 'warn');
+  setBusy(true,'Generating plan…','Building a practical planning document.');
+  try{
+    const result = await callAI(buildPrompt(), {includeSources:true});
+    state.plan = normalisePlan(result, state.type);
+    saveCurrent('history', true);
+    renderAll();
+    goTab('edit');
+    if(state.plan?._qualityWarnings?.length){
+      setStatus(state.plan._qualityWarnings[0], 'warn','editStatusBox');
+    }else{
+      setStatus(`${PLAN_LABELS[state.type]} generated.`, 'ok','editStatusBox');
+    }
+  }catch(err){
+    const message = err?.message || 'Generation failed.';
+    setStatus(message, 'err');
+  }finally{
+    setCreateBusy(false);
+    setBusy(false);
+  }
+}
+async function transformPlan(mode){
+  if(!state.plan) return setStatus('Create a plan first.', 'warn','editStatusBox');
+  const request = mode === 'formal'
+    ? 'Rewrite this planning document in a more formal school-planning style while keeping it useful and not bloated.'
+    : 'Rewrite this planning document into a quicker, leaner teacher-use version. Preserve the key teaching sequence and assessment evidence.';
+  setBusy(true, mode === 'formal' ? 'Making it formal…' : 'Making it quick…', 'Keeping structure, changing depth and tone.');
+  try{
+    const result = await callAI(`You are improving an existing CyclePlanner ${state.plan.type}. ${request}\nReturn ONLY valid JSON using the same schema.\nExisting plan JSON:\n${JSON.stringify(state.plan,null,2)}`);
+    state.plan = normalisePlan(result,state.type);
+    saveCurrent('history',true);
+    renderAll();
+    setStatus(mode === 'formal' ? 'Formal version ready.' : 'Quick version ready.','ok','editStatusBox');
+  }catch(err){
+    setStatus(err.message || 'Transformation failed.','err','editStatusBox');
+  }finally{setBusy(false);}
+}
+async function modifyWithAI(){
+  if(!state.plan) return setStatus('Create a plan first.','warn','editStatusBox');
+  const request = qs('modifyRequest').value.trim();
+  if(!request) return setStatus('Write what you want changed first.','warn','editStatusBox');
+  setBusy(true,'Modifying with AI…','Applying requested changes while preserving the rest of the plan.');
+  try{
+    const result = await callAI(`You are modifying an existing CyclePlanner ${state.plan.type}.
+
+Teacher request:
+${request}
+
+Rules:
+- Change only the parts the teacher asked to change.
+- Preserve the current planning type and JSON schema.
+- Keep the plan concise and practical.
+- Keep Cycle 3 domain and learning outcomes valid; do not invent outcomes.
+- Return ONLY valid JSON using the same schema.
+
+Existing plan JSON:
+${JSON.stringify(state.plan,null,2)}`);
+    state.plan = normalisePlan(result,state.type);
+    saveCurrent('history',true);
+    renderAll();
+    setStatus('AI modification applied.','ok','editStatusBox');
+  }catch(err){
+    setStatus(err.message || 'AI modification failed.','err','editStatusBox');
+  }finally{setBusy(false);}
+}
+async function lightResource(kind){
+  if(!state.plan) return setStatus('Create a plan first.','warn','editStatusBox');
+  const instructions = {
+    key_questions:'Add or improve practical key questions for discussion and checking understanding.',
+    exit_ticket:'Add or improve a short classroom-ready exit ticket.',
+    misconceptions:'Add or improve the misconceptionCheck field with likely student misunderstandings and a fast way to catch them.'
+  };
+  setBusy(true,'Adding light resource…','Small resource only. CycleStudio handles bigger worksheet work.');
+  try{
+    const result = await callAI(`Improve this CyclePlanner ${state.plan.type}. ${instructions[kind]} Keep the plan concise. Return ONLY valid JSON using the same schema.\n${JSON.stringify(state.plan,null,2)}`);
+    state.plan = normalisePlan(result,state.type);
+    saveCurrent('history',true);
+    renderAll();
+    setStatus('Light resource added.','ok','editStatusBox');
+  }catch(err){
+    setStatus(err.message || 'Could not add resource.','err','editStatusBox');
+  }finally{setBusy(false);}
+}
+
+/* 9. Library + settings */
+function saveCurrent(bucket='history', silent=false){
+  if(!state.plan){
+    state.plan = blankPlan(state.type);
+    syncCurrentPlanSetup();
+  }
+  const key = bucket === 'template' ? STORAGE.templates : STORAGE.history;
+  const list = readJSON(key, []);
+  list.unshift({id:makeId(),createdAt:new Date().toISOString(),type:state.plan.type,title:state.plan.title || 'Untitled',plan:clonePlain(state.plan)});
+  writeJSON(key, list.slice(0,60));
+  writeJSON(STORAGE.current, state.plan);
+  if(!silent) setStatus(bucket === 'template' ? 'Saved as template.' : 'Saved to history.', 'ok','editStatusBox');
+}
+function renderLibrary(){
+  renderSavedList(STORAGE.history,'historyList');
+  renderSavedList(STORAGE.templates,'templateList');
+}
+function renderSavedList(key, rootId){
+  const items = readJSON(key, []);
+  qs(rootId).innerHTML = items.length
+    ? items.map(item=>`<div class="saved-item"><div><strong>${esc(item.title)}</strong><span>${esc(PLAN_LABELS[item.type] || item.type)} · ${new Date(item.createdAt).toLocaleString()}</span></div><div class="pill-row"><button class="mini-btn" data-load-key="${key}" data-load-id="${item.id}">Load</button><button class="mini-btn danger" data-delete-key="${key}" data-delete-id="${item.id}">Delete</button></div></div>`).join('')
+    : '<p class="tiny">Nothing saved yet.</p>';
+}
+function loadSaved(key,id){
+  const item = readJSON(key,[]).find(entry=>entry.id === id);
+  if(!item) return;
+  state.type = item.type;
+  state.plan = normalisePlan(clonePlain(item.plan), state.type);
+  selectPlanningType(state.type);
+  goTab('edit');
+  renderAll();
+  setStatus('Loaded: ' + item.title, 'ok','editStatusBox');
+}
+function deleteSaved(key,id){
+  writeJSON(key, readJSON(key,[]).filter(item=>item.id !== id));
+  renderLibrary();
+  renderTemplateModal();
+}
+function clearLibrary(){
+  if(confirm('Clear all saved history and templates?')){
+    writeJSON(STORAGE.history,[]);
+    writeJSON(STORAGE.templates,[]);
+    renderLibrary();
+  }
+}
+function openTemplates(){
+  renderTemplateModal();
+  qs('templateModal').classList.add('open');
+}
+function closeTemplates(){
+  qs('templateModal').classList.remove('open');
+}
+function renderTemplateModal(){
+  const items = readJSON(STORAGE.templates,[]).filter(item=>item.type === state.type);
+  qs('templateModalList').innerHTML = items.length
+    ? items.map(item=>`<div class="saved-item"><div><strong>${esc(item.title)}</strong><span>${new Date(item.createdAt).toLocaleDateString()}</span></div><button class="mini-btn" data-template-id="${item.id}">Use</button></div>`).join('')
+    : '<p class="tiny">No templates for this planning type yet.</p>';
+}
+function useTemplate(id){
+  const item = readJSON(STORAGE.templates,[]).find(entry=>entry.id === id);
+  if(!item) return;
+  state.type = item.type;
+  state.plan = normalisePlan(clonePlain(item.plan), state.type);
+  selectPlanningType(state.type);
+  closeTemplates();
+  goTab('edit');
+  renderAll();
+  setStatus('Template loaded.','ok','editStatusBox');
+}
+function saveSettings(){
+  savePrefs();
+  setStatus('Settings saved.','ok','editStatusBox');
+}
+function copyText(){
+  if(!state.plan) return setStatus('Nothing to copy yet.','warn','editStatusBox');
+  navigator.clipboard?.writeText(JSON.stringify(state.plan,null,2)).then(()=>setStatus('Copied.','ok','editStatusBox')).catch(()=>setStatus('Could not copy.','warn','editStatusBox'));
+}
+function copyStudioBrief(){
+  const p = state.plan;
+  if(!p) return setStatus('Create a plan first.','warn','editStatusBox');
+  const brief = `Create a CycleStudio worksheet/resource to support this ${p.type}:
+Title: ${p.title}
+Year: ${p.yearLevel}
+Domain: ${p.domain || ''}
+Learning outcomes:
+${(p.learningOutcomes || []).map(o=>'- '+o).join('\n')}
+
+Context:
+${p.context || p.overview || ''}
+
+Create a short classroom resource, exit ticket, practice task, or worksheet aligned to the plan. Keep it printable and age-appropriate.`;
+  navigator.clipboard?.writeText(brief).then(()=>setStatus('CycleStudio brief copied.','ok','editStatusBox')).catch(()=>setStatus('Could not copy CycleStudio brief.','warn','editStatusBox'));
+}
+
+
+function safeFilename(name='CyclePlanner_plan'){
+  return String(name || 'CyclePlanner_plan')
+    .trim()
+    .replace(/[^a-z0-9\-]+/gi,'_')
+    .replace(/_+/g,'_')
+    .replace(/^_|_$/g,'') || 'CyclePlanner_plan';
+}
+function makeExportPage(){
+  const page = document.createElement('div');
+  page.className = 'preview-page';
+  Object.assign(page.style, {
+    width:`${EXPORT_PAGE.cssWidth}px`,
+    maxWidth:`${EXPORT_PAGE.cssWidth}px`,
+    minHeight:`${EXPORT_PAGE.cssHeight}px`,
+    margin:`0 0 ${EXPORT_PAGE.marginBottom}px 0`,
+    boxShadow:'none',
+    background:'#ffffff',
+    overflow:'hidden'
+  });
+  return page;
+}
+function pageHasMeaningfulContent(page){
+  return !!String(page?.textContent || '').trim();
+}
+function removeEmptyExportPages(wrap){
+  const pages = Array.from(wrap.querySelectorAll('.preview-page'));
+  pages.forEach((page, index) => {
+    if(index > 0 && !pageHasMeaningfulContent(page)) page.remove();
+  });
+}
+
+function pageHasOnlyOptionalContent(page){
+  const children = Array.from(page.children).filter(el => (el.textContent || '').trim());
+  return children.length > 0 && children.every(el => el.classList.contains('export-optional'));
+}
+function removeOptionalOrphanPages(wrap){
+  let pages = Array.from(wrap.querySelectorAll('.preview-page'));
+  while(pages.length > 1 && pageHasOnlyOptionalContent(pages[pages.length - 1])){
+    pages[pages.length - 1].remove();
+    pages = Array.from(wrap.querySelectorAll('.preview-page'));
+  }
+}
+function buildExportClone(){
+  renderPreview();
+  const sourcePage = qs('preview')?.querySelector('.preview-page');
+  const wrap = document.createElement('div');
+  wrap.setAttribute('aria-hidden','true');
+  Object.assign(wrap.style, {
+    position:'fixed', left:'-12000px', top:'0', width:`${EXPORT_PAGE.cssWidth}px`, background:'#ffffff',
+    padding:'0', margin:'0', zIndex:'-1', pointerEvents:'none'
+  });
+  document.body.appendChild(wrap);
+  if(!sourcePage) return wrap;
+
+  const sourceClone = sourcePage.cloneNode(true);
+  // Direct PDF export is for the printable plan. Internal support notes such as
+  // CycleStudio hand-off ideas stay in the live preview/editor and Copy CycleStudio brief.
+  sourceClone.querySelectorAll('.export-optional').forEach(el => el.remove());
+  sourceClone.style.width = `${EXPORT_PAGE.cssWidth}px`;
+  sourceClone.style.maxWidth = `${EXPORT_PAGE.cssWidth}px`;
+  sourceClone.style.boxShadow = 'none';
+  sourceClone.style.margin = '0';
+  sourceClone.style.background = '#ffffff';
+
+  const blocks = Array.from(sourceClone.children);
+  const pageLimit = EXPORT_PAGE.cssHeight;
+  let page = makeExportPage();
+  wrap.appendChild(page);
+  blocks.forEach(block => {
+    const clone = block.cloneNode(true);
+    page.appendChild(clone);
+    if(page.scrollHeight > pageLimit && page.children.length > 1){
+      page.removeChild(clone);
+      page = makeExportPage();
+      wrap.appendChild(page);
+      page.appendChild(clone);
+    }
+  });
+  removeEmptyExportPages(wrap);
+  removeOptionalOrphanPages(wrap);
+  wrap.querySelectorAll('.preview-page').forEach(p => {
+    p.style.width = `${EXPORT_PAGE.cssWidth}px`;
+    p.style.maxWidth = `${EXPORT_PAGE.cssWidth}px`;
+    p.style.minHeight = `${EXPORT_PAGE.cssHeight}px`;
+    p.style.boxShadow = 'none';
+    p.style.background = '#ffffff';
+  });
+  return wrap;
+}
+function waitForImages(root){
+  const images = Array.from(root.querySelectorAll('img'));
+  return Promise.all(images.map(img => img.complete ? Promise.resolve() : new Promise(resolve => {
+    img.onload = resolve;
+    img.onerror = resolve;
+  })));
+}
+function planQualityIssues(plan=state.plan){
+  const issues = [];
+  if(!plan) return issues;
+  if(plan.type === 'unit'){
+    const declared = clampInt(plan.lessonCount || getUnitLessonCount(), 1, 24, 0);
+    const actual = Array.isArray(plan.lessons) ? plan.lessons.length : 0;
+    if(declared && actual !== declared){
+      issues.push(`This unit says ${declared} lesson${declared === 1 ? '' : 's'} but only has ${actual}. Add missing lesson cards or adjust the setup before exporting.`);
+    }
+    (plan.lessons || []).forEach((lesson, index) => {
+      if(isBlankText(lesson.focus) || isBlankText(lesson.activities) || isBlankText(lesson.assessmentEvidence)){
+        issues.push(`Lesson ${index + 1} is missing focus, activities or evidence.`);
+      }
+    });
+  }
+  if(plan.type === 'sequence'){
+    const declared = clampInt(plan.weekCount || getSequenceWeekCount(), 1, 40, 0);
+    const actual = Array.isArray(plan.weeks) ? plan.weeks.length : 0;
+    if(declared && actual !== declared){
+      issues.push(`This scope map says ${declared} week${declared === 1 ? '' : 's'} but only has ${actual}. Add missing week rows or adjust the setup before exporting.`);
+    }
+  }
+  return issues;
+}
+function showPlanQualityWarnings(target='editStatusBox'){
+  const issues = planQualityIssues(state.plan);
+  if(issues.length){
+    setStatus(issues[0], 'err', target);
+    return false;
+  }
+  return true;
+}
+async function exportPdf(){
+  if(!state.plan) return setStatus('Create or load a plan first.','warn','editStatusBox');
+  if(!showPlanQualityWarnings('editStatusBox')) return;
+  const html2canvasFn = window.html2canvas;
+  const jsPdfCtor = window.jspdf && window.jspdf.jsPDF;
+  if(!html2canvasFn || !jsPdfCtor){
+    setStatus('PDF export libraries are unavailable here. Opening print instead.', 'warn','editStatusBox');
+    window.print();
+    return;
+  }
+  let cloneWrap = null;
+  setStatus('Building PDF...', 'warn','editStatusBox');
+  setBusy(true, 'Exporting PDF...', 'Creating a direct download from the preview.');
+  try{
+    if(document.fonts && document.fonts.ready) await document.fonts.ready;
+    cloneWrap = buildExportClone();
+    await waitForImages(cloneWrap);
+    const pages = Array.from(cloneWrap.querySelectorAll('.preview-page'));
+    if(!pages.length) throw new Error('No preview pages found.');
+    const pdf = new jsPdfCtor({unit:'mm', format:'a4', orientation:'portrait', compress:true});
+    let firstPage = true;
+    for(const pageEl of pages){
+      const cssWidth = EXPORT_PAGE.cssWidth;
+      const cssHeight = EXPORT_PAGE.cssHeight;
+      const canvas = await html2canvasFn(pageEl, {
+        scale:2,
+        useCORS:true,
+        allowTaint:true,
+        backgroundColor:'#ffffff',
+        width:cssWidth,
+        height:cssHeight,
+        windowWidth:cssWidth,
+        windowHeight:cssHeight,
+        scrollX:0,
+        scrollY:0,
+        removeContainer:true
+      });
+      if(!firstPage) pdf.addPage();
+      firstPage = false;
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.96), 'JPEG', 0, 0, EXPORT_PAGE.pdfWidth, EXPORT_PAGE.pdfHeight, undefined, 'FAST');
+    }
+    pdf.save(safeFilename(state.plan.title || PLAN_LABELS[state.type]) + '.pdf');
+    setStatus('PDF exported.', 'ok','editStatusBox');
+  }catch(err){
+    console.error(err);
+    setStatus('Direct PDF export failed. Opening print as fallback.', 'err','editStatusBox');
+    window.print();
+  }finally{
+    if(cloneWrap) cloneWrap.remove();
+    setBusy(false);
+  }
+}
+
+async function pasteSourceImage(){
+  const zone = qs('sourcePasteZone');
+  if(navigator.clipboard && navigator.clipboard.read){
+    try{
+      const count = await addSourceImagesFromClipboardApi(await navigator.clipboard.read());
+      if(count){ setStatus(`${count} pasted image${count === 1 ? '' : 's'} added.`, 'ok'); return; }
+    }catch(err){ console.warn('Clipboard read failed:', err); }
+  }
+  zone?.focus();
+  setStatus('Click the paste box and press Ctrl/Cmd + V to paste an image.', 'warn');
+}
+
+/* 10. Event binding */
+function startBlank(){
+  state.plan = blankPlan(state.type);
+  syncCurrentPlanSetup();
+  renderAllAndPersist();
+  goTab('edit');
+}
+function buildScaffold(){
+  state.plan = scaffoldPlan(state.type);
+  syncCurrentPlanSetup();
+  renderAllAndPersist();
+  goTab('edit');
+}
+function setEditorCards(open){
+  qsa('#editor details.editor-card').forEach(card => { card.open = !!open; });
+}
+function handleAction(action){
+  const actions = {
+    'start-blank':startBlank,
+    'build-scaffold':buildScaffold,
+    'open-templates':openTemplates,
+    'close-templates':closeTemplates,
+    'generate':generatePlan,
+    'choose-source-pdf':()=>qs('sourcePdfInput')?.click(),
+    'choose-source-image':()=>qs('sourceImageInput')?.click(),
+    'paste-source-image':pasteSourceImage,
+    'save-history':()=>saveCurrent('history'),
+    'save-template':()=>saveCurrent('template'),
+    'expand-editor':()=>setEditorCards(true),
+    'collapse-editor':()=>setEditorCards(false),
+    'copy-text':copyText,
+    'export-pdf':exportPdf,
+    'print':()=>window.print(),
+    'modify-ai':modifyWithAI,
+    'make-formal':()=>transformPlan('formal'),
+    'make-quick':()=>transformPlan('quick'),
+    'copy-studio-brief':copyStudioBrief,
+    'key-questions':()=>lightResource('key_questions'),
+    'exit-ticket':()=>lightResource('exit_ticket'),
+    'misconceptions':()=>lightResource('misconceptions'),
+    'clear-modify':()=>{qs('modifyRequest').value='';},
+    'clear-library':clearLibrary,
+    'save-settings':saveSettings
+  };
+  actions[action]?.();
+}
+function bindEvents(){
+  document.addEventListener('click', event=>{
+    const go = event.target.closest('[data-go]');
+    if(go){goTab(go.dataset.go);return;}
+    const sourceRemove = event.target.closest('[data-source-remove]');
+    if(sourceRemove){removeSourceFile(sourceRemove.dataset.sourceRemove);return;}
+    const action = event.target.closest('[data-action]');
+    if(action){handleAction(action.dataset.action);return;}
+    const load = event.target.closest('[data-load-id]');
+    if(load){loadSaved(load.dataset.loadKey, load.dataset.loadId);return;}
+    const del = event.target.closest('[data-delete-id]');
+    if(del){deleteSaved(del.dataset.deleteKey, del.dataset.deleteId);return;}
+    const template = event.target.closest('[data-template-id]');
+    if(template){useTemplate(template.dataset.templateId);return;}
+    const add = event.target.closest('[data-add-row]');
+    if(add){addRow(add.dataset.addRow);return;}
+    const rem = event.target.closest('[data-remove-row]');
+    if(rem){removeRow(rem.dataset.removeRow, rem.dataset.index);return;}
+  });
+  document.addEventListener('input', event=>{
+    if(event.target.matches('#durationCustom')){ handleDurationChange(); return; }
+    if(event.target.matches('#unitLessonCustom')){ handleCountChange('unitLesson'); return; }
+    if(event.target.matches('#sequenceWeekCustom')){ handleCountChange('sequenceWeek'); return; }
+    if(event.target.matches('#yearLevel,#briefInput,#extraContextInput,#sourceDetailsInput,#apiKey,#modelName,#defaultContext')){ savePrefsSoon(); renderCreateSummary(); }
+    if(event.target.dataset.path && state.plan){
+      setNested(state.plan, event.target.dataset.path, event.target.value);
+      schedulePreviewUpdate();
+    }
+    if(event.target.dataset.arrayPath && state.plan){
+      setNested(state.plan, event.target.dataset.arrayPath, splitLines(event.target.value));
+      schedulePreviewUpdate();
+    }
+  });
+  document.addEventListener('change', event=>{
+    if(event.target.id === 'durationPreset'){ handleDurationChange(); return; }
+    if(event.target.id === 'unitLessonPreset'){ handleCountChange('unitLesson'); return; }
+    if(event.target.id === 'sequenceWeekPreset'){ handleCountChange('sequenceWeek'); return; }
+    if(event.target.id === 'sourcePdfInput'){
+      addSourceFiles(event.target.files).then(count=>setStatus(count ? `${count} PDF source added.` : 'No PDF source added.', count ? 'ok' : 'warn'));
+      event.target.value = '';
+      return;
+    }
+    if(event.target.id === 'sourceImageInput'){
+      addSourceFiles(event.target.files).then(count=>setStatus(count ? `${count} image source${count === 1 ? '' : 's'} added.` : 'No image source added.', count ? 'ok' : 'warn'));
+      event.target.value = '';
+      return;
+    }
+    if(event.target.id === 'planningTypeSelect') selectPlanningType(event.target.value);
+    if(event.target.id === 'domainSelect'){
+      state.selectedOutcomes = [];
+      renderCurriculumMode();
+      savePrefs();
+    }
+    if(event.target.matches('[data-outcome]')){
+      const value = event.target.dataset.outcome;
+      if(event.target.checked) state.selectedOutcomes = unique([...state.selectedOutcomes,value]);
+      else state.selectedOutcomes = state.selectedOutcomes.filter(outcome=>outcome !== value);
+      savePrefs();
+    }
+  });
+  const sourcePasteZone = qs('sourcePasteZone');
+  if(sourcePasteZone){
+    sourcePasteZone.addEventListener('focus',()=>sourcePasteZone.classList.add('active'));
+    sourcePasteZone.addEventListener('blur',()=>sourcePasteZone.classList.remove('active'));
+    sourcePasteZone.addEventListener('click',()=>sourcePasteZone.focus());
+    sourcePasteZone.addEventListener('paste', async event=>{
+      const count = await addSourceImagesFromClipboardItems(event.clipboardData?.items || []);
+      if(count){
+        event.preventDefault();
+        setStatus(`${count} pasted image${count === 1 ? '' : 's'} added.`, 'ok');
+      }else{
+        setStatus('No image found in the clipboard.', 'warn');
+      }
+    });
+  }
+  qsa('[data-curr]').forEach(btn=>btn.addEventListener('click',()=>{
+    state.curriculumMode = btn.dataset.curr;
+    renderCurriculumMode();
+    savePrefs();
+  }));
+}
+function init(){
+  populateDomains();
+  loadPrefs();
+  qs('domainSelect').value = getPrefs().domain || 'English Literacy';
+  selectPlanningType(state.type);
+  renderCurriculumMode();
+  renderCreateSummary();
+  renderSourceFiles();
+  const current = readJSON(STORAGE.current, null);
+  if(current){
+    state.type = current.type || state.type;
+    state.plan = normalisePlan(current, state.type);
+    selectPlanningType(state.type);
+  }
+  renderAll();
+  bindEvents();
+}
+window.addEventListener('DOMContentLoaded', function(){
+  if(window.SylCycle && SylCycle.onReady) SylCycle.onReady(init);
+  else init();
+});
+</script>
+</body>
+</html>
