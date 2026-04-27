@@ -56,12 +56,8 @@
     .nav-btn:hover .nav-icon { transform: scale(1.15); }
 
     /* ── Screens ── */
-    .screen { display: none; width: min(1120px, calc(100vw - 48px)); max-width: none; margin: 0 auto; padding: 32px 18px 24px; }
+    .screen { display: none; max-width: 660px; margin: 0 auto; padding: 32px 18px 24px; }
     .screen.active { display: block; }
-    #screen-setup { width: min(760px, calc(100vw - 48px)); }
-    #screen-profile { width: min(1180px, calc(100vw - 48px)); }
-    #screen-heatmap { width: min(1280px, calc(100vw - 48px)); }
-    #screen-students, #screen-bulk-assign { width: min(1180px, calc(100vw - 48px)); }
 
     /* ── Typography ── */
     .eyebrow { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 8px; }
@@ -163,7 +159,6 @@
 
     /* ── Comment ── */
     .comment-edit { font-size: 13px; min-height: 75px; }
-    .reassess-guidance { font-size: 12.5px; min-height: 72px; }
 
     /* ── Students roster ── */
     .roster-search { margin-bottom: 14px; }
@@ -305,9 +300,6 @@
     /* ── Notes field ── */
     .notes-field { width: 100%; font-size: 13px; padding: 9px 12px; border: 1.5px dashed var(--border); border-radius: 8px; font-family: 'Sora', sans-serif; color: var(--ink); background: var(--bg); outline: none; resize: none; min-height: 64px; line-height: 1.6; transition: border-color 0.15s; }
     .notes-field:focus { border-color: var(--accent); border-style: solid; background: var(--surface); }
-    .note-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
-    .dictate-btn { padding:6px 10px; font-size:11.5px; white-space:nowrap; }
-    .dictate-btn.recording { background: var(--nm-bg); color: var(--nm); border-color: var(--nm-bd); }
 
     /* ── History screen ── */
     .session-hist-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 11px; box-shadow: var(--shadow-sm); }
@@ -414,6 +406,15 @@
     .hm-view-btn { padding: 5px 14px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface); font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600; color: var(--ink-soft); cursor: pointer; transition: all 0.12s; }
     .hm-view-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
 
+    .heatmap-collapsible { margin-top: 14px; }
+    .heatmap-collapsible > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .heatmap-collapsible > summary::-webkit-details-marker { display: none; }
+    .heatmap-collapsible-title { font-size: 12px; font-weight: 700; color: var(--ink); }
+    .heatmap-collapsible-sub { font-size: 11px; color: var(--ink-soft); line-height: 1.45; margin-top: 3px; }
+    .heatmap-collapsible-arrow { font-size: 18px; color: var(--ink-soft); transition: transform 0.18s ease, color 0.14s; flex-shrink: 0; }
+    .heatmap-collapsible[open] .heatmap-collapsible-arrow { transform: rotate(180deg); color: var(--accent); }
+    .heatmap-collapsible-body { margin-top: 14px; }
+
 
     /* ── Heatmap dashboard ── */
     #hm-dashboard { display: grid; gap: 14px; margin-bottom: 14px; }
@@ -512,6 +513,12 @@
     }
     .hm-detail-btn:hover { border-color: var(--accent-bd); background: var(--accent-lt); color: var(--accent); }
     .hm-student-support { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .hm-student-support.is-clickable {
+      width: 100%; border: 1px solid transparent; border-radius: 10px; background: transparent;
+      padding: 8px 10px; cursor: pointer; text-align: left; transition: all 0.14s;
+      font-family: 'Sora', sans-serif;
+    }
+    .hm-student-support.is-clickable:hover { border-color: var(--accent-bd); background: var(--accent-lt); }
     .hm-support-score { font-size: 11px; font-weight: 700; color: var(--ink-mid); white-space: nowrap; }
 
     /* ── Student profile visuals ── */
@@ -584,6 +591,36 @@
       background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
       padding: 12px; box-shadow: var(--shadow-sm);
     }
+    .sv-outcome-row.is-clickable { cursor: pointer; transition: transform 0.14s, box-shadow 0.14s, border-color 0.14s, background 0.14s; }
+    .sv-outcome-row.is-clickable:hover { transform: translateY(-1px); box-shadow: var(--shadow); border-color: var(--accent-bd); background: var(--accent-lt); }
+    .sv-outcome-row.is-clickable.active { border-color: var(--accent); background: var(--accent-lt); box-shadow: var(--shadow); }
+    .profile-history-filter {
+      display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+      margin-bottom:10px; padding:10px 12px; border:1px solid var(--accent-bd); border-radius:10px;
+      background:var(--accent-lt);
+    }
+    .profile-history-filter.hidden { display:none; }
+    .profile-history-filter-main { font-size:12px; color:var(--ink-mid); line-height:1.45; }
+    .profile-history-filter-chip {
+      display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px;
+      font-size:10.5px; font-weight:700; border:1px solid var(--accent-bd); background:var(--surface); color:var(--accent);
+      margin-left:6px;
+    }
+    .profile-history-note { font-size:11.5px; color:var(--ink-soft); margin-bottom:10px; line-height:1.5; }
+    .profile-header-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+    .profile-inline-btn { white-space: nowrap; }
+    .profile-collapsible { margin-bottom: 14px; }
+    .profile-collapsible-toggle {
+      width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      background: none; border: none; cursor: pointer; text-align: left; padding: 0; font-family: 'Sora', sans-serif;
+    }
+    .profile-collapsible-toggle:hover .profile-collapsible-title { color: var(--accent); }
+    .profile-collapsible-title { font-size: 12px; font-weight: 700; color: var(--ink); transition: color 0.14s; }
+    .profile-collapsible-sub { font-size: 11px; color: var(--ink-soft); line-height: 1.45; margin-top: 3px; }
+    .profile-collapsible-arrow { font-size: 18px; color: var(--ink-soft); transition: transform 0.18s ease, color 0.14s; flex-shrink: 0; }
+    .profile-collapsible.open .profile-collapsible-arrow { transform: rotate(180deg); color: var(--accent); }
+    .profile-collapsible-body { display: none; margin-top: 14px; }
+    .profile-collapsible.open .profile-collapsible-body { display: block; }
     .sv-outcome-row-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
     .sv-outcome-row-main { min-width: 0; flex: 1; }
     .sv-outcome-row .sv-outcome-fr { margin-top: 0; }
@@ -704,7 +741,7 @@
 
     /* ── Responsive ── */
     @media (max-width: 520px) {
-      .screen, #screen-setup, #screen-profile, #screen-heatmap, #screen-students, #screen-bulk-assign { width: 100%; padding: 22px 13px 20px; }
+      .screen { padding: 22px 13px 20px; }
       .screen-title { font-size: 22px; }
     }
 
@@ -885,6 +922,7 @@
     <div id="batch-step-grid" style="display:none">
       <div class="card" style="margin-bottom:12px">
         <div class="section-label">Activity</div>
+        <div id="batch-edit-banner" style="display:none;background:var(--accent-lt);border:1px solid var(--accent-bd);border-radius:8px;padding:9px 12px;font-size:12.5px;color:var(--accent);margin-bottom:10px"></div>
         <div id="batch-activity-summary" style="font-size:13px;color:var(--ink-mid);line-height:1.55"></div>
         <div id="batch-domain-chip" class="domain-chip" style="margin-top:10px;margin-bottom:0"></div>
         <div id="batch-outcomes-display" style="margin-top:10px;display:flex;flex-direction:column;gap:6px"></div>
@@ -924,7 +962,7 @@
       </div>
 
       <div class="btn-row">
-        <button class="btn btn-success" onclick="saveBatchRecord()">✓ Save activity record</button>
+        <button class="btn btn-success" id="batch-save-btn" onclick="saveBatchRecord()">✓ Save activity record</button>
         <button class="btn btn-secondary" onclick="backToBatchInput()">← Back</button>
       </div>
     </div>
@@ -937,7 +975,7 @@
   <!-- Session context banner -->
   <div id="session-banner" style="display:none;background:var(--accent-lt);border:1px solid var(--accent-bd);border-radius:10px;padding:9px 13px;margin-bottom:16px;font-size:12px;color:var(--accent);align-items:center;justify-content:space-between">
     <span id="session-label-display"></span>
-    <button class="btn-icon" onclick="clearSessionState()" title="Clear session setup">✕</button>
+    <button class="btn-icon" onclick="clearSessionContext()" title="Clear">✕</button>
   </div>
 
   <div class="progress-wrap">
@@ -1062,24 +1100,14 @@
         </div>
       </div>
     </div>
-    <div class="card" id="notes-card">
-      <div class="section-label">Assessment notes</div>
-      <div class="form-group">
-        <div class="note-head">
-          <label class="form-label" for="session-notes" style="margin-bottom:0">Session notes <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
-          <button type="button" class="btn btn-secondary dictate-btn" onclick="toggleDictation('session-notes', this)">🎙 Dictate</button>
-        </div>
-        <textarea id="session-notes" class="notes-field" placeholder="e.g. This is a hybrid animal report. Focus on descriptive writing." oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';syncSessionAssessmentBanner()"></textarea>
-        <div class="form-hint">Stays on for the whole assessment session until you start a new one or clear it.</div>
-      </div>
-      <div class="form-group">
-        <div class="note-head">
-          <label class="form-label" for="student-notes" style="margin-bottom:0">Student-specific notes <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
-          <button type="button" class="btn btn-secondary dictate-btn" onclick="toggleDictation('student-notes', this)">🎙 Dictate</button>
-        </div>
-        <textarea id="student-notes" class="notes-field" placeholder="e.g. Strong ideas but rushed ending. Pay attention to paragraphing." oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
-        <div class="form-hint">Only applies to the current student and clears after you confirm the assessment.</div>
-      </div>
+    <div class="card" id="context-card" style="display:none">
+      <div class="section-label">Additional context <span style="font-weight:400;color:var(--ink-soft);text-transform:none;letter-spacing:0">(optional)</span></div>
+      <input type="text" id="session-context" placeholder="e.g. Written multiplication, CM2">
+    </div>
+    <div style="margin-bottom:10px">
+      <button onclick="toggleContextCard()" style="background:none;border:none;font-size:12px;color:var(--accent);cursor:pointer;font-family:'Sora',sans-serif;padding:0">
+        + Add context for this assessment
+      </button>
     </div>
     <div class="detail-toggle" id="detail-toggle" onclick="toggleDetailedComment()">
       <div class="dt-switch"><div class="dt-knob"></div></div>
@@ -1124,27 +1152,9 @@
         </select>
       </div>
       <div id="outcome-list" class="outcome-list"></div>
-      <div style="margin-bottom:14px">
-        <button class="btn btn-secondary" type="button" onclick="toggleResultOutcomeEditor()" style="padding:7px 12px;font-size:12px">Correct learning outcomes</button>
-        <div id="result-outcome-editor" style="display:none;margin-top:10px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg)">
-          <div class="form-hint" style="margin:0 0 10px">Choose the right learning outcomes for this assessment, then apply them.</div>
-          <div class="outcome-picker visible" style="display:block;margin-top:0">
-            <div class="outcome-picker-opts" id="result-outcome-opts"></div>
-          </div>
-          <div class="btn-row" style="margin-top:12px">
-            <button class="btn btn-primary" type="button" onclick="applyResultOutcomeSelection()" style="padding:7px 12px;font-size:12px">Apply chosen outcomes</button>
-            <button class="btn btn-secondary" type="button" onclick="resetResultOutcomeSelection()" style="padding:7px 12px;font-size:12px">Reset</button>
-          </div>
-        </div>
-      </div>
       <div>
         <div class="section-label">Comment / next step <span style="font-weight:400;color:var(--ink-soft);text-transform:none;letter-spacing:0">(edit or leave blank)</span></div>
         <textarea id="comment-input" class="comment-edit" placeholder="No comment generated — add one if needed, or leave blank."></textarea>
-      </div>
-      <div style="margin-top:14px">
-        <div class="section-label">Re-assess comment instructions <span style="font-weight:400;color:var(--ink-soft);text-transform:none;letter-spacing:0">(optional)</span></div>
-        <textarea id="reassess-guidance" class="reassess-guidance" placeholder="e.g. Make the comment shorter. Be kinder in tone. Focus on spelling. Mention one clear next step only."></textarea>
-        <div class="form-hint">Used only when you click Re-assess. It changes how the next comment is written, not the current saved comment.</div>
       </div>
     </div>
     <div class="btn-row">
@@ -1257,8 +1267,19 @@
     <div id="hm-domain-summary" class="hm-panel"></div>
     <div id="hm-trend-summary" class="hm-panel"></div>
   </div>
-  <div class="heatmap-summary" id="hm-summary"></div>
-  <div id="heatmap-list"></div>
+  <details class="card heatmap-collapsible" id="heatmap-map-panel">
+    <summary type="button">
+      <div>
+        <div class="heatmap-collapsible-title">Heatmap map</div>
+        <div class="heatmap-collapsible-sub">Collapsed by default so the dashboard hits first. Open it when you want the full grid or list view.</div>
+      </div>
+      <div class="heatmap-collapsible-arrow">⌄</div>
+    </summary>
+    <div class="heatmap-collapsible-body">
+      <div class="heatmap-summary" id="hm-summary"></div>
+      <div id="heatmap-list"></div>
+    </div>
+  </details>
 </div>
 
 <!-- ══ Print area ══ -->
@@ -1328,6 +1349,15 @@
       <label class="form-label">Comment / next step</label>
       <textarea id="edit-modal-comment" style="min-height:80px;font-size:13px;line-height:1.65"></textarea>
     </div>
+    <div class="form-group" id="edit-modal-batch-scope" style="display:none;margin-top:12px;padding:12px;border:1px solid var(--accent-bd);border-radius:10px;background:var(--accent-lt)">
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;user-select:none">
+        <input type="checkbox" id="edit-modal-apply-batch" checked style="margin-top:2px;accent-color:var(--accent)">
+        <span>
+          <span style="display:block;font-size:12.5px;font-weight:600;color:var(--ink)">Apply learning outcome changes to this whole batch record</span>
+          <span class="form-hint" id="edit-modal-batch-hint" style="display:block;margin-top:4px"></span>
+        </span>
+      </label>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-primary" onclick="saveAssessmentEdit()">Save</button>
       <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
@@ -1367,7 +1397,7 @@
   </div>
 </div>
 <script>
-const CYCLESTUDIO_DOMAIN_LIBRARY = {"Mathematics": {"Number, Calculation and Problem Solving": ["Read, write, compare, order and represent whole numbers", "Read, write, compare, order and represent fractions and decimal numbers", "Use place value to understand numbers and support calculation", "Recall and apply key number facts and mental calculation strategies", "Use the four operations accurately in written and mental calculation", "Choose efficient calculation methods and explain mathematical thinking", "Solve one-step and multi-step problems involving numbers and operations"], "Algebra": ["Recognise, describe and extend numerical and pictorial patterns", "Find and explain rules in number sequences", "Use symbols, words, diagrams or bar models to represent unknown quantities", "Reason about equality and equivalence", "Use simple pre-algebraic thinking to solve problems with an unknown value"], "Measurement": ["Estimate, compare, convert and use common units of length, mass and capacity", "Measure and calculate perimeter", "Measure, compare and calculate area", "Recognise, compare and use angles", "Read, use and solve problems involving time, dates and durations", "Use measurement knowledge to solve practical problems"], "Geometry and Space": ["Recognise, describe, classify and draw common 2D shapes", "Recognise, describe and classify common 3D solids", "Use geometric vocabulary accurately", "Use instruments and constructions carefully and precisely", "Identify and use lines, angles, parallelism, perpendicularity and symmetry", "Represent, describe and reason about positions and movement in space"], "Data Handling and Probability": ["Read, interpret and construct tables, charts and graphs", "Extract, compare and use information from data displays", "Organise and present data clearly", "Ask and answer questions using data", "Describe simple situations involving chance using appropriate language", "Compare likelihood in simple probability contexts"], "Proportionality": ["Recognise simple proportional situations", "Use multiplicative reasoning in scaling and comparison problems", "Solve simple problems involving equal rates or correspondences", "Use proportionality in contexts such as price, quantity, measure or geometry"], "Computational Thinking": ["Follow, describe and create simple step-by-step instructions", "Use logic to predict, check and correct sequences of actions", "Break a problem into smaller parts", "Recognise and use repetition, patterns and simple algorithms", "Develop reasoning linked to mathematical problem solving with or without digital tools"]}, "French": ["Read aloud fluently and expressively from an appropriate text", "Understand and interpret a literary or informational text", "Write a structured, coherent and correctly punctuated text", "Spell high-frequency words correctly and apply grammatical agreement", "Conjugate verbs in the studied tenses (present, compound past, imperfect and future)", "Identify the word class and grammatical function of words in a sentence", "Expand vocabulary through word building, derivation and context", "Take part in spoken exchanges while respecting communication rules", "Produce writing linked to a text read (continuation, transformation or summary)", "Use punctuation and logical connectives effectively"], "English Literacy": {"Reading": ["Read aloud accurately, fluently and expressively", "Read silently with stamina, focus and understanding", "Use reading strategies to understand explicit meaning", "Infer implicit meaning and justify ideas with evidence from the text", "Read and interpret literary texts, informational texts and documents across subjects"], "Writing": ["Write regularly for different purposes: to narrate, describe, explain, summarise and respond", "Use writing as a tool for thinking, organising ideas and learning across subjects", "Plan writing before drafting", "Draft, revise and improve writing using rereading, feedback and successive versions", "Produce coherent texts that follow the conventions of written language"], "Oral Language": ["Listen actively and understand short and longer spoken texts or instructions", "Speak clearly and in an organised way to explain, recount, present information or express a point of view", "Take part in discussions and debates respectfully and effectively", "Adapt speech to audience, purpose and situation", "Use voice, language and body effectively to be heard and understood"], "Vocabulary": ["Build and deepen vocabulary across all subjects", "Use context, morphology and reference tools to work out the meaning of unfamiliar words", "Make links between words through word families, meaning and usage", "Understand and use synonyms, antonyms and multiple-meaning words", "Reuse new vocabulary accurately in speaking and writing"], "Grammar and Grammatical Spelling": ["Identify and use the main parts of a simple sentence", "Recognise sentence types and forms and use them appropriately", "Identify word classes and the main functions of words and groups of words", "Apply agreement accurately within the noun group and between subject and verb", "Use and control the main verb forms and tenses studied in Cycle 3", "Use punctuation and sentence structure to support clarity and correctness in writing"]}, "Science and Technology": {"Scientific Inquiry and Communication": ["Ask questions, observe carefully and suggest possible explanations", "Plan and carry out simple investigations, tests or observations", "Use appropriate tools, methods and simple measurements", "Record results clearly using notes, tables, drawings, diagrams or graphs", "Compare observations with predictions and explain findings", "Use scientific vocabulary accurately in speaking and writing", "Work responsibly, safely and cooperatively during scientific and technical activities"], "Matter, Movement, Energy and Information": ["Describe and compare the properties of materials and changes in matter", "Observe and explain movement using simple ideas about forces and motion", "Recognise simple forms, sources and uses of energy", "Identify how light, sound or electrical signals can carry information", "Use observations and simple models to explain everyday physical phenomena"], "Living Things, Diversity and Life Functions": ["Recognise that living things share common characteristics", "Describe the diversity of living things and classify them using simple criteria", "Identify the main functions of living things, including growth, nutrition and reproduction", "Understand that living things interact with each other and with their environment", "Use observations to explain similarities, differences and changes in living things over time"], "Materials and Technical Objects": ["Identify needs, functions and uses of everyday objects", "Describe how simple technical objects are made and how they work", "Compare materials, components and simple technical solutions", "Design, build or improve a simple object or model to meet a need", "Explain choices made when creating or testing a technical solution"], "Earth and Environment": ["Describe the main features of Earth and its place in the solar system", "Identify components of an environment and describe relationships between living things and their habitat", "Observe changes in weather, seasons and natural environments", "Recognise that human activity affects environments and living things", "Use scientific knowledge to think about health, sustainability and environmental responsibility"]}, "History and Geography": {"History Skills and Historical Thinking": ["Place key events, periods and people in chronological order", "Use timelines and other representations of time to build historical understanding", "Remember and use key historical reference points from the programme", "Ask questions, make simple hypotheses and justify ideas in history", "Recognise a historical source, extract relevant information and identify point of view", "Use appropriate historical vocabulary in speaking, writing and discussion", "Work with others to investigate, discuss and present historical learning"], "Geography Skills and Geographical Thinking": ["Name and locate major places and geographical reference points", "Locate and describe places and spaces at different scales", "Use maps, plans, photographs and digital tools to understand places", "Use the idea of scale to compare local, national, European and global spaces", "Ask geographical questions, investigate evidence and justify ideas", "Use appropriate geographical vocabulary in speaking, writing and discussion", "Work with others to investigate, discuss and present geographical learning"], "CM1 History Themes": ["And before France? Ancient traces, early settlement and inherited worlds", "The age of kings: royal power, the kingdom of France and major medieval figures", "The time of Revolution and Empire: 1789, the nation and Napoleon"], "CM2 History Themes": ["The age of the Republic: symbols, rights, duties and republican schooling", "Industrial France: energy, machines, work, cities and rural change", "France from the world wars to the European Union"], "CM1 Geography Themes": ["Discovering the place or places where I live", "Living, working, learning and enjoying leisure in France", "Consuming in France: water, energy and food"], "CM2 Geography Themes": ["Moving around: daily travel, long-distance travel and sustainable mobility", "Communicating across the world through the Internet", "Living better: nature in the city, recycling and eco-districts"]}, "Civics and Moral Education": ["Understand and respect the rules of collective life", "Identify rights and responsibilities as a student and citizen", "Understand the values and principles of the French Republic", "Take part in debates by listening carefully and giving reasons", "Recognise and reject discrimination and stereotypes", "Understand the idea of the common good and shared interest", "Explain the role of democratic institutions", "Develop moral judgement and the ability to make ethical choices"], "Visual Arts": ["Create an artwork by exploring different materials and techniques", "Express an artistic intention and put it into practice", "Analyse and describe a work of art using appropriate vocabulary", "Make links between artworks from different periods and cultures", "Experiment with the effects of gesture, tools and surfaces", "Use the properties of colour, shape, light and texture", "Present and explain artistic choices orally"], "Music": ["Sing as part of a group with accurate pitch and rhythm", "Identify the features of a musical work such as tempo, timbre and pitch", "Listen to and compare musical works from different styles and periods", "Read and use graphic representations of sound", "Improvise or compose a short musical sequence", "Use appropriate musical vocabulary to describe a piece of music"], "PE": ["Perform a measurable physical action involving speed, distance or accuracy", "Adapt movement to different environments such as swimming, climbing or orienteering", "Cooperate and compete individually or as part of a team", "Respect the rules of a game or team sport", "Create and perform expressive or artistic movement sequences", "Keep yourself and others safe during physical activity"], "Modern Languages": ["Understand simple spoken messages and short documents", "Read and understand short texts appropriate to A1 or A2 level", "Speak in a short prepared way about familiar topics", "Interact orally in simple everyday exchanges", "Write sentences or a short text using basic rules accurately", "Identify cultural elements linked to the countries of the language being studied", "Use basic vocabulary and grammatical structures"]};
+const CYCLESTUDIO_DOMAIN_LIBRARY = {"Mathematics": {"Number, Calculation and Problem Solving": ["Read, write, compare, order and represent whole numbers", "Read, write, compare, order and represent fractions and decimal numbers", "Use place value to understand numbers and support calculation", "Recall and apply key number facts and mental calculation strategies", "Use the four operations accurately in written and mental calculation", "Choose efficient calculation methods and explain mathematical thinking", "Solve one-step and multi-step problems involving numbers and operations"], "Algebra": ["Recognise, describe and extend numerical and pictorial patterns", "Find and explain rules in number sequences", "Use symbols, words, diagrams or bar models to represent unknown quantities", "Reason about equality and equivalence", "Use simple pre-algebraic thinking to solve problems with an unknown value"], "Measurement": ["Estimate, compare, convert and use common units of length, mass and capacity", "Measure and calculate perimeter", "Measure, compare and calculate area", "Recognise, compare and use angles", "Read, use and solve problems involving time, dates and durations", "Use measurement knowledge to solve practical problems"], "Geometry and Space": ["Recognise, describe, classify and draw common 2D shapes", "Recognise, describe and classify common 3D solids", "Use geometric vocabulary accurately", "Use instruments and constructions carefully and precisely", "Identify and use lines, angles, parallelism, perpendicularity and symmetry", "Represent, describe and reason about positions and movement in space"], "Data Handling and Probability": ["Read, interpret and construct tables, charts and graphs", "Extract, compare and use information from data displays", "Organise and present data clearly", "Ask and answer questions using data", "Describe simple situations involving chance using appropriate language", "Compare likelihood in simple probability contexts"], "Proportionality": ["Recognise simple proportional situations", "Use multiplicative reasoning in scaling and comparison problems", "Solve simple problems involving equal rates or correspondences", "Use proportionality in contexts such as price, quantity, measure or geometry"], "Computational Thinking": ["Follow, describe and create simple step-by-step instructions", "Use logic to predict, check and correct sequences of actions", "Break a problem into smaller parts", "Recognise and use repetition, patterns and simple algorithms", "Develop reasoning linked to mathematical problem solving with or without digital tools"]}, "French": ["Read aloud fluently and expressively from an appropriate text", "Understand and interpret a literary or informational text", "Write a structured, coherent and correctly punctuated text", "Spell high-frequency words correctly and apply grammatical agreement", "Conjugate verbs in the studied tenses (present, compound past, imperfect and future)", "Identify the word class and grammatical function of words in a sentence", "Expand vocabulary through word building, derivation and context", "Take part in spoken exchanges while respecting communication rules", "Produce writing linked to a text read (continuation, transformation or summary)", "Use punctuation and logical connectives effectively"], "English Literacy": {"Reading": ["Read aloud accurately, fluently and expressively", "Read silently with stamina, focus and understanding", "Use reading strategies to understand explicit meaning", "Infer implicit meaning and justify ideas with evidence from the text", "Read and interpret literary texts, informational texts and documents across subjects"], "Writing": ["Write regularly for different purposes: to narrate, describe, explain, summarise and respond", "Use writing as a tool for thinking, organising ideas and learning across subjects", "Plan writing before drafting", "Draft, revise and improve writing using rereading, feedback and successive versions", "Produce coherent texts that follow the conventions of written language"], "Oral Language": ["Listen actively and understand short and longer spoken texts or instructions", "Speak clearly and in an organised way to explain, recount, present information or express a point of view", "Take part in discussions and debates respectfully and effectively", "Adapt speech to audience, purpose and situation", "Use voice, language and body effectively to be heard and understood"], "Vocabulary": ["Build and deepen vocabulary across all subjects", "Use context, morphology and reference tools to work out the meaning of unfamiliar words", "Make links between words through word families, meaning and usage", "Understand and use synonyms, antonyms and multiple-meaning words", "Reuse new vocabulary accurately in speaking and writing"], "Grammar and Grammatical Spelling": ["Identify and use the main parts of a simple sentence", "Recognise sentence types and forms and use them appropriately", "Identify word classes and the main functions of words and groups of words", "Apply agreement accurately within the noun group and between subject and verb", "Use and control the main verb forms and tenses studied in Cycle 3", "Spell high-frequency words accurately in independent writing", "Use common spelling patterns, morphology and word families to spell unfamiliar words", "Review and correct spelling using appropriate tools and strategies", "Use punctuation and sentence structure to support clarity and correctness in writing"]}, "Science and Technology": {"Scientific Inquiry and Communication": ["Ask questions, observe carefully and suggest possible explanations", "Plan and carry out simple investigations, tests or observations", "Use appropriate tools, methods and simple measurements", "Record results clearly using notes, tables, drawings, diagrams or graphs", "Compare observations with predictions and explain findings", "Use scientific vocabulary accurately in speaking and writing", "Work responsibly, safely and cooperatively during scientific and technical activities"], "Matter, Movement, Energy and Information": ["Describe and compare the properties of materials and changes in matter", "Observe and explain movement using simple ideas about forces and motion", "Recognise simple forms, sources and uses of energy", "Identify how light, sound or electrical signals can carry information", "Use observations and simple models to explain everyday physical phenomena"], "Living Things, Diversity and Life Functions": ["Recognise that living things share common characteristics", "Describe the diversity of living things and classify them using simple criteria", "Identify the main functions of living things, including growth, nutrition and reproduction", "Understand that living things interact with each other and with their environment", "Use observations to explain similarities, differences and changes in living things over time"], "Materials and Technical Objects": ["Identify needs, functions and uses of everyday objects", "Describe how simple technical objects are made and how they work", "Compare materials, components and simple technical solutions", "Design, build or improve a simple object or model to meet a need", "Explain choices made when creating or testing a technical solution"], "Earth and Environment": ["Describe the main features of Earth and its place in the solar system", "Identify components of an environment and describe relationships between living things and their habitat", "Observe changes in weather, seasons and natural environments", "Recognise that human activity affects environments and living things", "Use scientific knowledge to think about health, sustainability and environmental responsibility"]}, "History and Geography": {"History Skills and Historical Thinking": ["Place key events, periods and people in chronological order", "Use timelines and other representations of time to build historical understanding", "Remember and use key historical reference points from the programme", "Ask questions, make simple hypotheses and justify ideas in history", "Recognise a historical source, extract relevant information and identify point of view", "Use appropriate historical vocabulary in speaking, writing and discussion", "Work with others to investigate, discuss and present historical learning"], "Geography Skills and Geographical Thinking": ["Name and locate major places and geographical reference points", "Locate and describe places and spaces at different scales", "Use maps, plans, photographs and digital tools to understand places", "Use the idea of scale to compare local, national, European and global spaces", "Ask geographical questions, investigate evidence and justify ideas", "Use appropriate geographical vocabulary in speaking, writing and discussion", "Work with others to investigate, discuss and present geographical learning"], "CM1 History Themes": ["And before France? Ancient traces, early settlement and inherited worlds", "The age of kings: royal power, the kingdom of France and major medieval figures", "The time of Revolution and Empire: 1789, the nation and Napoleon"], "CM2 History Themes": ["The age of the Republic: symbols, rights, duties and republican schooling", "Industrial France: energy, machines, work, cities and rural change", "France from the world wars to the European Union"], "CM1 Geography Themes": ["Discovering the place or places where I live", "Living, working, learning and enjoying leisure in France", "Consuming in France: water, energy and food"], "CM2 Geography Themes": ["Moving around: daily travel, long-distance travel and sustainable mobility", "Communicating across the world through the Internet", "Living better: nature in the city, recycling and eco-districts"]}, "Civics and Moral Education": ["Understand and respect the rules of collective life", "Identify rights and responsibilities as a student and citizen", "Understand the values and principles of the French Republic", "Take part in debates by listening carefully and giving reasons", "Recognise and reject discrimination and stereotypes", "Understand the idea of the common good and shared interest", "Explain the role of democratic institutions", "Develop moral judgement and the ability to make ethical choices"], "Visual Arts": ["Create an artwork by exploring different materials and techniques", "Express an artistic intention and put it into practice", "Analyse and describe a work of art using appropriate vocabulary", "Make links between artworks from different periods and cultures", "Experiment with the effects of gesture, tools and surfaces", "Use the properties of colour, shape, light and texture", "Present and explain artistic choices orally"], "Music": ["Sing as part of a group with accurate pitch and rhythm", "Identify the features of a musical work such as tempo, timbre and pitch", "Listen to and compare musical works from different styles and periods", "Read and use graphic representations of sound", "Improvise or compose a short musical sequence", "Use appropriate musical vocabulary to describe a piece of music"], "PE": ["Perform a measurable physical action involving speed, distance or accuracy", "Adapt movement to different environments such as swimming, climbing or orienteering", "Cooperate and compete individually or as part of a team", "Respect the rules of a game or team sport", "Create and perform expressive or artistic movement sequences", "Keep yourself and others safe during physical activity"], "Modern Languages": ["Understand simple spoken messages and short documents", "Read and understand short texts appropriate to A1 or A2 level", "Speak in a short prepared way about familiar topics", "Interact orally in simple everyday exchanges", "Write sentences or a short text using basic rules accurately", "Identify cultural elements linked to the countries of the language being studied", "Use basic vocabulary and grammatical structures"]};
 
 const CYCLESTUDIO_TO_CYCLEASSESS_DOMAIN_MAP = {
   "Mathematics": "Mathématiques",
@@ -1797,9 +1827,21 @@ let currentResult = null;
 let sessionStudents = []; // current session batch
 let editingStudent = null;
 let editingAssessmentId = null;
+let editingBatchSessionId = null;
+let editingBatchAssessmentCount = 0;
+let currentProfileStudent = null;
+let profileSortMode = 'chronological';
+let profileMasteryDomainFilter = 'all';
+let profileHistoryOutcomeFilter = '';
+let profileHistoryDomainFilter = '';
+let profileMasteryPanelOpen = true;
+let profileHistoryPanelOpen = false;
+let profileHistoryShowAll = false;
+let profileCommentPanelOpen = false;
+let profileMapPanelOpen = false;
+let batchEditingSessionId = null;
+let batchEditReturn = null;
 let detailedComment = false;
-let sessionAssessmentDefaults = { domain: '', outcomes: [] };
-let activeDictation = null;
 const STATUS_LABEL = { met: 'Met', wt: 'Working Towards', nm: 'Not Met' };
 
 /* ══════════════════════════════════════════
@@ -1817,7 +1859,6 @@ function initApp() {
 
 function showMainApp() {
   document.getElementById('bottom-nav').classList.remove('hidden');
-  syncSessionAssessmentBanner();
   goTab('record');
 }
 
@@ -1845,7 +1886,7 @@ function goTab(tab) {
   if (nb) nb.classList.add('active');
   if (tab === 'students') renderRoster();
   if (tab === 'record')   { populateBatchClassSelect(); populateBatchStudentSelect(); }
-  if (tab === 'assess')   { populateAssessClassSelect(); populateStudentSelect(); syncSessionAssessmentBanner(); }
+  if (tab === 'assess')   { populateAssessClassSelect(); populateStudentSelect(); }
   if (tab === 'heatmap')  renderHeatmap();
 }
 
@@ -1863,72 +1904,9 @@ function toggleHistoryPanel() {
 /* ══════════════════════════════════════════
    ASSESS TAB
 ══════════════════════════════════════════ */
-function getSessionNotes() {
-  return document.getElementById('session-notes')?.value.trim() || '';
-}
-
-function getStudentNotes() {
-  return document.getElementById('student-notes')?.value.trim() || '';
-}
-
-function stopActiveDictation() {
-  if (!activeDictation) return;
-  activeDictation.recognition.onend = null;
-  try { activeDictation.recognition.stop(); } catch (e) {}
-  activeDictation.button?.classList.remove('recording');
-  if (activeDictation.button) activeDictation.button.innerHTML = '🎙 Dictate';
-  activeDictation = null;
-}
-
-function toggleDictation(targetId, btn) {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    flash('Dictation is not supported in this browser.', 'warn');
-    return;
-  }
-  if (activeDictation && activeDictation.targetId === targetId) {
-    stopActiveDictation();
-    return;
-  }
-  if (activeDictation) stopActiveDictation();
-
-  const field = document.getElementById(targetId);
-  if (!field) return;
-
-  const recognition = new SpeechRecognition();
-  recognition.lang = 'en-SG';
-  recognition.interimResults = true;
-  recognition.continuous = true;
-
-  const baseValue = field.value.trim();
-  activeDictation = { recognition, targetId, button: btn, baseValue };
-  btn.classList.add('recording');
-  btn.innerHTML = '⏺ Stop';
-
-  recognition.onresult = event => {
-    if (!activeDictation || activeDictation.targetId !== targetId) return;
-    let transcript = '';
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      transcript += event.results[i][0]?.transcript || '';
-    }
-    const clean = transcript.trim();
-    field.value = clean ? [baseValue, clean].filter(Boolean).join(baseValue ? ' ' : '') : baseValue;
-    field.style.height = 'auto';
-    field.style.height = field.scrollHeight + 'px';
-    syncSessionAssessmentBanner();
-  };
-
-  recognition.onerror = () => {
-    stopActiveDictation();
-    flash('Dictation stopped.', 'warn');
-  };
-
-  recognition.onend = () => {
-    if (!activeDictation || activeDictation.targetId !== targetId) return;
-    stopActiveDictation();
-  };
-
-  recognition.start();
+function toggleContextCard() {
+  const card = document.getElementById('context-card');
+  card.style.display = card.style.display === 'none' ? 'block' : 'none';
 }
 
 function toggleDetailedComment() {
@@ -1991,142 +1969,6 @@ function getChosenOutcomes() {
   const selected = [...document.querySelectorAll('#outcome-opts .outcome-opt.selected')].map(el => el.dataset.value || el.querySelector('.outcome-opt-text')?.textContent || '');
   if (selected.length > 0) return { domain, outcomes: selected, mode: 'selected' };
   return { domain, outcomes: [], mode: 'ai' };
-}
-
-function setSelectedOutcomeValues(containerSelector, values) {
-  const wanted = new Set((values || []).map(v => String(v || '').trim()).filter(Boolean));
-  document.querySelectorAll(`${containerSelector} .outcome-opt`).forEach(el => {
-    const selected = wanted.has(String(el.dataset.value || '').trim());
-    el.classList.toggle('selected', selected);
-    const check = el.querySelector('.outcome-opt-check');
-    if (check) check.textContent = selected ? '✓' : '';
-  });
-}
-
-function clearAssessOutcomeSelection() {
-  setSelectedOutcomeValues('#outcome-opts', []);
-  const ai = document.getElementById('outcome-ai');
-  const custom = document.getElementById('outcome-custom');
-  const customWrap = document.getElementById('custom-outcome-wrap');
-  const customText = document.getElementById('custom-outcome-text');
-  if (ai) ai.checked = true;
-  if (custom) custom.checked = false;
-  if (customWrap) customWrap.style.display = 'none';
-  if (customText) customText.value = '';
-}
-
-function hasSessionAssessmentDefaults() {
-  return !!(sessionAssessmentDefaults.domain && Array.isArray(sessionAssessmentDefaults.outcomes) && sessionAssessmentDefaults.outcomes.length);
-}
-
-function syncSessionAssessmentBanner() {
-  const banner = document.getElementById('session-banner');
-  const label = document.getElementById('session-label-display');
-  if (!banner || !label) return;
-  const bits = [];
-  if (hasSessionAssessmentDefaults()) {
-    const count = sessionAssessmentDefaults.outcomes.length;
-    bits.push(`${sessionAssessmentDefaults.domain} · ${count} LO${count !== 1 ? 's' : ''} remembered`);
-  }
-  if (getSessionNotes()) bits.push('session notes on');
-  if (!bits.length) {
-    banner.style.display = 'none';
-    label.textContent = '';
-    return;
-  }
-  label.textContent = `Session setup: ${bits.join(' · ')}`;
-  banner.style.display = 'flex';
-}
-
-function rememberSessionAssessmentDefaults(domain, outcomes) {
-  const approved = enforceApprovedOutcomes(domain, outcomes || []);
-  if (!domain || !approved.length) return;
-  sessionAssessmentDefaults = {
-    domain,
-    outcomes: approved.map(o => ({ fr: o.fr, en: o.en || o.fr, status: o.status }))
-  };
-  syncSessionAssessmentBanner();
-}
-
-function clearSessionAssessmentDefaults(silent = false) {
-  sessionAssessmentDefaults = { domain: '', outcomes: [] };
-  const domainSel = document.getElementById('domain-select');
-  const picker = document.getElementById('outcome-picker');
-  if (domainSel) domainSel.value = '';
-  if (picker) picker.classList.remove('visible');
-  clearAssessOutcomeSelection();
-  syncSessionAssessmentBanner();
-  if (!silent) flash('Remembered domain and learning outcomes cleared.');
-}
-
-function clearSessionState(silent = false) {
-  clearSessionAssessmentDefaults(true);
-  const sessionNotesField = document.getElementById('session-notes');
-  if (sessionNotesField) sessionNotesField.value = '';
-  syncSessionAssessmentBanner();
-  if (!silent) flash('Session setup cleared.');
-}
-
-function applySessionAssessmentDefaultsToForm() {
-  if (!hasSessionAssessmentDefaults()) return;
-  const domainSel = document.getElementById('domain-select');
-  if (!domainSel) return;
-  domainSel.value = sessionAssessmentDefaults.domain;
-  onDomainChange();
-  const ai = document.getElementById('outcome-ai');
-  const custom = document.getElementById('outcome-custom');
-  const customWrap = document.getElementById('custom-outcome-wrap');
-  if (ai) ai.checked = false;
-  if (custom) custom.checked = false;
-  if (customWrap) customWrap.style.display = 'none';
-  setSelectedOutcomeValues('#outcome-opts', sessionAssessmentDefaults.outcomes.map(o => o.fr));
-}
-
-function toggleResultOutcomeOpt(optionId) {
-  const el = document.getElementById(optionId);
-  if (!el) return;
-  el.classList.toggle('selected');
-  const check = el.querySelector('.outcome-opt-check');
-  if (check) check.textContent = el.classList.contains('selected') ? '✓' : '';
-}
-
-function renderResultOutcomeEditor() {
-  if (!currentResult || !currentResult.domain) return;
-  renderOutcomeOptions(currentResult.domain, 'result-outcome-opts', 'ropt', 'toggleResultOutcomeOpt');
-  setSelectedOutcomeValues('#result-outcome-opts', (currentResult.outcomes || []).map(o => o.fr));
-}
-
-function toggleResultOutcomeEditor(forceOpen = null) {
-  const box = document.getElementById('result-outcome-editor');
-  if (!box) return;
-  const shouldOpen = forceOpen === null ? box.style.display === 'none' : !!forceOpen;
-  box.style.display = shouldOpen ? 'block' : 'none';
-  if (shouldOpen) renderResultOutcomeEditor();
-}
-
-function resetResultOutcomeSelection() {
-  renderResultOutcomeEditor();
-}
-
-function applyResultOutcomeSelection() {
-  if (!currentResult) return;
-  const selected = [...document.querySelectorAll('#result-outcome-opts .outcome-opt.selected')]
-    .map(el => el.dataset.value || '')
-    .filter(Boolean)
-    .slice(0, 3);
-  if (!selected.length) {
-    flash('Choose at least one learning outcome.', 'warn');
-    return;
-  }
-  const existingStatuses = new Map((currentResult.outcomes || []).map(o => [o.fr, o.status]));
-  currentResult.outcomes = selected.map(value => ({
-    fr: value,
-    en: value,
-    status: existingStatuses.get(value) || 'wt'
-  }));
-  renderResultUI(currentResult);
-  toggleResultOutcomeEditor(false);
-  flash('Learning outcomes updated.', 'success');
 }
 
 function populateAssessClassSelect() {
@@ -2386,10 +2228,6 @@ function checkReady() {
   document.getElementById('assess-btn').disabled = !(nameReady && workReady);
 }
 
-function getReassessGuidance() {
-  return document.getElementById('reassess-guidance')?.value.trim() || '';
-}
-
 async function runAssessment() {
   const name = document.getElementById('student-name').value.trim();
   const usingPdf = assessInputType === 'pdf';
@@ -2402,18 +2240,12 @@ async function runAssessment() {
 
   const settings = DB.loadSettings();
   const defaultCtx = settings.defaultContext || '';
-  const sessionNotes = getSessionNotes();
-  const studentNotes = getStudentNotes();
-  const ctxParts = [
-    defaultCtx,
-    sessionNotes ? `Session notes: ${sessionNotes}` : '',
-    studentNotes ? `Student-specific notes: ${studentNotes}` : ''
-  ].filter(Boolean);
+  const sessionCtx = document.getElementById('session-context').value.trim();
+  const ctxParts = [defaultCtx, sessionCtx].filter(Boolean);
   const ctxBlock = ctxParts.length ? `
 Additional context: ${ctxParts.join('. ')}` : '';
 
   const { domain: chosenDomain, outcomes: chosenOutcomes, mode: outcomeMode } = getChosenOutcomes();
-  const reassessGuidance = getReassessGuidance();
   const sourceContent = usingPdf
     ? [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: currentPDFData.base64 } }]
     : activePhotos.map(p => ({ type: 'image', source: { type: 'base64', media_type: p.mimeType, data: p.base64 } }));
@@ -2424,7 +2256,7 @@ Additional context: ${ctxParts.join('. ')}` : '';
       messageContent: sourceContent,
       timeoutMs: detailedComment ? 60000 : 45000,
       includePdfBeta,
-      activityDescription: [sessionNotes, studentNotes, defaultCtx].filter(Boolean).join('. ')
+      activityDescription: sessionCtx || defaultCtx || ''
     });
 
     const domainInstruction = `The domain is fixed as: ${resolvedDomain}. Use this exact domain. The approved in-app curriculum library is the source of truth.`;
@@ -2455,17 +2287,9 @@ ${buildOutcomeLibraryPrompt(resolvedDomain)}`;
       ? '"comment": "<comprehensive comment addressed to the student by name: strengths, areas to focus on, next step — in light Australian English, no em dashes>",' 
       : '"comment": "<specific next step in light Australian English, no em dashes — OR empty string>",' ;
 
-    const reassessCommentInstruction = reassessGuidance
-      ? `
-Extra teacher preference for the NEW comment only:
-- ${reassessGuidance}
-- Apply this preference to the comment style, length, tone or focus.
-- Do not change the domain or chosen outcomes just because of this preference unless the work itself clearly requires it.`
-      : '';
-
     const prompt = `You are an experienced teacher at an international school following the French Cycle 3 curriculum (CM1, CM2, 6ème, ages 8-11). All comments and English translations must be in English.
 
-${usingPdf ? "A PDF document of the student's work is attached. It may contain one or more scanned pages. Treat the whole PDF as one piece of work." : (activePhotos.length > 1 ? activePhotos.length + " photographs of the student's work are attached — treat them as a single piece of work spanning multiple pages." : "A photograph of the student's work is attached.")}${ctxBlock}${reassessCommentInstruction}
+${usingPdf ? "A PDF document of the student's work is attached. It may contain one or more scanned pages. Treat the whole PDF as one piece of work." : (activePhotos.length > 1 ? activePhotos.length + " photographs of the student's work are attached — treat them as a single piece of work spanning multiple pages." : "A photograph of the student's work is attached.")}${ctxBlock}
 
 Your task:
 1. ${domainInstruction}
@@ -2530,11 +2354,8 @@ Respond with ONLY a valid JSON object — no markdown, no backticks, no preamble
 function overrideDomain(val) {
   if (!val || !currentResult) return;
   currentResult.domain = val;
-  currentResult.outcomes = enforceApprovedOutcomes(val, currentResult.outcomes || []);
+  document.getElementById('result-domain').textContent = '📚 ' + val;
   document.getElementById('domain-override').value = '';
-  renderResultUI(currentResult);
-  toggleResultOutcomeEditor(true);
-  flash('Domain changed. Choose the correct learning outcomes for this domain.', 'warn');
 }
 
 function renderResultUI(r) {
@@ -2552,8 +2373,8 @@ function renderResultUI(r) {
           <option value="wt"  ${o.status==='wt' ?'selected':''}>Working Towards</option>
           <option value="nm"  ${o.status==='nm' ?'selected':''}>Not Met</option>
         </select>
-        <div class="outcome-fr">${esc(o.fr)}</div>
-        <div class="outcome-en">${esc(o.en)}</div>
+        <div class="outcome-fr">${esc(getOutcomeDisplayPrimary(o))}</div>
+        ${getOutcomeDisplaySecondary(o) ? `<div class="outcome-en">${esc(getOutcomeDisplaySecondary(o))}</div>` : ''}
       </div>`;
     list.appendChild(row);
   });
@@ -2567,7 +2388,6 @@ function renderResultUI(r) {
   }
   commentEl.style.height = 'auto';
   commentEl.style.height = commentEl.scrollHeight + 'px';
-  if (document.getElementById('result-outcome-editor')?.style.display !== 'none') renderResultOutcomeEditor();
 }
 
 function updateStatus(i, val) {
@@ -2580,15 +2400,9 @@ function updateStatus(i, val) {
 function reassess() { setState('loading'); setTimeout(runAssessment, 80); }
 
 function confirmResult() {
-  if (!currentResult?.outcomes?.length) {
-    toggleResultOutcomeEditor(true);
-    flash('Choose at least one learning outcome before confirming.', 'warn');
-    return;
-  }
   const name    = document.getElementById('student-name').value.trim();
   const comment = document.getElementById('comment-input').value.trim();
   currentResult.comment = comment;
-  rememberSessionAssessmentDefaults(currentResult.domain, currentResult.outcomes);
 
   const assessment = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2,5),
@@ -2620,7 +2434,6 @@ function confirmResult() {
 }
 
 function resetAssessForm() {
-  stopActiveDictation();
   document.getElementById('student-name').value = '';
   const sel = document.getElementById('student-select'); if (sel) sel.value = '';
   currentPhotos = [];
@@ -2629,20 +2442,12 @@ function resetAssessForm() {
   document.getElementById('photo-count').textContent = '';
   removeAssessPDF();
   setAssessInputType('photo');
-  const studentNotesField = document.getElementById('student-notes');
-  if (studentNotesField) studentNotesField.value = '';
-  clearAssessOutcomeSelection();
-  if (hasSessionAssessmentDefaults()) applySessionAssessmentDefaultsToForm();
-  else {
-    document.getElementById('domain-select').value = '';
-    document.getElementById('outcome-picker').classList.remove('visible');
-  }
+  document.getElementById('session-context').value = '';
+  document.getElementById('context-card').style.display = 'none';
+  document.getElementById('domain-select').value = '';
+  document.getElementById('outcome-picker').classList.remove('visible');
   document.getElementById('assess-btn').disabled = true;
-  const reassessGuidanceEl = document.getElementById('reassess-guidance');
-  if (reassessGuidanceEl) reassessGuidanceEl.value = '';
   currentPhotos = []; currentThumb = null; currentPDFData = null; currentResult = null;
-  toggleResultOutcomeEditor(false);
-  syncSessionAssessmentBanner();
 }
 
 function setState(s) {
@@ -2667,7 +2472,7 @@ function finishSession() {
         <div class="hist-dot" style="background:${o.status==='met'?'var(--met)':o.status==='wt'?'var(--wt)':'var(--nm)'};margin-top:4px"></div>
         <div>
           <div class="hist-status" style="color:${o.status==='met'?'var(--met)':o.status==='wt'?'var(--wt)':'var(--nm)'}">${STATUS_LABEL[o.status]}</div>
-          <div class="hist-outcome-fr">${esc(o.fr)}</div>
+          <div class="hist-outcome-fr">${esc(getOutcomeDisplayPrimary(o))}</div>
         </div>
       </div>`).join('');
     const cmt = st.comment ? `<div class="hist-comment">📝 ${esc(st.comment)}</div>` : '';
@@ -2680,13 +2485,10 @@ function finishSession() {
 }
 
 function newSession() {
-  stopActiveDictation();
   sessionStudents = [];
-  clearSessionState(true);
   document.getElementById('progress-step').textContent = 'Ready to assess';
   document.getElementById('progress-fill').style.width = '0%';
   document.getElementById('finish-btn').style.display = 'none';
-  resetAssessForm();
   setState('input');
 }
 
@@ -2697,7 +2499,7 @@ function printSessionCards() {
       <div class="pc-outcome">
         <div class="pc-dot ${o.status}"></div>
         <div class="pc-status ${o.status}">${STATUS_LABEL[o.status]}</div>
-        <div><div class="pc-fr">${esc(o.fr)}</div><div class="pc-en">${esc(o.en)}</div></div>
+        <div><div class="pc-fr">${esc(getOutcomeDisplayPrimary(o))}</div>${getOutcomeDisplaySecondary(o) ? `<div class="pc-en">${esc(getOutcomeDisplaySecondary(o))}</div>` : ''}</div>
       </div>`).join('');
     const cmt = st.comment ? `<div class="pc-comment"><strong>Next step:</strong> ${esc(st.comment)}</div>` : '';
     return `<div class="pc"><div class="pc-name">${esc(st.name)}</div><div class="pc-domain">${esc(st.domain)}</div>${outs}${cmt}</div>`;
@@ -2776,13 +2578,17 @@ function renderHistory() {
     const deleteBtn = s._reconstructed
       ? `<button class="btn-icon" data-ids='${JSON.stringify(s.students.map(x=>x.assessmentId))}' data-date="${esc(s.date)}" data-activity="${esc(s.activity||'')}" onclick="deleteReconstructedSession(this)" title="Delete all records in this session" style="font-size:15px;color:var(--ink-soft)">🗑</button>`
       : `<button class="btn-icon" onclick="deleteSessionRecord('${esc(s.id)}')" title="Delete this session and all its records" style="font-size:15px;color:var(--ink-soft)">🗑</button>`;
+    const reopenBtn = s.type === 'batch' && !s._reconstructed
+      ? `<button class="btn btn-secondary" onclick="event.stopPropagation(); reopenBatchSession('${esc(s.id)}', { sourceTab: 'students' }); return false;" style="padding:6px 10px;font-size:11.5px">↺ Open grid</button>`
+      : '';
     return `<div class="session-hist-card">
       <div class="sh-header">
         <div>
           <div class="sh-date">${formatDate(s.date)}${typeTag}${recoTag}</div>
           ${activityLabel}
         </div>
-        <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+          ${reopenBtn}
           <div class="sh-count">${s.students.length} student${s.students.length!==1?'s':''}</div>
           ${deleteBtn}
         </div>
@@ -2968,11 +2774,110 @@ function setClassFilter(cls) {
    PROFILE SCREEN
 ══════════════════════════════════════════ */
 function openProfile(name) {
+  currentProfileStudent = name;
+  profileMasteryDomainFilter = 'all';
+  profileHistoryOutcomeFilter = '';
+  profileHistoryDomainFilter = '';
+  profileMasteryPanelOpen = true;
+  profileHistoryPanelOpen = false;
+  profileHistoryShowAll = false;
+  profileCommentPanelOpen = false;
+  profileMapPanelOpen = false;
   showScreen('profile');
   document.getElementById('nav-students').classList.add('active');
   document.getElementById('nav-assess').classList.remove('active');
   document.getElementById('nav-heatmap').classList.remove('active');
   renderProfile(name);
+}
+
+function getAssessmentPerformanceScore(assessment) {
+  const values = { met: 2, wt: 1, nm: 0 };
+  const outcomes = Array.isArray(assessment?.outcomes) ? assessment.outcomes : [];
+  if (!outcomes.length) return -1;
+  const scored = outcomes
+    .map(o => values[o?.status])
+    .filter(v => typeof v === 'number');
+  if (!scored.length) return -1;
+  return scored.reduce((sum, value) => sum + value, 0) / scored.length;
+}
+
+function setProfileSortMode(mode) {
+  profileSortMode = mode === 'performance' ? 'performance' : 'chronological';
+  if (currentProfileStudent) renderProfile(currentProfileStudent);
+}
+
+function setProfileMasteryDomainFilter(domain) {
+  profileMasteryDomainFilter = domain || 'all';
+  if (currentProfileStudent) renderProfile(currentProfileStudent);
+}
+
+function toggleProfileMasteryPanel(forceOpen = null) {
+  profileMasteryPanelOpen = forceOpen === null ? !profileMasteryPanelOpen : !!forceOpen;
+  if (currentProfileStudent) renderProfile(currentProfileStudent);
+}
+
+function toggleProfileHistoryPanel(forceOpen = null) {
+  profileHistoryPanelOpen = forceOpen === null ? !profileHistoryPanelOpen : !!forceOpen;
+  if (currentProfileStudent) renderProfile(currentProfileStudent);
+  if (profileHistoryPanelOpen) {
+    requestAnimationFrame(() => {
+      const target = document.getElementById('profile-history-panel');
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+}
+
+function setProfileHistoryShowAll(showAll = true) {
+  profileHistoryShowAll = !!showAll;
+  profileHistoryPanelOpen = true;
+  if (currentProfileStudent) renderProfile(currentProfileStudent);
+  requestAnimationFrame(() => {
+    const target = document.getElementById('profile-history-panel');
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
+function toggleProfileCommentPanel(forceOpen = null) {
+  profileCommentPanelOpen = forceOpen === null ? !profileCommentPanelOpen : !!forceOpen;
+  if (currentProfileStudent) renderProfile(currentProfileStudent);
+  if (profileCommentPanelOpen) {
+    requestAnimationFrame(() => {
+      const target = document.getElementById('profile-comment-panel');
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+}
+
+function toggleProfileMapPanel(forceOpen = null) {
+  profileMapPanelOpen = forceOpen === null ? !profileMapPanelOpen : !!forceOpen;
+  if (currentProfileStudent) renderProfile(currentProfileStudent);
+  if (profileMapPanelOpen) {
+    requestAnimationFrame(() => {
+      const target = document.getElementById('profile-map-panel');
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+}
+
+function setProfileHistoryOutcomeFilter(outcome = '', shouldScroll = false, domain = '') {
+  profileHistoryOutcomeFilter = outcome || '';
+  profileHistoryDomainFilter = profileHistoryOutcomeFilter ? (domain || '') : '';
+  if (profileHistoryOutcomeFilter) {
+    profileHistoryPanelOpen = true;
+    profileHistoryShowAll = true;
+  }
+  if (currentProfileStudent) renderProfile(currentProfileStudent);
+  if (shouldScroll) {
+    requestAnimationFrame(() => {
+      const target = document.getElementById('profile-history-panel');
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+}
+
+function setProfileHistoryOutcomeFilterFromNode(node, shouldScroll = false) {
+  if (!node) return;
+  setProfileHistoryOutcomeFilter(node.dataset.outcome || '', shouldScroll, node.dataset.domain || '');
 }
 
 
@@ -3085,90 +2990,98 @@ function buildStudentProfileDataset(st) {
 
 function renderStudentProfileDashboard(st) {
   const dataset = buildStudentProfileDataset(st);
-  if (!dataset.overall.total) {
-    return `
-      <div class="card student-viz-card">
-        <div class="section-label">Student visual snapshot</div>
-        <div class="sv-empty">No assessed outcomes yet, so there is nothing visual to show.</div>
-      </div>`;
-  }
+  const bodyHtml = (() => {
+    if (!dataset.overall.total) {
+      return `<div class="sv-empty">No assessed outcomes yet, so there is nothing to summarise.</div>`;
+    }
 
-  const domainRowsHtml = dataset.domainRows.map(row => {
-    const metPct = row.total ? (row.met / row.total) * 100 : 0;
-    const wtPct = row.total ? (row.wt / row.total) * 100 : 0;
-    const nmPct = row.total ? (row.nm / row.total) * 100 : 0;
-    return `
-      <div class="sv-domain-row">
-        <div>
-          <div class="sv-domain-name">${esc(row.domain)}</div>
-          <div class="sv-domain-meta">${row.outcomeCount} outcome${row.outcomeCount!==1?'s':''} · ${row.total} outcomes</div>
-        </div>
-        <div class="sv-domain-track">
-          ${metPct > 0 ? `<div class="sv-domain-seg met" style="width:${metPct}%"></div>` : ''}
-          ${wtPct > 0 ? `<div class="sv-domain-seg wt" style="width:${wtPct}%"></div>` : ''}
-          ${nmPct > 0 ? `<div class="sv-domain-seg nm" style="width:${nmPct}%"></div>` : ''}
-        </div>
-        <div class="sv-domain-total">${row.met} / ${row.wt} / ${row.nm}</div>
-      </div>`;
-  }).join('');
+    const masteryDomains = [...new Set(dataset.outcomeRows.map(row => row.domain).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    const scopedOutcomeRows = profileMasteryDomainFilter === 'all'
+      ? dataset.outcomeRows.slice()
+      : dataset.outcomeRows.filter(row => row.domain === profileMasteryDomainFilter);
 
-  const outcomeMasteryHtml = dataset.outcomeRows.length ? `
-    <div class="sv-outcome-list">
-      ${dataset.outcomeRows.map(row => `
-        <div class="sv-outcome-row">
-          <div class="sv-outcome-row-head">
-            <div class="sv-outcome-row-main">
-              <div class="sv-outcome-domain-chip">${esc(row.domain)}</div>
-              <div class="sv-outcome-fr">${esc(row.fr)}</div>
-              <div class="sv-outcome-en">${esc(row.en)}</div>
-            </div>
-            <div class="sv-outcome-score">
-              <div class="sv-outcome-score-value">${row.metPct}%</div>
-              <div class="sv-outcome-score-label">Met rate</div>
-              <div class="sv-outcome-score-sub">${row.met} met out of ${row.total}</div>
-            </div>
-          </div>
-          <div class="sv-outcome-track">
-            ${row.metRate > 0 ? `<div class="sv-domain-seg met" style="width:${row.metRate * 100}%"></div>` : ''}
-            ${row.wtRate > 0 ? `<div class="sv-domain-seg wt" style="width:${row.wtRate * 100}%"></div>` : ''}
-            ${row.nmRate > 0 ? `<div class="sv-domain-seg nm" style="width:${row.nmRate * 100}%"></div>` : ''}
-          </div>
-          <div class="sv-outcome-counts">
-            <div class="sv-outcome-count-badges">
-              <span class="sv-outcome-badge met">Met ${row.met}</span>
-              <span class="sv-outcome-badge wt">W/T ${row.wt}</span>
-              <span class="sv-outcome-badge nm">N/M ${row.nm}</span>
-            </div>
-            <div class="sv-outcome-last">Seen ${row.total} time${row.total !== 1 ? 's' : ''}${row.lastSeen ? ` · Last ${esc(formatDate(row.lastSeen))}` : ''}</div>
-          </div>
-        </div>`).join('')}
-    </div>` : '<div class="sv-empty">No individual outcome data yet.</div>';
+    const displayOutcomeRows = scopedOutcomeRows.slice().sort((a, b) => {
+      if (profileSortMode === 'performance') {
+        return (a.metPct - b.metPct)
+          || (b.nmPct - a.nmPct)
+          || (b.wtPct - a.wtPct)
+          || (b.total - a.total)
+          || a.fr.localeCompare(b.fr);
+      }
+      return (b.lastSeen || '').localeCompare(a.lastSeen || '')
+        || (b.total - a.total)
+        || a.fr.localeCompare(b.fr);
+    });
 
-  const maxTrendTotal = Math.max(...dataset.trendRows.map(row => row.total), 1);
-  const trendHtml = dataset.trendRows.length ? `
-    <div class="sv-trend-wrap">
-      <div class="sv-trend-bars">
-        ${dataset.trendRows.map(row => {
-          const heightPct = Math.max(8, (row.total / maxTrendTotal) * 100);
-          const segMet = row.total ? (row.met / row.total) * 100 : 0;
-          const segWt = row.total ? (row.wt / row.total) * 100 : 0;
-          const segNm = row.total ? (row.nm / row.total) * 100 : 0;
-          return `
-            <div class="sv-trend-col" title="${esc(row.label)}: ${row.total} outcomes">
-              <div class="sv-trend-bar-area">
-                <div class="sv-trend-bar" style="height:${heightPct}%">
-                  ${segMet > 0 ? `<div class="sv-trend-seg met" style="height:${segMet}%"></div>` : ''}
-                  ${segWt > 0 ? `<div class="sv-trend-seg wt" style="height:${segWt}%"></div>` : ''}
-                  ${segNm > 0 ? `<div class="sv-trend-seg nm" style="height:${segNm}%"></div>` : ''}
-                </div>
+    const outcomeMasteryHtml = displayOutcomeRows.length ? `
+      <div class="sv-outcome-list">
+        ${displayOutcomeRows.map(row => `
+          <div class="sv-outcome-row is-clickable ${profileHistoryOutcomeFilter === row.fr && (!profileHistoryDomainFilter || profileHistoryDomainFilter === row.domain) ? 'active' : ''}" data-outcome="${escAttr(row.fr)}" data-domain="${escAttr(row.domain)}" onclick="setProfileHistoryOutcomeFilterFromNode(this,true)" title="Show matching assessment history">
+            <div class="sv-outcome-row-head">
+              <div class="sv-outcome-row-main">
+                <div class="sv-outcome-domain-chip">${esc(row.domain)}</div>
+                <div class="sv-outcome-fr">${esc(getOutcomeDisplayPrimary(row))}</div>
+                ${getOutcomeDisplaySecondary(row) ? `<div class="sv-outcome-en">${esc(getOutcomeDisplaySecondary(row))}</div>` : ''}
               </div>
-              <div class="sv-trend-total">${row.total}</div>
-              <div class="sv-trend-label">${esc(row.label)}</div>
-            </div>`;
-        }).join('')}
-      </div>
-    </div>` : `<div class="sv-empty">Not enough dated assessments to show a trend yet.</div>`;
+              <div class="sv-outcome-score">
+                <div class="sv-outcome-score-value">${row.metPct}%</div>
+                <div class="sv-outcome-score-label">Met rate</div>
+                <div class="sv-outcome-score-sub">${row.met} met out of ${row.total}</div>
+              </div>
+            </div>
+            <div class="sv-outcome-track">
+              ${row.metRate > 0 ? `<div class="sv-domain-seg met" style="width:${row.metRate * 100}%"></div>` : ''}
+              ${row.wtRate > 0 ? `<div class="sv-domain-seg wt" style="width:${row.wtRate * 100}%"></div>` : ''}
+              ${row.nmRate > 0 ? `<div class="sv-domain-seg nm" style="width:${row.nmRate * 100}%"></div>` : ''}
+            </div>
+            <div class="sv-outcome-counts">
+              <div class="sv-outcome-count-badges">
+                <span class="sv-outcome-badge met">Met ${row.met}</span>
+                <span class="sv-outcome-badge wt">W/T ${row.wt}</span>
+                <span class="sv-outcome-badge nm">N/M ${row.nm}</span>
+              </div>
+              <div class="sv-outcome-last">Seen ${row.total} time${row.total !== 1 ? 's' : ''}${row.lastSeen ? ` · Last ${esc(formatDate(row.lastSeen))}` : ''}</div>
+            </div>
+          </div>`).join('')}
+      </div>` : `<div class="sv-empty">No outcomes recorded yet for ${esc(profileMasteryDomainFilter)}.</div>`;
 
+    return `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:240px;flex:1">
+          <div class="profile-collapsible-sub" style="margin-top:0">Summary view. Filter by domain, then sort that slice by chronology or performance. Click a row to jump straight to the matching assessment history.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <select id="profile-mastery-domain-filter" onchange="setProfileMasteryDomainFilter(this.value)" style="font-size:12.5px;padding:7px 10px;min-width:220px;max-width:320px;font-family:'Sora',sans-serif;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--ink);outline:none">
+              <option value="all" ${profileMasteryDomainFilter === 'all' ? 'selected' : ''}>All domains</option>
+              ${masteryDomains.map(domain => `<option value="${escAttr(domain)}" ${profileMasteryDomainFilter === domain ? 'selected' : ''}>${esc(domain)}</option>`).join('')}
+            </select>
+            <div class="form-hint" style="margin-top:0">${displayOutcomeRows.length} outcome${displayOutcomeRows.length !== 1 ? 's' : ''} shown</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="hm-view-btn ${profileSortMode === 'chronological' ? 'active' : ''}" onclick="setProfileSortMode('chronological')" type="button">Chronological</button>
+          <button class="hm-view-btn ${profileSortMode === 'performance' ? 'active' : ''}" onclick="setProfileSortMode('performance')" type="button">Performance</button>
+        </div>
+      </div>
+      ${outcomeMasteryHtml}`;
+  })();
+
+  return `
+    <div class="card profile-collapsible ${profileMasteryPanelOpen ? 'open' : ''}" id="profile-mastery-panel">
+      <button class="profile-collapsible-toggle" onclick="toggleProfileMasteryPanel()" type="button">
+        <div>
+          <div class="profile-collapsible-title">Outcome mastery</div>
+          <div class="profile-collapsible-sub">Keep this open for the overview. Collapse it when you just want the audit trail.</div>
+        </div>
+        <div class="profile-collapsible-arrow">⌄</div>
+      </button>
+      <div class="profile-collapsible-body">
+        ${bodyHtml}
+      </div>
+    </div>`;
+}
+
+function renderStudentRecentOutcomeMap(st) {
+  const dataset = buildStudentProfileDataset(st);
   const matrixHtml = (dataset.matrixRows.length && dataset.recentAssessments.length) ? `
     <div class="sv-matrix-wrap">
       <table class="sv-matrix">
@@ -3186,8 +3099,8 @@ function renderStudentProfileDashboard(st) {
           ${dataset.matrixRows.map(row => `
             <tr>
               <td class="sv-outcome-col">
-                <div class="sv-outcome-fr">${esc(row.fr)}</div>
-                <div class="sv-outcome-en">${esc(row.en)}</div>
+                <div class="sv-outcome-fr">${esc(getOutcomeDisplayPrimary(row))}</div>
+                ${getOutcomeDisplaySecondary(row) ? `<div class="sv-outcome-en">${esc(getOutcomeDisplaySecondary(row))}</div>` : ''}
                 <div class="sv-outcome-meta">${esc(row.domain)} · ${row.met} met · ${row.wt} wt · ${row.nm} nm</div>
               </td>
               ${dataset.recentAssessments.map(col => {
@@ -3205,46 +3118,16 @@ function renderStudentProfileDashboard(st) {
     </div>` : `<div class="sv-empty">Not enough repeated outcome data yet to build an individual map.</div>`;
 
   return `
-    <div class="card student-viz-card">
-      <div class="section-label">Student visual snapshot</div>
-      <div class="student-viz-stat-grid">
-        <div class="student-viz-stat">
-          <div class="sv-label">Overall met rate</div>
-          <div class="sv-value">${dataset.metRate}%</div>
-          <div class="sv-sub">${dataset.overall.met} of ${dataset.overall.total} outcomes are met</div>
+    <div class="card profile-collapsible ${profileMapPanelOpen ? 'open' : ''}" id="profile-map-panel">
+      <button class="profile-collapsible-toggle" onclick="toggleProfileMapPanel()" type="button">
+        <div>
+          <div class="profile-collapsible-title">Recent outcome map</div>
+          <div class="profile-collapsible-sub">Collapsed by default so it stops eating half the profile. Open it when you need the deeper pattern check.</div>
         </div>
-        <div class="student-viz-stat">
-          <div class="sv-label">Support flags</div>
-          <div class="sv-value">${dataset.supportFlags}</div>
-          <div class="sv-sub">${dataset.overall.wt} working towards · ${dataset.overall.nm} not met</div>
-        </div>
-        <div class="student-viz-stat">
-          <div class="sv-label">Outcomes tracked</div>
-          <div class="sv-value">${dataset.outcomeRows.length}</div>
-          <div class="sv-sub">${dataset.domainRows.length} domain${dataset.domainRows.length!==1?'s':''} represented</div>
-        </div>
-      </div>
-      <div class="student-viz-stack">
-        <div class="student-viz-box">
-          <h4>Domain performance</h4>
-          <p>Stacked bars show how this student is performing across each domain.</p>
-          <div class="sv-domain-rows">${domainRowsHtml || '<div class="sv-empty">No domain data yet.</div>'}</div>
-        </div>
-        <div class="student-viz-box">
-          <h4>Outcome mastery</h4>
-          <p>Each outcome shows a straight met percentage as the headline, with Working Towards and Not Met still visible underneath.</p>
-          ${outcomeMasteryHtml}
-        </div>
-        <div class="student-viz-box">
-          <h4>Recent outcome map</h4>
-          <p>A student-sized heatmap of recent assessments, so you can spot wobble without reading every card.</p>
-          ${matrixHtml}
-        </div>
-        <div class="student-viz-box">
-          <h4>Recent trend</h4>
-          <p>Each column shows one recent assessment and the mix of Met / Working Towards / Not Met.</p>
-          ${trendHtml}
-        </div>
+        <div class="profile-collapsible-arrow">⌄</div>
+      </button>
+      <div class="profile-collapsible-body">
+        ${matrixHtml}
       </div>
     </div>`;
 }
@@ -3440,11 +3323,29 @@ Return ONLY valid JSON:
 
 
 function renderProfile(name) {
+  currentProfileStudent = name;
   const st = DB.getStudent(name);
   if (!st) { document.getElementById('profile-content').innerHTML = '<p>Student not found.</p>'; return; }
 
-  const assessments = st.assessments;
+  const assessments = (st.assessments || []).slice().sort((a, b) => {
+    if (profileSortMode === 'performance') {
+      return (getAssessmentPerformanceScore(a) - getAssessmentPerformanceScore(b))
+        || ((b.date || '').localeCompare(a.date || ''))
+        || ((b.id || '').localeCompare(a.id || ''));
+    }
+    return ((b.date || '').localeCompare(a.date || '')) || ((b.id || '').localeCompare(a.id || ''));
+  });
   const domains = [...new Set(assessments.map(a => a.domain))];
+  const filteredAssessments = profileHistoryOutcomeFilter
+    ? assessments.filter(a => {
+        if (profileHistoryDomainFilter && (a.domain || '') !== profileHistoryDomainFilter) return false;
+        return (a.outcomes || []).some(o => o && o.fr === profileHistoryOutcomeFilter);
+      })
+    : assessments;
+  const visibleAssessments = profileHistoryOutcomeFilter
+    ? filteredAssessments
+    : (profileHistoryShowAll ? filteredAssessments : filteredAssessments.slice(0, 5));
+  const hiddenHistoryCount = profileHistoryOutcomeFilter ? 0 : Math.max(filteredAssessments.length - visibleAssessments.length, 0);
   const domainCounts = {};
   assessments.forEach(a => { domainCounts[a.domain] = (domainCounts[a.domain]||0)+1; });
 
@@ -3467,24 +3368,33 @@ function renderProfile(name) {
     <div class="card" style="margin-bottom:14px">
       <div class="section-label">Recurring challenges</div>
       <div style="display:flex;flex-wrap:wrap;gap:4px">
-        ${challenges.map(c => `<span class="challenge-chip">⚠ ${esc(c.fr)} ×${c.count}</span>`).join('')}
+        ${challenges.map(c => `<span class="challenge-chip">⚠ ${esc(getOutcomeDisplayPrimary(c))} ×${c.count}</span>`).join('')}
       </div>
     </div>` : '';
 
   const domainCommentHtml = domains.length ? `
-    <div class="card" style="margin-bottom:14px">
-      <div class="section-label">Domain comment</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
-        <select id="profile-domain-comment-select" onchange="switchProfileDomainComment('${escAttr(name)}')" style="font-size:13px;padding:8px 10px;flex:1;min-width:220px">
-          ${domains.map(d => `<option value="${escAttr(d)}">${esc(d)}</option>`).join('')}
-        </select>
-        <button class="btn btn-primary" id="profile-domain-comment-generate-btn" onclick="generateDomainCommentFromData('${escAttr(name)}')" style="white-space:nowrap">✨ Generate from data</button>
+    <div class="card profile-collapsible ${profileCommentPanelOpen ? 'open' : ''}" id="profile-comment-panel">
+      <button class="profile-collapsible-toggle" onclick="toggleProfileCommentPanel()" type="button">
+        <div>
+          <div class="profile-collapsible-title">Generate comment</div>
+          <div class="profile-collapsible-sub">Build a domain comment from stored outcomes and teacher notes, then tweak it if needed.</div>
+        </div>
+        <div class="profile-collapsible-arrow">⌄</div>
+      </button>
+      <div class="profile-collapsible-body">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+          <select id="profile-domain-comment-select" onchange="switchProfileDomainComment('${escAttr(name)}')" style="font-size:13px;padding:8px 10px;flex:1;min-width:220px">
+            ${domains.map(d => `<option value="${escAttr(d)}">${esc(d)}</option>`).join('')}
+          </select>
+          <button class="btn btn-primary" id="profile-domain-comment-generate-btn" onclick="generateDomainCommentFromData('${escAttr(name)}')" style="white-space:nowrap">✨ Generate from data</button>
+        </div>
+        <div class="form-hint" style="margin-bottom:8px">Uses stored outcomes and comments from the selected domain only.</div>
+        <textarea class="notes-field" id="profile-domain-comment-text" placeholder="Generate a domain comment, then edit if needed." oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" onblur="saveProfileDomainComment('${escAttr(name)}')">${esc(((st.domainComments||{})[domains[0]]) || '')}</textarea>
       </div>
-      <div class="form-hint" style="margin-bottom:8px">Uses stored outcomes and comments from the selected domain only.</div>
-      <textarea class="notes-field" id="profile-domain-comment-text" placeholder="Generate a domain comment, then edit if needed." oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" onblur="saveProfileDomainComment('${escAttr(name)}')">${esc(((st.domainComments||{})[domains[0]]) || '')}</textarea>
     </div>` : '';
 
-  const historyHtml = assessments.map(a => {
+  const historyHtml = visibleAssessments.map(a => {
+    const batchSession = a.type === 'batch' ? findBatchSessionByAssessmentId(a.id) : null;
     const thumbEl = a.thumb
       ? `<img class="hist-thumb" src="${a.thumb}" alt="">`
       : a.type === 'batch'
@@ -3492,12 +3402,15 @@ function renderProfile(name) {
         : `<div class="hist-thumb-ph">📄</div>`;
     const batchBadge = a.type === 'batch' ? `<span class="batch-badge">Batch</span>` : '';
     const activityNote = a.type === 'batch' && a.activity ? `<div style="font-size:11px;color:var(--ink-soft);margin-top:1px;font-style:italic">${esc(a.activity)}</div>` : '';
-    const outcomes = a.outcomes.map(o => `
-      <div class="hist-outcome">
+    const outcomes = a.outcomes.map(o => {
+      const isMatch = profileHistoryOutcomeFilter && o.fr === profileHistoryOutcomeFilter && (!profileHistoryDomainFilter || (a.domain || '') === profileHistoryDomainFilter);
+      return `
+      <div class="hist-outcome" ${isMatch ? 'style="background:var(--accent-lt);border:1px solid var(--accent-bd);border-radius:8px;padding:7px 8px"' : ''}>
         <div class="hist-dot" style="background:${o.status==='met'?'var(--met)':o.status==='wt'?'var(--wt)':'var(--nm)'}"></div>
         <div class="hist-status" style="color:${o.status==='met'?'var(--met)':o.status==='wt'?'var(--wt)':'var(--nm)'};min-width:88px">${STATUS_LABEL[o.status]}</div>
-        <div><div class="hist-outcome-fr">${esc(o.fr)}</div><div class="hist-outcome-en">${esc(o.en)}</div></div>
-      </div>`).join('');
+        <div><div class="hist-outcome-fr">${esc(getOutcomeDisplayPrimary(o))}${isMatch ? ' <span style="font-size:10px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:0.06em">Match</span>' : ''}</div>${getOutcomeDisplaySecondary(o) ? `<div class="hist-outcome-en">${esc(getOutcomeDisplaySecondary(o))}</div>` : ''}</div>
+      </div>`;
+    }).join('');
     const cmt = a.comment ? `<div class="hist-comment">📝 ${esc(a.comment)}</div>` : '';
     return `<div class="assess-hist-card">
       <div class="hist-header">
@@ -3506,6 +3419,7 @@ function renderProfile(name) {
           <div class="hist-date">${formatDate(a.date)}</div>
           <div class="hist-domain">${esc(a.domain)}${batchBadge}</div>${activityNote}
         </div>
+        ${batchSession ? `<button class="btn btn-secondary" onclick='event.stopPropagation(); reopenBatchSession(${jsq(batchSession.id)}, { sourceTab: "profile", studentName: ${jsq(name)} }); return false;' type="button" style="padding:6px 10px;font-size:11px;white-space:nowrap">↺ Open grid</button>` : ''}
         <button class="btn-icon" onclick="openEditAssessment('${esc(name)}','${a.id}')" title="Edit">✎</button>
         <button class="btn-icon" onclick="deleteAssessment('${esc(name)}','${a.id}')" title="Delete" style="font-size:14px">🗑</button>
       </div>
@@ -3530,16 +3444,42 @@ function renderProfile(name) {
         <div class="stat-box"><div class="sn">${challenges.length}</div><div class="sl">Recurring challenges</div></div>
       </div>
       <div class="domain-tags" style="flex-wrap:wrap">${domainChips}</div>
+      <div class="profile-header-actions">
+        ${domains.length ? `<button class="btn btn-primary profile-inline-btn" onclick="toggleProfileCommentPanel(true)" type="button">✨ Generate comment</button>` : ''}
+      </div>
     </div>
-    ${renderStudentProfileDashboard(st)}
     ${domainCommentHtml}
+    ${renderStudentProfileDashboard(st)}
+    <div class="card profile-collapsible ${profileHistoryPanelOpen ? 'open' : ''}" id="profile-history-panel">
+      <button class="profile-collapsible-toggle" onclick="toggleProfileHistoryPanel()" type="button">
+        <div>
+          <div class="profile-collapsible-title">Assessment history</div>
+          <div class="profile-collapsible-sub">Audit trail and edit zone. Opens when you jump here from Outcome mastery.</div>
+        </div>
+        <div class="profile-collapsible-arrow">⌄</div>
+      </button>
+      <div class="profile-collapsible-body">
+        <div class="profile-history-note">Use Outcome mastery above for the summary view. Click a mastery row to filter this history down to the matching evidence.</div>
+        <div class="profile-history-filter ${profileHistoryOutcomeFilter ? '' : 'hidden'}" id="profile-history-filter-bar">
+          <div class="profile-history-filter-main">
+            Showing evidence for
+            <span class="profile-history-filter-chip">${esc(profileHistoryOutcomeFilter || '')}</span>
+            ${profileHistoryDomainFilter ? `<span class="profile-history-filter-chip" style="background:var(--surface);color:var(--accent);border-color:var(--accent-bd)">${esc(profileHistoryDomainFilter)}</span>` : ''}
+            <span style="color:var(--ink-soft)">· ${filteredAssessments.length} matching assessment${filteredAssessments.length !== 1 ? 's' : ''}</span>
+          </div>
+          <button class="btn btn-secondary" onclick="setProfileHistoryOutcomeFilter('')" type="button" style="padding:7px 12px;font-size:12px">Clear filter</button>
+        </div>
+        ${historyHtml || '<div class="card"><div class="sv-empty">No matching assessment history for this outcome yet.</div></div>'}
+        ${(hiddenHistoryCount > 0 && !profileHistoryOutcomeFilter) ? `<div class="btn-row" style="margin-top:10px"><button class="btn btn-secondary" onclick="setProfileHistoryShowAll(true)" type="button">Show ${hiddenHistoryCount} older assessment${hiddenHistoryCount !== 1 ? 's' : ''}</button></div>` : ''}
+        ${(profileHistoryShowAll && filteredAssessments.length > 5 && !profileHistoryOutcomeFilter) ? `<div class="btn-row" style="margin-top:10px"><button class="btn btn-secondary" onclick="setProfileHistoryShowAll(false)" type="button">Show fewer</button></div>` : ''}
+      </div>
+    </div>
     <div class="card" style="margin-bottom:14px">
       <div class="section-label">Teacher notes</div>
       <textarea class="notes-field" id="profile-notes" placeholder="e.g. EAL student, joined mid-year, has IEP for reading…" onblur="saveProfileNotes('${esc(name)}')">${esc(st.notes||'')}</textarea>
     </div>
     ${challengeHtml}
-    <div class="section-label" style="margin-bottom:10px">Assessment history</div>
-    ${historyHtml}
+    ${renderStudentRecentOutcomeMap(st)}
     <div class="btn-row no-print" style="margin-top:4px">
       <button class="btn btn-secondary" onclick="printProfile('${esc(name)}')">🖨 Print profile</button>
       <button class="btn btn-secondary" onclick="exportStudentExcel('${esc(name)}')">⬇ Export to Excel</button>
@@ -3565,6 +3505,131 @@ function saveProfileClass(name) {
   renderRoster(); // refresh badges
 }
 
+
+function buildEditOutcomeSelectOptions(domain, currentValue) {
+  const entries = getAllowedOutcomeEntries(domain);
+  const optionValues = entries.map(entry => entry.stored);
+  const options = [];
+
+  if (currentValue && !optionValues.includes(currentValue)) {
+    options.push(`<option value="${escAttr(currentValue)}">${esc(currentValue)} (current)</option>`);
+  }
+
+  entries.forEach(entry => {
+    options.push(`<option value="${escAttr(entry.stored)}">${esc(entry.stored)}</option>`);
+  });
+
+  return options.join('');
+}
+
+function findBatchSessionByAssessmentId(assessmentId) {
+  return DB.getSessions().find(session => session.type === 'batch' && (session.students || []).some(entry => entry.assessmentId === assessmentId)) || null;
+}
+
+function getBatchSessionAssessment(session, studentName, assessmentId) {
+  const data = DB.loadData();
+  const student = data.students?.[studentName];
+  if (!student) return null;
+  return (student.assessments || []).find(item => item.id === assessmentId) || null;
+}
+
+function normalizeBatchReopenOutcomes(entries) {
+  const firstWithOutcomes = entries.find(entry => Array.isArray(entry.assessment?.outcomes) && entry.assessment.outcomes.length);
+  const sourceOutcomes = firstWithOutcomes?.assessment?.outcomes || [];
+  if (!sourceOutcomes.length) return [{ fr: '', en: '' }];
+  return sourceOutcomes.map(o => ({ fr: o?.fr || o?.en || '', en: o?.en || o?.fr || '' }));
+}
+
+function reopenBatchSession(sessionId, options = {}) {
+  try {
+    const session = DB.getSessions().find(entry => entry.id === sessionId);
+    if (!session || session.type !== 'batch') {
+      flash('Could not reopen that batch record.', 'warn');
+      return;
+    }
+
+    const entries = (session.students || []).map(entry => ({
+      ...entry,
+      assessment: getBatchSessionAssessment(session, entry.name, entry.assessmentId)
+    })).filter(entry => entry.assessment);
+
+    if (!entries.length) {
+      flash('No saved student records were found for that batch.', 'warn');
+      return;
+    }
+
+    const firstAssessment = entries[0].assessment;
+    const normalizedOutcomes = normalizeBatchReopenOutcomes(entries);
+
+    batchEditingSessionId = session.id;
+    batchEditReturn = { sourceTab: options.sourceTab || 'students', studentName: options.studentName || '' };
+    batchContext = {
+      domain: firstAssessment?.domain || session.domain || '',
+      outcomes: normalizedOutcomes,
+      description: session.activity || firstAssessment?.activity || ''
+    };
+
+    batchStudentStatuses = {};
+    const forcedStudents = entries.map(entry => {
+      const st = DB.getStudent(entry.name);
+      const savedStatuses = (entry.assessment?.outcomes || []).map(o => o?.status || null);
+      const paddedStatuses = normalizedOutcomes.map((_, index) => savedStatuses[index] || null);
+      batchStudentStatuses[entry.name] = {
+        outcomeStatuses: paddedStatuses,
+        comment: entry.assessment?.comment || '',
+        absent: false,
+        assessmentId: entry.assessment?.id || ''
+      };
+      return { name: entry.name, assessments: st?.assessments || [], class: st?.class || '', _saved: true };
+    });
+
+    goTab('record');
+    populateBatchClassSelect();
+    populateBatchStudentSelect();
+    showBatchStep('grid');
+
+    requestAnimationFrame(() => {
+      try {
+        showBatchGrid({ preserveStatuses: true, forcedStudents, disableClassFilter: true });
+        document.getElementById('batch-step-input').style.display = 'none';
+        document.getElementById('batch-step-grid').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        flash(`Opened saved batch grid for ${forcedStudents.length} student${forcedStudents.length !== 1 ? 's' : ''}.`, 'success');
+      } catch (innerErr) {
+        console.error('Batch reopen render failed', innerErr);
+        flash('Opened the record tab, but the saved grid failed to render.', 'warn');
+      }
+    });
+  } catch (err) {
+    console.error('Batch reopen failed', err);
+    flash('Could not reopen that batch record.', 'warn');
+  }
+}
+
+function applyBatchOutcomeLabelsToSession(sessionId, domain, outcomeLabels) {
+  if (!sessionId || !domain || !Array.isArray(outcomeLabels) || !outcomeLabels.length) return 0;
+  const data = DB.loadData();
+  const session = (data.sessions || []).find(entry => entry.id === sessionId);
+  if (!session) return 0;
+
+  let updatedCount = 0;
+  (session.students || []).forEach(entry => {
+    const student = data.students?.[entry.name];
+    if (!student) return;
+    const assessment = (student.assessments || []).find(item => item.id === entry.assessmentId);
+    if (!assessment || assessment.domain !== domain) return;
+    assessment.outcomes = (assessment.outcomes || []).map((outcome, index) => {
+      const nextLabel = outcomeLabels[index];
+      if (!nextLabel) return outcome;
+      return { ...outcome, fr: nextLabel, en: nextLabel };
+    });
+    updatedCount += 1;
+  });
+
+  DB.saveData(data);
+  return updatedCount;
+}
+
 async function deleteAssessment(name, id) {
   if (!await appConfirm('Delete assessment?', 'This record will be removed from the student profile. Cannot be undone.', 'Delete', 'btn-ghost')) return;
   DB.deleteAssessment(name, id);
@@ -3578,17 +3643,42 @@ function openEditAssessment(name, id) {
   if (!a) return;
   editingStudent = name;
   editingAssessmentId = id;
+  const batchSession = a.type === 'batch' ? findBatchSessionByAssessmentId(id) : null;
+  editingBatchSessionId = batchSession?.id || null;
+  editingBatchAssessmentCount = (batchSession?.students || []).length || 0;
   document.getElementById('edit-modal-title').textContent = name + ' — ' + a.domain;
   document.getElementById('edit-modal-outcomes').innerHTML = a.outcomes.map((o, i) => `
-    <div class="form-group">
-      <label class="form-label" style="font-weight:600">${esc(o.fr)}<span style="font-weight:400;font-style:italic;color:var(--ink-soft)"> — ${esc(o.en)}</span></label>
+    <div class="form-group" style="padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg)">
+      <label class="form-label" style="font-weight:600;margin-bottom:8px">Outcome ${i + 1}</label>
+      <select id="em-outcome-${i}" style="font-size:13px;padding:7px 10px;margin-bottom:8px">
+        ${buildEditOutcomeSelectOptions(a.domain, o.fr)}
+      </select>
       <select id="em-status-${i}" style="font-size:13px;padding:7px 10px">
         <option value="met" ${o.status==='met'?'selected':''}>Met</option>
         <option value="wt"  ${o.status==='wt' ?'selected':''}>Working Towards</option>
         <option value="nm"  ${o.status==='nm' ?'selected':''}>Not Met</option>
       </select>
+      <div class="form-hint" style="margin-top:6px">Change the outcome if the assessment was tagged to the wrong learning outcome.</div>
     </div>`).join('');
+  a.outcomes.forEach((o, i) => {
+    const outcomeSelect = document.getElementById('em-outcome-' + i);
+    if (outcomeSelect) outcomeSelect.value = o.fr;
+  });
   document.getElementById('edit-modal-comment').value = a.comment || '';
+
+  const batchScope = document.getElementById('edit-modal-batch-scope');
+  const batchToggle = document.getElementById('edit-modal-apply-batch');
+  const batchHint = document.getElementById('edit-modal-batch-hint');
+  if (a.type === 'batch' && editingBatchAssessmentCount > 1) {
+    batchScope.style.display = 'block';
+    batchToggle.checked = true;
+    batchHint.textContent = `This will update the selected learning outcome label across ${editingBatchAssessmentCount} student records from the same saved batch activity. Statuses and comments stay individual.`;
+  } else {
+    batchScope.style.display = 'none';
+    batchToggle.checked = false;
+    batchHint.textContent = '';
+  }
+
   document.getElementById('edit-modal').classList.add('open');
 }
 
@@ -3597,19 +3687,51 @@ function saveAssessmentEdit() {
   if (!st) return;
   const a = st.assessments.find(x => x.id === editingAssessmentId);
   if (!a) return;
-  a.outcomes.forEach((o, i) => {
-    const sel = document.getElementById('em-status-' + i);
-    if (sel) o.status = sel.value;
+
+  const originalOutcomeLabels = (a.outcomes || []).map(outcome => outcome.fr || '');
+  const updatedOutcomes = a.outcomes.map((o, i) => {
+    const statusSel = document.getElementById('em-status-' + i);
+    const outcomeSel = document.getElementById('em-outcome-' + i);
+    const chosenOutcome = (outcomeSel?.value || o.fr || '').trim();
+    const canonical = canonicalizeOutcomeChoice(a.domain, chosenOutcome);
+    const storedOutcome = canonical ? canonical.stored : chosenOutcome;
+    return {
+      ...o,
+      fr: storedOutcome,
+      en: storedOutcome,
+      status: statusSel ? statusSel.value : o.status
+    };
   });
-  a.comment = document.getElementById('edit-modal-comment').value.trim();
-  DB.updateAssessment(editingStudent, editingAssessmentId, { outcomes: a.outcomes, comment: a.comment });
+
+  const outcomeLabelsChanged = updatedOutcomes.some((outcome, index) => outcome.fr !== (originalOutcomeLabels[index] || ''));
+  const nextComment = document.getElementById('edit-modal-comment').value.trim();
+  DB.updateAssessment(editingStudent, editingAssessmentId, { outcomes: updatedOutcomes, comment: nextComment });
+
+  let batchUpdatedCount = 0;
+  const shouldApplyBatch = editingBatchSessionId && document.getElementById('edit-modal-apply-batch')?.checked;
+  if (shouldApplyBatch && outcomeLabelsChanged) {
+    batchUpdatedCount = applyBatchOutcomeLabelsToSession(editingBatchSessionId, a.domain, updatedOutcomes.map(outcome => outcome.fr));
+  }
+
+  const profileStudentName = editingStudent;
   closeEditModal();
-  renderProfile(editingStudent);
+  if (profileStudentName) renderProfile(profileStudentName);
+  if (batchUpdatedCount > 1) flash(`Updated the learning outcome across ${batchUpdatedCount} batch records.`, 'success');
+  else flash('Assessment updated.', 'success');
 }
 
 function closeEditModal() {
   document.getElementById('edit-modal').classList.remove('open');
-  editingStudent = null; editingAssessmentId = null;
+  editingStudent = null;
+  editingAssessmentId = null;
+  editingBatchSessionId = null;
+  editingBatchAssessmentCount = 0;
+  const batchScope = document.getElementById('edit-modal-batch-scope');
+  const batchToggle = document.getElementById('edit-modal-apply-batch');
+  const batchHint = document.getElementById('edit-modal-batch-hint');
+  if (batchScope) batchScope.style.display = 'none';
+  if (batchToggle) batchToggle.checked = false;
+  if (batchHint) batchHint.textContent = '';
 }
 
 function printProfile(name) {
@@ -3621,7 +3743,7 @@ function printProfile(name) {
       <div class="pc-outcome">
         <div class="pc-dot ${o.status}"></div>
         <div class="pc-status ${o.status}">${STATUS_LABEL[o.status]}</div>
-        <div><div class="pc-fr">${esc(o.fr)}</div><div class="pc-en">${esc(o.en)}</div></div>
+        <div><div class="pc-fr">${esc(getOutcomeDisplayPrimary(o))}</div>${getOutcomeDisplaySecondary(o) ? `<div class="pc-en">${esc(getOutcomeDisplaySecondary(o))}</div>` : ''}</div>
       </div>`).join('');
     const cmt = a.comment ? `<div class="pc-comment"><strong>Next step:</strong> ${esc(a.comment)}</div>` : '';
     return `<div class="pc">
@@ -3639,6 +3761,7 @@ function printProfile(name) {
 ══════════════════════════════════════════ */
 let hmView = 'grid';
 let hmCardDetailKey = null;
+let hmSupportShowAll = false;
 
 function setHmView(v) {
   hmView = v;
@@ -3993,6 +4116,15 @@ function renderHeatmapCardDetail(dataset, mountEl) {
   mountEl.querySelectorAll('[data-hm-filter-domain]').forEach(btn => {
     btn.addEventListener('click', () => applyHeatmapDomainFilter(btn.getAttribute('data-hm-filter-domain') || ''));
   });
+  mountEl.querySelectorAll('[data-hm-open-profile]').forEach(btn => {
+    btn.addEventListener('click', () => openProfile(btn.getAttribute('data-hm-open-profile') || ''));
+  });
+  mountEl.querySelectorAll('[data-hm-support-toggle]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      hmSupportShowAll = (btn.getAttribute('data-hm-support-toggle') || '') === 'all';
+      renderHeatmap();
+    });
+  });
 }
 
 function renderHeatmapMetRateDetail(dataset) {
@@ -4032,13 +4164,23 @@ function renderHeatmapMetRateDetail(dataset) {
 }
 
 function renderHeatmapSupportDetail(dataset) {
-  const rows = dataset.studentRows.filter(row => row.supportCount > 0).slice(0, 10);
+  const flaggedRows = dataset.studentRows.filter(row => row.supportCount > 0);
+  const visibleRows = hmSupportShowAll ? flaggedRows : flaggedRows.slice(0, 10);
+  const hiddenCount = Math.max(flaggedRows.length - visibleRows.length, 0);
+  const helperText = flaggedRows.length > 10
+    ? (hmSupportShowAll
+        ? `Showing all ${flaggedRows.length} flagged students in this filtered view.`
+        : `Showing the top ${visibleRows.length} of ${flaggedRows.length} flagged students in this filtered view.`)
+    : `${flaggedRows.length} flagged student${flaggedRows.length!==1?'s':''} in this filtered view.`;
   return `
     <div class="hm-card-detail-head">
       <div>
         <div class="hm-card-detail-title">Students needing support</div>
         <div class="hm-card-detail-sub">Sorted by how many Working Towards / Not Met outcomes they have in this filtered view.</div>
       </div>
+      ${flaggedRows.length > 10 ? `<div class="hm-detail-actions">
+        <button type="button" class="hm-detail-btn" data-hm-support-toggle="${hmSupportShowAll ? 'top' : 'all'}">${hmSupportShowAll ? 'Show top 10' : 'Show all flagged students'}</button>
+      </div>` : ''}
     </div>
     <div class="hm-chip-row">
       <span class="hm-chip wt">${dataset.needsSupportCount} students flagged</span>
@@ -4047,22 +4189,24 @@ function renderHeatmapSupportDetail(dataset) {
     </div>
     <div class="hm-detail-section">
       <h4>Support priority list</h4>
+      <div class="hm-panel-sub" style="margin-bottom:10px">${helperText}</div>
       <div class="hm-detail-list">
-        ${rows.map(row => {
+        ${visibleRows.map(row => {
           const sub = [
             row.weakestDomain ? `Most affected domain: ${row.weakestDomain}` : '',
             row.lastConcernDate ? `Latest concern: ${row.lastConcernDate}` : ''
           ].filter(Boolean).join(' · ');
           return `
-            <div class="hm-student-support">
+            <button type="button" class="hm-student-support is-clickable" data-hm-open-profile="${escAttr(row.name)}" title="Open ${escAttr(row.name)}'s profile">
               <div class="hm-detail-row-main">
                 <div class="hm-detail-row-title">${esc(row.name)}</div>
                 <div class="hm-detail-row-sub">${esc(sub || `${row.assessedCount} assessed outcomes`)}</div>
               </div>
               <div class="hm-support-score">${row.supportCount} support flag${row.supportCount!==1?'s':''}</div>
-            </div>`;
+            </button>`;
         }).join('') || '<div class="hm-empty-note">No students currently need support in this filtered view.</div>'}
       </div>
+      ${hiddenCount > 0 && !hmSupportShowAll ? `<div class="hm-panel-sub" style="margin-top:10px">${hiddenCount} more flagged student${hiddenCount!==1?'s':''} hidden. Use “Show all flagged students” to see the rest.</div>` : ''}
     </div>`;
 }
 
@@ -4271,8 +4415,8 @@ function renderHeatmapGrid(students, domainOutcomes, outcomeInfo, studentOutcome
       }).join('');
       bodyRows += `<tr>
         <td class="col-outcome">
-          <div class="oc-fr">${esc(info.fr)}</div>
-          <div class="oc-en">${esc(info.en)}</div>
+          <div class="oc-fr">${esc(getOutcomeDisplayPrimary(info))}</div>
+          ${getOutcomeDisplaySecondary(info) ? `<div class="oc-en">${esc(getOutcomeDisplaySecondary(info))}</div>` : ''}
         </td>
         ${cells}
       </tr>`;
@@ -4319,8 +4463,8 @@ function renderHeatmapList(keys, outcomeInfo, studentOutcomeMap, students) {
 
   document.getElementById('heatmap-list').innerHTML = rows.map(o => `
     <div class="outcome-hm-row">
-      <div class="hm-outcome-fr">${esc(o.info.fr)}</div>
-      <div class="hm-outcome-en">${esc(o.info.en)}</div>
+      <div class="hm-outcome-fr">${esc(getOutcomeDisplayPrimary(o.info))}</div>
+      ${getOutcomeDisplaySecondary(o.info) ? `<div class="hm-outcome-en">${esc(getOutcomeDisplaySecondary(o.info))}</div>` : ''}
       <div class="hm-bar-wrap">
         ${o.pMet>0?`<div class="hm-bar-seg hm-bar-met" style="width:${o.pMet}%"></div>`:''}
         ${o.pWt >0?`<div class="hm-bar-seg hm-bar-wt"  style="width:${o.pWt}%"></div>`:''}
@@ -4551,8 +4695,7 @@ function renderBatchOutcomes() {
   document.getElementById('batch-outcomes-display').innerHTML = batchContext.outcomes.map((o, i) =>
     `<div style="display:flex;align-items:flex-start;gap:8px;font-size:12.5px;padding:7px 10px;background:var(--accent-lt);border:1px solid var(--accent-bd);border-radius:7px">
       <div style="flex:1">
-        <strong>${esc(o.fr)}</strong><br>
-        <span style="font-size:11.5px;color:var(--ink-soft);font-style:italic">${esc(o.en)}</span>
+        <strong>${esc(getOutcomeDisplayPrimary(o))}</strong>${getOutcomeDisplaySecondary(o) ? `<br><span style="font-size:11.5px;color:var(--ink-soft);font-style:italic">${esc(getOutcomeDisplaySecondary(o))}</span>` : ''}
       </div>
       <button onclick="removeBatchOutcome(${i})" title="Remove this outcome" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--ink-soft);padding:0;flex-shrink:0;line-height:1" onmouseover="this.style.color='var(--nm)'" onmouseout="this.style.color='var(--ink-soft)'">✕</button>
     </div>`
@@ -4587,7 +4730,7 @@ function createEmptyBatchOutcomeStatuses() {
 }
 
 function createBatchStudentState() {
-  return { outcomeStatuses: createEmptyBatchOutcomeStatuses(), comment: '', absent: false };
+  return { outcomeStatuses: createEmptyBatchOutcomeStatuses(), comment: '', absent: false, assessmentId: '' };
 }
 
 function getBatchFilledOutcomeCount(state) {
@@ -4607,8 +4750,7 @@ function renderBatchSplitRowsHTML(name) {
   return (batchContext?.outcomes || []).map((o, i) => `
     <div class="cg-split-row">
       <div class="cg-split-title">
-        <strong>${esc(o.fr)}</strong>
-        <span>${esc(o.en)}</span>
+        <strong>${esc(getOutcomeDisplayPrimary(o))}</strong>${getOutcomeDisplaySecondary(o) ? `<span>${esc(getOutcomeDisplaySecondary(o))}</span>` : ''}
       </div>
       <div class="cg-split-actions">
         <button id="cgmini-met-${batchKey(name)}-${i}" class="cg-mini-status${state.outcomeStatuses?.[i] === 'met' ? ' active-met' : ''}" onclick='setBatchOutcomeStatus(${jsq(name)}, ${i}, "met")'  title="Met">✓</button>
@@ -4624,7 +4766,7 @@ function renderBatchStudentRow(name, opts = {}) {
   const state = batchStudentStatuses[name] || createBatchStudentState();
   const total = (batchContext?.outcomes || []).length;
   const filled = getBatchFilledOutcomeCount(state);
-  const metaLabel = total ? `${filled}/${total} outcomes set` : 'No outcomes';
+  const metaLabel = total ? `${filled}/${total} outcomes set${state.assessmentId ? ' · saved record' : ''}` : 'No outcomes';
   return `<div class="cg-row" id="cgrow-${key}">
     <div class="cg-main">
       <div class="cg-name">${esc(name)}${isNew ? ` <span style="font-size:10px;color:var(--accent);font-weight:600">new</span>` : ''}<span class="cg-name-meta">${metaLabel}</span></div>
@@ -4711,19 +4853,23 @@ function setBatchOutcomeStatus(name, index, status) {
   syncBatchRowUI(name);
 }
 
-function showBatchGrid() {
+function showBatchGrid(options = {}) {
+  const { preserveStatuses = false, forcedStudents = null, disableClassFilter = false } = options;
   const namedStudent = document.getElementById('batch-student-name')?.value.trim();
+  const bannerEl = document.getElementById('batch-edit-banner');
+  const saveBtn = document.getElementById('batch-save-btn');
+
   document.getElementById('batch-activity-summary').textContent = batchContext.description || '';
   document.getElementById('batch-domain-chip').textContent = '📚 ' + batchContext.domain;
   const warnEl = document.getElementById('batch-domain-warn');
   warnEl.style.display = batchContext.domain === 'Langues vivantes' ? 'flex' : 'none';
   renderBatchOutcomes();
 
-  batchStudentStatuses = {};
+  if (!preserveStatuses) batchStudentStatuses = {};
   const allStudents = DB.getAllStudents();
   const classes = DB.getClasses();
-  let students = allStudents;
-  if (classes.length && rosterClassFilter !== 'all' && rosterClassFilter !== '__none__') {
+  let students = forcedStudents ? forcedStudents.slice() : allStudents;
+  if (!forcedStudents && classes.length && rosterClassFilter !== 'all' && rosterClassFilter !== '__none__') {
     students = allStudents.filter(s => s.class === rosterClassFilter);
     if (!students.length) students = allStudents;
   }
@@ -4738,13 +4884,13 @@ function showBatchGrid() {
   }
   noStu.style.display = 'none';
 
-  if (namedStudent && !students.find(s => s.name === namedStudent)) {
+  if (!forcedStudents && namedStudent && !students.find(s => s.name === namedStudent)) {
     students = [...students, { name: namedStudent, assessments: [], _isNew: true }];
   }
 
   const existingFilter = document.getElementById('batch-class-filter-row');
   if (existingFilter) existingFilter.remove();
-  if (classes.length) {
+  if (!forcedStudents && !disableClassFilter && classes.length) {
     const cgFilter = document.createElement('div');
     cgFilter.id = 'batch-class-filter-row';
     cgFilter.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px';
@@ -4757,11 +4903,32 @@ function showBatchGrid() {
   }
 
   rows.innerHTML = students.map(st => {
-    batchStudentStatuses[st.name] = createBatchStudentState();
+    if (!batchStudentStatuses[st.name]) batchStudentStatuses[st.name] = createBatchStudentState();
     return renderBatchStudentRow(st.name, { isNew: !!st._isNew });
   }).join('');
 
-  Object.keys(batchStudentStatuses).forEach(syncBatchRowUI);
+  Object.keys(batchStudentStatuses).forEach(name => {
+    const commentBox = document.getElementById('cgcmt-' + batchKey(name));
+    const commentInput = commentBox ? commentBox.querySelector('textarea') : null;
+    if (commentInput) commentInput.value = batchStudentStatuses[name]?.comment || '';
+    syncBatchRowUI(name);
+  });
+
+  if (batchEditingSessionId) {
+    if (bannerEl) {
+      const savedCount = Object.values(batchStudentStatuses).filter(state => state.assessmentId).length;
+      bannerEl.textContent = `Editing saved batch grid · ${savedCount} student record${savedCount !== 1 ? 's' : ''}. Save changes here to update the whole class grid faster.`;
+      bannerEl.style.display = 'block';
+    }
+    if (saveBtn) saveBtn.textContent = '✓ Save batch changes';
+  } else {
+    if (bannerEl) {
+      bannerEl.textContent = '';
+      bannerEl.style.display = 'none';
+    }
+    if (saveBtn) saveBtn.textContent = '✓ Save activity record';
+  }
+
   showBatchStep('grid');
 }
 
@@ -4869,23 +5036,95 @@ function saveBatchRecord() {
   }
   if (!toSave.length) { flash('No students recorded — please set at least one status preset or split outcome statuses.'); return; }
 
-  const sessionEntries = [];
+  const data = DB.loadData();
+  if (!data.sessions) data.sessions = [];
+  let session = batchEditingSessionId ? (data.sessions || []).find(entry => entry.id === batchEditingSessionId) : null;
+  let createdCount = 0;
+  let updatedCount = 0;
+
+  if (!session) {
+    session = { id: Date.now().toString(36), date: today, type: 'batch', activity: batchContext.description, students: [] };
+    data.sessions.unshift(session);
+  } else {
+    session.activity = batchContext.description;
+  }
+
   toSave.forEach(([name, v]) => {
-    const assessment = {
-      id:       Date.now().toString(36) + Math.random().toString(36).slice(2,5),
-      date:     today,
-      type:     'batch',
-      domain:   batchContext.domain,
-      activity: batchContext.description,
-      outcomes: batchContext.outcomes.map((o, i) => ({ fr: o.fr, en: o.en, status: v.outcomeStatuses[i] })),
-      comment:  v.comment || '',
-      thumb:    ''
-    };
-    DB.saveAssessment(name, assessment);
-    sessionEntries.push({ name, domain: batchContext.domain, assessmentId: assessment.id });
+    if (!data.students[name]) data.students[name] = { name, assessments: [] };
+    if (rosterClassFilter !== 'all' && rosterClassFilter !== '__none__' && !data.students[name].class) data.students[name].class = rosterClassFilter;
+    const student = data.students[name];
+    const nextOutcomes = batchContext.outcomes.map((o, i) => ({ fr: o.fr, en: o.en, status: v.outcomeStatuses[i] }));
+
+    if (v.assessmentId) {
+      const existing = (student.assessments || []).find(item => item.id === v.assessmentId);
+      if (existing) {
+        existing.type = 'batch';
+        existing.domain = batchContext.domain;
+        existing.activity = batchContext.description;
+        existing.outcomes = nextOutcomes;
+        existing.comment = v.comment || '';
+        existing.thumb = '';
+        updatedCount += 1;
+      } else {
+        const assessment = {
+          id: v.assessmentId,
+          date: today,
+          type: 'batch',
+          domain: batchContext.domain,
+          activity: batchContext.description,
+          outcomes: nextOutcomes,
+          comment: v.comment || '',
+          thumb: ''
+        };
+        student.assessments.unshift(assessment);
+        updatedCount += 1;
+      }
+      const existingEntry = (session.students || []).find(entry => entry.assessmentId === v.assessmentId || entry.name === name);
+      if (existingEntry) {
+        existingEntry.name = name;
+        existingEntry.domain = batchContext.domain;
+        existingEntry.assessmentId = v.assessmentId;
+      } else {
+        session.students.push({ name, domain: batchContext.domain, assessmentId: v.assessmentId });
+      }
+    } else {
+      const assessment = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+        date: today,
+        type: 'batch',
+        domain: batchContext.domain,
+        activity: batchContext.description,
+        outcomes: nextOutcomes,
+        comment: v.comment || '',
+        thumb: ''
+      };
+      student.assessments.unshift(assessment);
+      v.assessmentId = assessment.id;
+      session.students.push({ name, domain: batchContext.domain, assessmentId: assessment.id });
+      createdCount += 1;
+    }
   });
 
-  DB.saveSession({ id: Date.now().toString(36), date: today, type: 'batch', activity: batchContext.description, students: sessionEntries });
+  DB.saveData(data);
+
+  if (batchEditingSessionId) {
+    const totalChanged = updatedCount + createdCount;
+    flash(`Saved changes to ${totalChanged} batch record${totalChanged !== 1 ? 's' : ''}.`, 'success');
+    const returnTo = batchEditReturn || { sourceTab: 'students', studentName: '' };
+    resetBatchFlow();
+    if (returnTo.sourceTab === 'profile' && returnTo.studentName) {
+      showScreen('profile');
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('nav-students')?.classList.add('active');
+      renderProfile(returnTo.studentName);
+    } else {
+      goTab('students');
+      const panel = document.getElementById('history-panel');
+      if (panel) panel.style.display = 'block';
+      renderHistory();
+    }
+    return;
+  }
 
   flash(`Saved for ${toSave.length} student${toSave.length !== 1 ? 's' : ''}.`, 'success');
   resetBatchFlow();
@@ -4893,7 +5132,7 @@ function saveBatchRecord() {
 }
 
 function resetBatchFlow() {
-  batchInputType = 'text'; batchPhotoData = null; batchPDFData = null; batchContext = null; batchStudentStatuses = {};
+  batchInputType = 'text'; batchPhotoData = null; batchPDFData = null; batchContext = null; batchStudentStatuses = {}; batchEditingSessionId = null; batchEditReturn = null;
   document.getElementById('batch-desc').value = '';
   const batchClsEl = document.getElementById('batch-class-select'); if (batchClsEl) batchClsEl.value = '';
   const batchNewEl = document.getElementById('batch-new-student'); if (batchNewEl) batchNewEl.value = '';
@@ -4903,6 +5142,8 @@ function resetBatchFlow() {
   document.getElementById('batch-pdf-name').textContent = '';
   document.getElementById('batch-domain-select').value = '';
   document.getElementById('batch-outcome-picker').classList.remove('visible');
+  const batchBanner = document.getElementById('batch-edit-banner'); if (batchBanner) { batchBanner.textContent = ''; batchBanner.style.display = 'none'; }
+  const batchSaveBtn = document.getElementById('batch-save-btn'); if (batchSaveBtn) batchSaveBtn.textContent = '✓ Save activity record';
   setInputType('text');
   showBatchStep('input');
 }
@@ -4912,7 +5153,25 @@ function showBatchStep(step) {
   document.getElementById('batch-step-grid').style.display  = step === 'grid'  ? 'block' : 'none';
 }
 
-function backToBatchInput() { showBatchStep('input'); }
+function backToBatchInput() {
+  if (batchEditingSessionId) {
+    const returnTo = batchEditReturn || { sourceTab: 'students', studentName: '' };
+    resetBatchFlow();
+    if (returnTo.sourceTab === 'profile' && returnTo.studentName) {
+      showScreen('profile');
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('nav-students')?.classList.add('active');
+      renderProfile(returnTo.studentName);
+    } else {
+      goTab('students');
+      const panel = document.getElementById('history-panel');
+      if (panel) panel.style.display = 'block';
+      renderHistory();
+    }
+    return;
+  }
+  showBatchStep('input');
+}
 
 // populateBatchStudentSelect defined above
 
@@ -5227,6 +5486,17 @@ function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function escAttr(s) { return esc(s).replace(/'/g, '&#39;'); }
+function getOutcomeDisplayPrimary(outcome) {
+  const en = String(outcome?.en || '').trim();
+  const fr = String(outcome?.fr || '').trim();
+  return en || fr;
+}
+function getOutcomeDisplaySecondary(outcome) {
+  const en = String(outcome?.en || '').trim();
+  const fr = String(outcome?.fr || '').trim();
+  if (!fr || fr === en) return '';
+  return fr;
+}
 function formatDate(iso) {
   if (!iso) return '—';
   const [y,m,d] = iso.split('-');
