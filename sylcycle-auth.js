@@ -130,7 +130,6 @@
         SylCycle.user = user;
         SylCycle.uid  = user.uid;
         await SylCycle.cloudSync();
-        SylCycle._injectPill();
         SylCycle._fireReady();
       } else {
         /* Not on the launcher? Redirect to login. */
