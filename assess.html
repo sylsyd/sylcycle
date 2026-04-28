@@ -56,8 +56,23 @@
     .nav-btn:hover .nav-icon { transform: scale(1.15); }
 
     /* ── Screens ── */
-    .screen { display: none; max-width: 660px; margin: 0 auto; padding: 32px 18px 24px; }
+    .screen { display: none; width: min(1120px, calc(100vw - 64px)); margin: 0 auto; padding: 32px 0 24px; }
     .screen.active { display: block; }
+
+    #screen-record { width: min(1180px, calc(100vw - 64px)); }
+    #batch-step-input {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.9fr) minmax(420px, 1.35fr);
+      gap: 18px;
+      align-items: start;
+    }
+    #batch-step-input > .card { margin-bottom: 0; }
+    .record-class-card,
+    .record-student-card { grid-column: 1; }
+    .record-activity-card,
+    .record-domain-card { grid-column: 2; }
+    .record-activity-card { grid-row: 1 / span 2; }
+    #batch-step-input > .btn-row { grid-column: 2; margin-top: 0; justify-content: flex-end; }
 
     /* ── Typography ── */
     .eyebrow { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 8px; }
@@ -741,8 +756,16 @@
 
     /* ── Responsive ── */
     @media (max-width: 520px) {
-      .screen { padding: 22px 13px 20px; }
+      .screen { width: 100%; padding: 22px 13px 20px; }
       .screen-title { font-size: 22px; }
+    }
+
+    @media (max-width: 860px) {
+      .screen,
+      #screen-record { width: 100%; padding-left: 18px; padding-right: 18px; }
+      #batch-step-input { display: block; }
+      #batch-step-input > .card { margin-bottom: 14px; }
+      #batch-step-input > .btn-row { margin-top: 18px; justify-content: flex-start; }
     }
 
     /* ── Print ── */
@@ -830,13 +853,13 @@
 
     <!-- Step 1: input -->
     <div id="batch-step-input">
-      <div class="card">
+      <div class="card record-class-card">
         <div class="section-label">Class</div>
         <select id="batch-class-select" style="font-size:13.5px;padding:9px 12px" onchange="onBatchClassChange()">
           <option value="">— All classes —</option>
         </select>
       </div>
-      <div class="card">
+      <div class="card record-student-card">
         <div class="section-label">Student <span style="font-weight:400;color:var(--ink-soft);text-transform:none;letter-spacing:0">— add a new student to your roster</span></div>
         <select id="batch-student-select" onchange="onBatchStudentSelect()" style="margin-bottom:8px;font-size:13.5px;padding:9px 12px">
           <option value="">— Select existing student —</option>
@@ -845,7 +868,7 @@
           <input type="text" id="batch-student-name" placeholder="Or type a new name…" autocomplete="off" style="font-size:13.5px">
         </div>
       </div>
-      <div class="card">
+      <div class="card record-activity-card">
         <div class="section-label">Activity input</div>
         <div class="input-type-row">
           <button class="input-type-btn active" id="itype-text" onclick="setInputType('text')"><span class="it-icon">✏️</span>Describe it</button>
@@ -880,7 +903,7 @@
       </div>
 
       <!-- Domain + outcomes (same picker as assess mode) -->
-      <div class="card">
+      <div class="card record-domain-card">
         <div class="section-label">Domain</div>
         <select id="batch-domain-select" style="font-size:13.5px;padding:9px 12px" onchange="onBatchDomainChange()">
           <option value="">Identify automatically</option>
