@@ -631,7 +631,6 @@ table{width:100%;border-collapse:collapse;font-size:12px;line-height:1.45}th,td{
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 /* =============================================================
@@ -669,13 +668,6 @@ const STORAGE = {
   history:'cycleplanner_refactor_history_v1',
   templates:'cycleplanner_refactor_templates_v1'
 };
-const EXPORT_PAGE = Object.freeze({
-  cssWidth:794,
-  cssHeight:1123,
-  pdfWidth:210,
-  pdfHeight:297,
-  marginBottom:18
-});
 const SAVE_DEBOUNCE_MS = 300;
 const DEFAULT_PREFS = {
   yearLevel:'CM1',
@@ -1958,95 +1950,6 @@ function safeFilename(name='CyclePlanner_plan'){
     .replace(/_+/g,'_')
     .replace(/^_|_$/g,'') || 'CyclePlanner_plan';
 }
-function makeExportPage(){
-  const page = document.createElement('div');
-  page.className = 'preview-page';
-  Object.assign(page.style, {
-    width:`${EXPORT_PAGE.cssWidth}px`,
-    maxWidth:`${EXPORT_PAGE.cssWidth}px`,
-    minHeight:`${EXPORT_PAGE.cssHeight}px`,
-    margin:`0 0 ${EXPORT_PAGE.marginBottom}px 0`,
-    boxShadow:'none',
-    background:'#ffffff',
-    overflow:'hidden'
-  });
-  return page;
-}
-function pageHasMeaningfulContent(page){
-  return !!String(page?.textContent || '').trim();
-}
-function removeEmptyExportPages(wrap){
-  const pages = Array.from(wrap.querySelectorAll('.preview-page'));
-  pages.forEach((page, index) => {
-    if(index > 0 && !pageHasMeaningfulContent(page)) page.remove();
-  });
-}
-
-function pageHasOnlyOptionalContent(page){
-  const children = Array.from(page.children).filter(el => (el.textContent || '').trim());
-  return children.length > 0 && children.every(el => el.classList.contains('export-optional'));
-}
-function removeOptionalOrphanPages(wrap){
-  let pages = Array.from(wrap.querySelectorAll('.preview-page'));
-  while(pages.length > 1 && pageHasOnlyOptionalContent(pages[pages.length - 1])){
-    pages[pages.length - 1].remove();
-    pages = Array.from(wrap.querySelectorAll('.preview-page'));
-  }
-}
-function buildExportClone(){
-  renderPreview();
-  const sourcePage = qs('preview')?.querySelector('.preview-page');
-  const wrap = document.createElement('div');
-  wrap.setAttribute('aria-hidden','true');
-  Object.assign(wrap.style, {
-    position:'fixed', left:'-12000px', top:'0', width:`${EXPORT_PAGE.cssWidth}px`, background:'#ffffff',
-    padding:'0', margin:'0', zIndex:'-1', pointerEvents:'none'
-  });
-  document.body.appendChild(wrap);
-  if(!sourcePage) return wrap;
-
-  const sourceClone = sourcePage.cloneNode(true);
-  // Direct PDF export is for the printable plan. Internal support notes such as
-  // CycleStudio hand-off ideas stay in the live preview/editor and Copy CycleStudio brief.
-  sourceClone.querySelectorAll('.export-optional').forEach(el => el.remove());
-  sourceClone.style.width = `${EXPORT_PAGE.cssWidth}px`;
-  sourceClone.style.maxWidth = `${EXPORT_PAGE.cssWidth}px`;
-  sourceClone.style.boxShadow = 'none';
-  sourceClone.style.margin = '0';
-  sourceClone.style.background = '#ffffff';
-
-  const blocks = Array.from(sourceClone.children);
-  const pageLimit = EXPORT_PAGE.cssHeight;
-  let page = makeExportPage();
-  wrap.appendChild(page);
-  blocks.forEach(block => {
-    const clone = block.cloneNode(true);
-    page.appendChild(clone);
-    if(page.scrollHeight > pageLimit && page.children.length > 1){
-      page.removeChild(clone);
-      page = makeExportPage();
-      wrap.appendChild(page);
-      page.appendChild(clone);
-    }
-  });
-  removeEmptyExportPages(wrap);
-  removeOptionalOrphanPages(wrap);
-  wrap.querySelectorAll('.preview-page').forEach(p => {
-    p.style.width = `${EXPORT_PAGE.cssWidth}px`;
-    p.style.maxWidth = `${EXPORT_PAGE.cssWidth}px`;
-    p.style.minHeight = `${EXPORT_PAGE.cssHeight}px`;
-    p.style.boxShadow = 'none';
-    p.style.background = '#ffffff';
-  });
-  return wrap;
-}
-function waitForImages(root){
-  const images = Array.from(root.querySelectorAll('img'));
-  return Promise.all(images.map(img => img.complete ? Promise.resolve() : new Promise(resolve => {
-    img.onload = resolve;
-    img.onerror = resolve;
-  })));
-}
 function planQualityIssues(plan=state.plan){
   const issues = [];
   if(!plan) return issues;
@@ -2079,58 +1982,279 @@ function showPlanQualityWarnings(target='editStatusBox'){
   }
   return true;
 }
+/* Text-based PDF export
+   -------------------------------------------------------------
+   This avoids html2canvas. html2canvas makes a screenshot PDF, which
+   looks tidy but turns text into pixels. This exporter draws real PDF
+   text with jsPDF, so the exported file stays searchable, selectable
+   and editable in PDF tools. */
+const PDF_TEXT_EXPORT = Object.freeze({
+  w:210,
+  h:297,
+  margin:15,
+  contentW:180,
+  colours:{
+    ink:[16,40,71],
+    muted:[104,117,138],
+    crimson:[159,18,57],
+    line:[224,229,238],
+    soft:[248,241,242],
+    blueSoft:[244,246,250]
+  }
+});
+function pdfPlain(value=''){
+  return cleanText(value)
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201c\u201d]/g, '"')
+    .replace(/\u00a0/g, ' ');
+}
+function pdfLineHeight(size=10, factor=1.28){ return size * 0.3528 * factor; }
+function pdfSetFont(pdf, size=10, style='normal', colour=PDF_TEXT_EXPORT.colours.ink){
+  pdf.setFont('helvetica', style);
+  pdf.setFontSize(size);
+  pdf.setTextColor(colour[0], colour[1], colour[2]);
+}
+function pdfEnsureSpace(pdf, cursor, needed=8){
+  if(cursor.y + needed <= PDF_TEXT_EXPORT.h - PDF_TEXT_EXPORT.margin) return;
+  pdf.addPage();
+  cursor.y = PDF_TEXT_EXPORT.margin + 5;
+}
+function pdfWriteWrapped(pdf, cursor, text, opts={}){
+  const value = pdfPlain(text);
+  if(!value) return;
+  const x = opts.x ?? PDF_TEXT_EXPORT.margin;
+  const width = opts.width ?? PDF_TEXT_EXPORT.contentW;
+  const size = opts.size ?? 10;
+  const style = opts.style || 'normal';
+  const colour = opts.colour || PDF_TEXT_EXPORT.colours.ink;
+  const lineH = pdfLineHeight(size, opts.lineFactor || 1.28);
+  const paragraphs = value.split('\n');
+  pdfSetFont(pdf, size, style, colour);
+  paragraphs.forEach((para, paraIndex) => {
+    const cleanPara = para.trim();
+    if(!cleanPara){ cursor.y += lineH * .65; return; }
+    const lines = pdf.splitTextToSize(cleanPara, width);
+    lines.forEach(line => {
+      pdfEnsureSpace(pdf, cursor, lineH + 1);
+      pdf.text(line, x, cursor.y);
+      cursor.y += lineH;
+    });
+    if(paraIndex < paragraphs.length - 1) cursor.y += lineH * .25;
+  });
+  cursor.y += opts.gapAfter ?? 2.4;
+}
+function pdfWriteBulletList(pdf, cursor, items=[], opts={}){
+  const list = (items || []).map(pdfPlain).filter(Boolean);
+  if(!list.length) return;
+  const x = opts.x ?? PDF_TEXT_EXPORT.margin;
+  const width = opts.width ?? PDF_TEXT_EXPORT.contentW;
+  const size = opts.size ?? 10;
+  const lineH = pdfLineHeight(size, 1.24);
+  pdfSetFont(pdf, size, 'normal', opts.colour || PDF_TEXT_EXPORT.colours.ink);
+  list.forEach(item => {
+    const lines = pdf.splitTextToSize(item, width - 6);
+    lines.forEach((line, index) => {
+      pdfEnsureSpace(pdf, cursor, lineH + 1);
+      if(index === 0) pdf.text('-', x, cursor.y);
+      pdf.text(line, x + 5, cursor.y);
+      cursor.y += lineH;
+    });
+    cursor.y += 1.2;
+  });
+  cursor.y += opts.gapAfter ?? 2;
+}
+function pdfSection(pdf, cursor, title, bodyFn, opts={}){
+  pdfEnsureSpace(pdf, cursor, 13);
+  cursor.y += opts.before ?? 1.5;
+  const x = PDF_TEXT_EXPORT.margin;
+  const w = PDF_TEXT_EXPORT.contentW;
+  if(opts.accent){
+    pdf.setFillColor(...PDF_TEXT_EXPORT.colours.soft);
+    pdf.setDrawColor(...PDF_TEXT_EXPORT.colours.line);
+    if(typeof pdf.roundedRect === 'function') pdf.roundedRect(x - 2, cursor.y - 6, w + 4, 10, 2, 2, 'FD');
+    else pdf.rect(x - 2, cursor.y - 6, w + 4, 10, 'FD');
+  }
+  pdfSetFont(pdf, 12, 'bold', opts.accent ? PDF_TEXT_EXPORT.colours.crimson : PDF_TEXT_EXPORT.colours.ink);
+  pdf.text(pdfPlain(title), x, cursor.y);
+  cursor.y += 5;
+  pdf.setDrawColor(...PDF_TEXT_EXPORT.colours.line);
+  pdf.line(x, cursor.y, x + w, cursor.y);
+  cursor.y += 5;
+  bodyFn();
+  cursor.y += 3;
+}
+function pdfKeyValue(pdf, cursor, label, value){
+  const clean = pdfPlain(value);
+  if(clean) pdfWriteWrapped(pdf, cursor, `${label}: ${clean}`, {size:10, gapAfter:1.8});
+}
+function pdfHeader(pdf, cursor, plan, label){
+  const m = PDF_TEXT_EXPORT.margin;
+  pdf.setFillColor(...PDF_TEXT_EXPORT.colours.blueSoft);
+  pdf.rect(0, 0, PDF_TEXT_EXPORT.w, 33, 'F');
+  pdfSetFont(pdf, 9, 'bold', PDF_TEXT_EXPORT.colours.crimson);
+  pdf.text(pdfPlain(label).toUpperCase(), m, 13);
+  pdfSetFont(pdf, 20, 'bold', PDF_TEXT_EXPORT.colours.ink);
+  const titleLines = pdf.splitTextToSize(pdfPlain(plan.title || 'Untitled'), PDF_TEXT_EXPORT.contentW - 34);
+  pdf.text(titleLines.slice(0, 2), m, 22, {lineHeightFactor:1.05});
+  pdfSetFont(pdf, 9, 'bold', PDF_TEXT_EXPORT.colours.crimson);
+  pdf.text('CyclePlanner', PDF_TEXT_EXPORT.w - m - 26, 13);
+  cursor.y = 43 + Math.max(0, titleLines.length - 1) * 5;
+  const scale = plan.type === 'unit'
+    ? `${plan.lessonCount || (plan.lessons || []).length || ''} lessons`
+    : plan.type === 'sequence'
+      ? `${plan.weekCount || (plan.weeks || []).length || ''} weeks`
+      : (plan.duration || '');
+  pdfSetFont(pdf, 10, 'normal', PDF_TEXT_EXPORT.colours.muted);
+  pdf.text(pdfPlain([plan.yearLevel, scale].filter(Boolean).join(' · ')), m, cursor.y);
+  cursor.y += 9;
+}
+function pdfCurriculum(pdf, cursor, plan){
+  pdfSection(pdf, cursor, 'Curriculum links', () => {
+    pdfKeyValue(pdf, cursor, 'Domain', plan.domain || 'Not set');
+    pdfWriteBulletList(pdf, cursor, plan.learningOutcomes || []);
+  }, {accent:true});
+}
+function pdfTextSection(pdf, cursor, title, text, accent=false){
+  if(pdfPlain(text)) pdfSection(pdf, cursor, title, () => pdfWriteWrapped(pdf, cursor, text, {size:10}), {accent});
+}
+function pdfArraySection(pdf, cursor, title, items, accent=false){
+  if((items || []).filter(Boolean).length) pdfSection(pdf, cursor, title, () => pdfWriteBulletList(pdf, cursor, items), {accent});
+}
+function pdfLessonPlan(pdf, cursor, plan){
+  pdfHeader(pdf, cursor, plan, 'Lesson plan');
+  pdfCurriculum(pdf, cursor, plan);
+  pdfTextSection(pdf, cursor, 'Context', plan.context, true);
+  pdfArraySection(pdf, cursor, 'Objectives', plan.objectives);
+  pdfArraySection(pdf, cursor, 'Materials', plan.materials);
+  pdfArraySection(pdf, cursor, 'Vocabulary', plan.vocabulary);
+  pdfTextSection(pdf, cursor, 'Prior knowledge', plan.priorKnowledge);
+  if((plan.lessonFlow || []).length){
+    pdfSection(pdf, cursor, 'Lesson flow', () => {
+      (plan.lessonFlow || []).forEach((row, index) => {
+        pdfEnsureSpace(pdf, cursor, 20);
+        pdfSetFont(pdf, 10.5, 'bold', PDF_TEXT_EXPORT.colours.ink);
+        pdf.text(pdfPlain(`${index + 1}. ${row.phase || 'Phase'}${row.duration ? ' · ' + row.duration : ''}`), PDF_TEXT_EXPORT.margin, cursor.y);
+        cursor.y += 5;
+        pdfWriteWrapped(pdf, cursor, `Teacher: ${row.teacherRole || ''}`, {x:PDF_TEXT_EXPORT.margin + 4, width:PDF_TEXT_EXPORT.contentW - 4, size:9.6, gapAfter:1});
+        pdfWriteWrapped(pdf, cursor, `Students: ${row.studentTask || ''}`, {x:PDF_TEXT_EXPORT.margin + 4, width:PDF_TEXT_EXPORT.contentW - 4, size:9.6, gapAfter:1});
+        if(pdfPlain(row.notes)) pdfWriteWrapped(pdf, cursor, `Notes: ${row.notes}`, {x:PDF_TEXT_EXPORT.margin + 4, width:PDF_TEXT_EXPORT.contentW - 4, size:9.2, colour:PDF_TEXT_EXPORT.colours.muted, gapAfter:1});
+        cursor.y += 2;
+      });
+    });
+  }
+  pdfTextSection(pdf, cursor, 'Support', plan.differentiation?.support);
+  pdfTextSection(pdf, cursor, 'Extension', plan.differentiation?.extension);
+  pdfTextSection(pdf, cursor, 'EAL / language support', plan.differentiation?.eal);
+  pdfArraySection(pdf, cursor, 'Key questions', plan.keyQuestions);
+  pdfTextSection(pdf, cursor, 'Exit ticket', plan.exitTicket, true);
+  pdfTextSection(pdf, cursor, 'Misconception check', plan.misconceptionCheck, true);
+  pdfTextSection(pdf, cursor, 'Assessment evidence', plan.assessment?.evidence, true);
+  pdfArraySection(pdf, cursor, 'Success criteria', plan.assessment?.successCriteria);
+  pdfTextSection(pdf, cursor, 'Next steps', plan.assessment?.nextSteps);
+  pdfTextSection(pdf, cursor, 'CycleAssess hook', plan.cycleAssessHooks?.evidenceToCollect);
+  pdfTextSection(pdf, cursor, 'Reflection', plan.reflection);
+}
+function pdfUnitPlan(pdf, cursor, plan){
+  pdfHeader(pdf, cursor, plan, 'Unit plan');
+  pdfCurriculum(pdf, cursor, plan);
+  if(Array.isArray(plan._qualityWarnings) && plan._qualityWarnings.length){
+    pdfSection(pdf, cursor, 'Pre-export quality note', () => pdfWriteBulletList(pdf, cursor, plan._qualityWarnings), {accent:true});
+  }
+  pdfTextSection(pdf, cursor, 'Overview', plan.overview, true);
+  pdfTextSection(pdf, cursor, 'Driving question', plan.drivingQuestion);
+  pdfArraySection(pdf, cursor, 'Vocabulary', plan.vocabulary);
+  if((plan.lessons || []).length){
+    pdfSection(pdf, cursor, 'Lesson sequence', () => {
+      (plan.lessons || []).forEach((row, index) => {
+        pdfEnsureSpace(pdf, cursor, 24);
+        pdf.setFillColor(...PDF_TEXT_EXPORT.colours.blueSoft);
+        pdf.setDrawColor(...PDF_TEXT_EXPORT.colours.line);
+        pdf.rect(PDF_TEXT_EXPORT.margin - 1, cursor.y - 5, PDF_TEXT_EXPORT.contentW + 2, 9, 'FD');
+        pdfSetFont(pdf, 10.5, 'bold', PDF_TEXT_EXPORT.colours.ink);
+        pdf.text(pdfPlain(`${index + 1}. ${row.title || 'Lesson'}${row.duration ? ' · ' + row.duration : ''}`), PDF_TEXT_EXPORT.margin + 1, cursor.y + 1);
+        cursor.y += 9;
+        pdfWriteWrapped(pdf, cursor, `Focus: ${row.focus || ''}`, {x:PDF_TEXT_EXPORT.margin + 3, width:PDF_TEXT_EXPORT.contentW - 3, size:9.6, gapAfter:1});
+        pdfWriteWrapped(pdf, cursor, `Activities: ${row.activities || ''}`, {x:PDF_TEXT_EXPORT.margin + 3, width:PDF_TEXT_EXPORT.contentW - 3, size:9.6, gapAfter:1});
+        pdfWriteWrapped(pdf, cursor, `Evidence: ${row.assessmentEvidence || ''}`, {x:PDF_TEXT_EXPORT.margin + 3, width:PDF_TEXT_EXPORT.contentW - 3, size:9.4, colour:PDF_TEXT_EXPORT.colours.muted, gapAfter:1});
+        cursor.y += 3;
+      });
+    });
+  }
+  pdfTextSection(pdf, cursor, 'Support', plan.differentiation?.support);
+  pdfTextSection(pdf, cursor, 'Extension', plan.differentiation?.extension);
+  pdfTextSection(pdf, cursor, 'EAL / language support', plan.differentiation?.eal);
+  pdfTextSection(pdf, cursor, 'Final assessment', plan.finalAssessment, true);
+  pdfTextSection(pdf, cursor, 'CycleAssess hook', plan.cycleAssessHooks?.evidenceToCollect);
+  pdfTextSection(pdf, cursor, 'Notes', plan.notes);
+}
+function pdfSequencePlan(pdf, cursor, plan){
+  pdfHeader(pdf, cursor, plan, 'Scope & sequence');
+  pdfTextSection(pdf, cursor, 'Overview', plan.overview, true);
+  pdfTextSection(pdf, cursor, 'Term / block', plan.termOrBlock);
+  if((plan.weeks || []).length){
+    pdfSection(pdf, cursor, 'Sequence map', () => {
+      (plan.weeks || []).forEach((row, index) => {
+        pdfEnsureSpace(pdf, cursor, 22);
+        pdfSetFont(pdf, 10.5, 'bold', PDF_TEXT_EXPORT.colours.ink);
+        pdf.text(pdfPlain(`${row.week || 'Week ' + (index + 1)}${row.domain ? ' · ' + row.domain : ''}`), PDF_TEXT_EXPORT.margin, cursor.y);
+        cursor.y += 5;
+        pdfWriteWrapped(pdf, cursor, `Focus: ${row.focus || ''}`, {x:PDF_TEXT_EXPORT.margin + 3, width:PDF_TEXT_EXPORT.contentW - 3, size:9.6, gapAfter:1});
+        pdfWriteWrapped(pdf, cursor, `Lessons / activities: ${row.lessons || ''}`, {x:PDF_TEXT_EXPORT.margin + 3, width:PDF_TEXT_EXPORT.contentW - 3, size:9.6, gapAfter:1});
+        pdfWriteWrapped(pdf, cursor, `Assessment: ${row.assessment || ''}`, {x:PDF_TEXT_EXPORT.margin + 3, width:PDF_TEXT_EXPORT.contentW - 3, size:9.4, colour:PDF_TEXT_EXPORT.colours.muted, gapAfter:1});
+        cursor.y += 2;
+      });
+    });
+  }
+  pdfTextSection(pdf, cursor, 'Coverage notes', plan.coverageNotes, true);
+  pdfTextSection(pdf, cursor, 'CycleAssess hook', plan.cycleAssessHooks?.coverageNotes);
+  pdfTextSection(pdf, cursor, 'Notes', plan.notes);
+}
+function pdfAddFooters(pdf){
+  const pages = pdf.internal.getNumberOfPages();
+  for(let i = 1; i <= pages; i++){
+    pdf.setPage(i);
+    pdf.setDrawColor(...PDF_TEXT_EXPORT.colours.line);
+    pdf.line(PDF_TEXT_EXPORT.margin, 287, PDF_TEXT_EXPORT.w - PDF_TEXT_EXPORT.margin, 287);
+    pdfSetFont(pdf, 8.5, 'normal', PDF_TEXT_EXPORT.colours.muted);
+    pdf.text(`CyclePlanner · Page ${i} of ${pages}`, PDF_TEXT_EXPORT.margin, 292);
+  }
+}
 async function exportPdf(){
   if(!state.plan) return setStatus('Create or load a plan first.','warn','editStatusBox');
   if(!showPlanQualityWarnings('editStatusBox')) return;
-  const html2canvasFn = window.html2canvas;
   const jsPdfCtor = window.jspdf && window.jspdf.jsPDF;
-  if(!html2canvasFn || !jsPdfCtor){
-    setStatus('PDF export libraries are unavailable here. Opening print instead.', 'warn','editStatusBox');
+  if(!jsPdfCtor){
+    setStatus('PDF export library is unavailable here. Opening print instead.', 'warn','editStatusBox');
     window.print();
     return;
   }
-  let cloneWrap = null;
-  setStatus('Building PDF...', 'warn','editStatusBox');
-  setBusy(true, 'Exporting PDF...', 'Creating a direct download from the preview.');
+  setStatus('Building editable text PDF...', 'warn','editStatusBox');
+  setBusy(true, 'Exporting proper PDF...', 'Writing real PDF text instead of taking a screenshot. Fancy, but actually useful.');
   try{
-    if(document.fonts && document.fonts.ready) await document.fonts.ready;
-    cloneWrap = buildExportClone();
-    await waitForImages(cloneWrap);
-    const pages = Array.from(cloneWrap.querySelectorAll('.preview-page'));
-    if(!pages.length) throw new Error('No preview pages found.');
     const pdf = new jsPdfCtor({unit:'mm', format:'a4', orientation:'portrait', compress:true});
-    let firstPage = true;
-    for(const pageEl of pages){
-      const cssWidth = EXPORT_PAGE.cssWidth;
-      const cssHeight = EXPORT_PAGE.cssHeight;
-      const canvas = await html2canvasFn(pageEl, {
-        scale:2,
-        useCORS:true,
-        allowTaint:true,
-        backgroundColor:'#ffffff',
-        width:cssWidth,
-        height:cssHeight,
-        windowWidth:cssWidth,
-        windowHeight:cssHeight,
-        scrollX:0,
-        scrollY:0,
-        removeContainer:true
-      });
-      if(!firstPage) pdf.addPage();
-      firstPage = false;
-      pdf.addImage(canvas.toDataURL('image/jpeg',0.96), 'JPEG', 0, 0, EXPORT_PAGE.pdfWidth, EXPORT_PAGE.pdfHeight, undefined, 'FAST');
-    }
-    pdf.save(safeFilename(state.plan.title || PLAN_LABELS[state.type]) + '.pdf');
-    setStatus('PDF exported.', 'ok','editStatusBox');
+    const cursor = {y:PDF_TEXT_EXPORT.margin};
+    const plan = normalisePlan(clonePlain(state.plan), state.plan.type || state.type);
+    if(plan.type === 'unit') pdfUnitPlan(pdf, cursor, plan);
+    else if(plan.type === 'sequence') pdfSequencePlan(pdf, cursor, plan);
+    else pdfLessonPlan(pdf, cursor, plan);
+    pdfAddFooters(pdf);
+    pdf.setProperties({
+      title: pdfPlain(plan.title || PLAN_LABELS[plan.type] || 'CyclePlanner plan'),
+      subject: PLAN_LABELS[plan.type] || 'CyclePlanner plan',
+      creator: 'CyclePlanner'
+    });
+    pdf.save(safeFilename(plan.title || PLAN_LABELS[plan.type]) + '.pdf');
+    setStatus('Editable text PDF exported.', 'ok','editStatusBox');
   }catch(err){
     console.error(err);
-    setStatus('Direct PDF export failed. Opening print as fallback.', 'err','editStatusBox');
+    setStatus('Text PDF export failed. Opening print as fallback.', 'err','editStatusBox');
     window.print();
   }finally{
-    if(cloneWrap) cloneWrap.remove();
     setBusy(false);
   }
 }
+
 
 async function pasteSourceImage(){
   const zone = qs('sourcePasteZone');
