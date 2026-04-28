@@ -1,7 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title">
   <title>SylCycle logo</title>
-  <rect width="1024" height="1024" fill="#fff"/>
-  <g transform="translate(83 92)">
+  <g transform="translate(88 112) scale(.79)">
     <path
       d="M193 647c61 112 164 171 282 159-41-35-71-74-93-117-60-5-112-31-151-81L119 722c76 92 172 141 294 148 64 4 121-4 171-24-73-35-130-88-170-157-82-10-151-49-221-42z"
       fill="#08356d"/>
