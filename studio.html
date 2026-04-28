@@ -312,6 +312,42 @@
     border:none; background:rgba(17,40,82,.82); color:#fff; cursor:pointer;
     font-size:13px; line-height:22px;
   }
+  .source-file-card{
+    min-height:118px;
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+    justify-content:flex-start;
+  }
+  .source-file-icon{
+    height:42px;
+    width:42px;
+    border-radius:12px;
+    background:var(--blue-soft);
+    color:var(--blue-dark);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.04em;
+    border:1px solid var(--line);
+  }
+  .source-file-name{
+    font-size:11px;
+    line-height:1.25;
+    font-weight:800;
+    color:var(--ink);
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+  }
+  .source-file-meta{
+    font-size:10px;
+    line-height:1.35;
+    color:var(--ink-soft);
+  }
   .pill-row{display:flex; gap:8px; flex-wrap:wrap}
   .small-btn{
     padding:9px 12px;
@@ -927,17 +963,18 @@
 <div class="tiny" style="margin-top:6px"></div>
 </div>
 <div class="field" style="margin-top:12px">
-<label for="promptImageUpload">Example activity images</label>
-<div aria-label="Example activity images upload panel. Click here and press Control or Command V to paste." class="upload upload-paste-panel" id="promptImagePanel" tabindex="0">
-<input accept="image/*" class="hidden-file-input" id="promptImageUpload" multiple type="file"/>
+<label for="promptImageUpload">Source inspiration files</label>
+<div aria-label="Source inspiration upload panel. Click here and press Control or Command V to paste an image." class="upload upload-paste-panel" id="promptImagePanel" tabindex="0">
+<input accept="image/*,.pdf,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation" class="hidden-file-input" id="promptImageUpload" multiple type="file"/>
 <div class="custom-file-row">
-<button class="small-btn" onclick="qs('promptImageUpload')?.click()" type="button">Choose images</button>
-<span class="tiny" id="promptImageFileStatus">No images added.</span>
+<button class="small-btn" onclick="qs('promptImageUpload')?.click()" type="button">Choose images / PDF / PPTX</button>
+<span class="tiny" id="promptImageFileStatus">No source files added.</span>
 </div>
-<div class="tiny" style="margin-top:8px">Upload or paste screenshots of example activities. Claude will use them as inspiration for more activities in a similar style or format.</div>
+<div class="tiny" style="margin-top:8px">Upload or paste screenshots, or add a PDF/PPTX lesson plan or slideshow. CycleStudio will use these as inspiration and source material when generating the worksheet.</div>
+<div class="tiny" style="margin-top:6px">PPTX slide text is extracted in the browser. If the slideshow is mostly visual, export it as a PDF first for better AI reading.</div>
 <div class="clipboard-tools">
-<button class="clipboard-btn" id="pastePromptImageBtn" type="button">Paste from clipboard</button>
-<div class="tiny">You can also click here and press Ctrl/Cmd + V.</div>
+<button class="clipboard-btn" id="pastePromptImageBtn" type="button">Paste image from clipboard</button>
+<div class="tiny">You can also click here and press Ctrl/Cmd + V to paste a screenshot.</div>
 </div>
 <div class="thumb-list" id="promptImageThumbs"></div>
 </div>
@@ -1088,6 +1125,7 @@ Click here, then press Ctrl/Cmd + V to paste a screenshot.
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style id="cyclestudio-v4-style">
 .success-box{
   background:linear-gradient(180deg,#f8fbff 0%,#f1f7fe 100%);
@@ -1594,6 +1632,7 @@ const state = {
   curriculumMode: 'ai_both',
   images: [],
   promptImages: [],
+  promptDocuments: [],
   templatePdf: null,
   worksheet: null,
   qualityCheck: null,
@@ -1863,11 +1902,21 @@ function bindUploads(){
     promptImageUpload.dataset.boundUploads = '1';
     promptImageUpload.addEventListener('change', async (e)=>{
       const files = [...e.target.files || []];
+      let added = 0;
+      let skipped = 0;
       for(const file of files){
-        await addPromptImageToState(file);
+        try{
+          if(await addPromptSourceToState(file)) added += 1;
+          else skipped += 1;
+        }catch(err){
+          console.warn('Could not add source file', file?.name, err);
+          skipped += 1;
+        }
       }
       renderPromptImageThumbs();
       savePrefs();
+      if(added) showStatus(`${added} source file${added === 1 ? '' : 's'} added.`, skipped ? 'warn' : 'ok');
+      if(skipped && !added) showStatus('No usable source files were added. Use images, PDFs or PPTX files.', 'warn');
       e.target.value = '';
     });
   }
@@ -2005,6 +2054,152 @@ async function addPromptImageToState(file, fallbackName='Example image'){
   return true;
 }
 
+function fileExt(file){
+  const name = String(file?.name || '').toLowerCase();
+  return name.includes('.') ? name.split('.').pop() : '';
+}
+
+function isPdfFile(file){
+  return (file?.type || '') === 'application/pdf' || fileExt(file) === 'pdf';
+}
+
+function isPptxFile(file){
+  return (file?.type || '') === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' || fileExt(file) === 'pptx';
+}
+
+function decodeXmlEntities(str=''){
+  const map = { amp:'&', lt:'<', gt:'>', quot:'"', apos:"'" };
+  return String(str)
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n, 10)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)))
+    .replace(/&([a-z]+);/gi, (_, entity) => map[entity] || `&${entity};`);
+}
+
+function stripXmlTags(str=''){
+  return decodeXmlEntities(String(str || '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+}
+
+async function extractPptxText(file){
+  if(!window.JSZip) throw new Error('PPTX support did not load. Try again, or export the slideshow as PDF.');
+  const zip = await window.JSZip.loadAsync(await file.arrayBuffer());
+  const slideFiles = Object.keys(zip.files)
+    .filter(name => /^ppt\/slides\/slide\d+\.xml$/i.test(name))
+    .sort((a,b) => {
+      const an = parseInt((a.match(/slide(\d+)\.xml/i) || [0,0])[1], 10);
+      const bn = parseInt((b.match(/slide(\d+)\.xml/i) || [0,0])[1], 10);
+      return an - bn;
+    });
+  const noteFiles = Object.keys(zip.files)
+    .filter(name => /^ppt\/notesSlides\/notesSlide\d+\.xml$/i.test(name))
+    .sort((a,b) => {
+      const an = parseInt((a.match(/notesSlide(\d+)\.xml/i) || [0,0])[1], 10);
+      const bn = parseInt((b.match(/notesSlide(\d+)\.xml/i) || [0,0])[1], 10);
+      return an - bn;
+    });
+
+  const readTextRuns = async (name) => {
+    const xml = await zip.files[name].async('string');
+    const runs = [];
+    const regex = /<a:t[^>]*>([\s\S]*?)<\/a:t>/g;
+    let match;
+    while((match = regex.exec(xml))){
+      const text = decodeXmlEntities(match[1]).replace(/\s+/g, ' ').trim();
+      if(text) runs.push(text);
+    }
+    if(runs.length) return runs.join(' ');
+    return stripXmlTags(xml);
+  };
+
+  const chunks = [];
+  for(const name of slideFiles){
+    const slideNo = parseInt((name.match(/slide(\d+)\.xml/i) || [0, chunks.length + 1])[1], 10);
+    const slideText = await readTextRuns(name);
+    const relatedNotesName = noteFiles.find(note => note.toLowerCase().endsWith(`notesslide${slideNo}.xml`));
+    const notesText = relatedNotesName ? await readTextRuns(relatedNotesName) : '';
+    const combined = [slideText, notesText ? `Speaker notes: ${notesText}` : ''].filter(Boolean).join('\n');
+    if(combined.trim()) chunks.push(`Slide ${slideNo}:\n${combined.trim()}`);
+  }
+  return chunks.join('\n\n').trim();
+}
+
+async function addPromptDocumentToState(file){
+  const kind = isPdfFile(file) ? 'pdf' : isPptxFile(file) ? 'pptx' : '';
+  if(!kind) return false;
+  const name = file.name || `Source ${state.promptDocuments.length + 1}.${kind}`;
+  const doc = {
+    id: Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    name,
+    kind,
+    mimeType: kind === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    size: file.size || 0,
+    addedAt: new Date().toISOString(),
+    extractedText: ''
+  };
+
+  if(kind === 'pdf'){
+    const dataUrl = await fileToDataUrl(file);
+    doc.dataUrl = dataUrl;
+    doc.base64 = dataUrl.split(',')[1];
+    doc.extractedText = '';
+  }else if(kind === 'pptx'){
+    doc.extractedText = await extractPptxText(file);
+    if(!doc.extractedText){
+      throw new Error('No readable text was found in that PPTX. Export it as PDF if the slides are mostly visual.');
+    }
+  }
+
+  state.promptDocuments.push(doc);
+  return true;
+}
+
+async function addPromptSourceToState(file){
+  if(!file) return false;
+  if((file.type || '').startsWith('image/')) return addPromptImageToState(file);
+  if(isPdfFile(file) || isPptxFile(file)) return addPromptDocumentToState(file);
+  return false;
+}
+
+function removePromptDocument(idx){
+  state.promptDocuments.splice(idx, 1);
+  renderPromptImageThumbs();
+  savePrefs();
+}
+
+function sourceFileMeta(doc){
+  if(!doc) return '';
+  if(doc.kind === 'pdf') return 'PDF attached for AI reading';
+  const chars = String(doc.extractedText || '').length;
+  return `PPTX text extracted${chars ? ` • ${chars.toLocaleString()} chars` : ''}`;
+}
+
+function truncateForPrompt(str='', max=12000){
+  const value = String(str || '').trim();
+  if(value.length <= max) return value;
+  return value.slice(0, max) + `\n\n[Truncated after ${max.toLocaleString()} characters.]`;
+}
+
+function buildPromptDocumentContextText(){
+  const docs = state.promptDocuments || [];
+  if(!docs.length) return '';
+  return docs.map((doc, idx) => {
+    const label = doc.kind === 'pdf' ? 'PDF source' : 'PPTX source';
+    const attachedNote = doc.kind === 'pdf'
+      ? 'This PDF is attached to the message. Read it for topic, structure, vocabulary, examples, sequencing and task ideas.'
+      : 'The PPTX file itself is not sent to the AI; its extracted slide text is provided below.';
+    const extracted = doc.extractedText
+      ? `\nExtracted text:\n"""${truncateForPrompt(doc.extractedText, 14000)}"""`
+      : '';
+    return `${label} ${idx + 1}: ${doc.name}\n${attachedNote}${extracted}`;
+  }).join('\n\n');
+}
+
+function buildPromptDocumentInstruction(){
+  const docs = state.promptDocuments || [];
+  if(!docs.length) return 'No PDF or PPTX source documents are attached.';
+  const names = docs.map(doc => `${doc.name} (${String(doc.kind || 'file').toUpperCase()})`).join(', ');
+  return `Source documents: ${docs.length} PDF/PPTX file${docs.length === 1 ? '' : 's'} supplied: ${names}. Use them as the basis and inspiration for the worksheet. If they are lesson plans, turn the learning sequence into student-facing worksheet tasks. If they are slides, preserve the core teaching progression and examples, but create original worksheet wording. Do not copy long passages verbatim unless the teacher clearly supplied their own text to reuse.`;
+}
+
 async function addImagesFromClipboardItems(items){
   let added = 0;
   for(const item of [...items || []]){
@@ -2070,20 +2265,31 @@ function renderImageThumbs(){
 function renderPromptImageThumbs(){
   const wrap = qs('promptImageThumbs');
   const status = qs('promptImageFileStatus');
-  const count = (state.promptImages || []).length;
-  if(status) status.textContent = count ? `${count} example image${count === 1 ? '' : 's'} added.` : 'No images added.';
+  const imageCount = (state.promptImages || []).length;
+  const docCount = (state.promptDocuments || []).length;
+  const total = imageCount + docCount;
+  if(status) status.textContent = total ? `${total} source file${total === 1 ? '' : 's'} added.` : 'No source files added.';
   if(!wrap) return;
-  if(!count){
+  if(!total){
     wrap.innerHTML = '';
     return;
   }
-  wrap.innerHTML = state.promptImages.map((img, idx)=>`
+  const imageCards = (state.promptImages || []).map((img, idx)=>`
     <div class="thumb">
       <button class="remove" onclick="removePromptImage(${idx})" title="Remove example image">×</button>
       <img src="${img.dataUrl}" alt="${esc(img.name)}">
       <div class="tiny" style="margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(img.name)}</div>
     </div>
   `).join('');
+  const documentCards = (state.promptDocuments || []).map((doc, idx)=>`
+    <div class="thumb source-file-card">
+      <button class="remove" onclick="removePromptDocument(${idx})" title="Remove source file">×</button>
+      <div class="source-file-icon">${esc(String(doc.kind || 'file').toUpperCase())}</div>
+      <div class="source-file-name" title="${esc(doc.name)}">${esc(doc.name)}</div>
+      <div class="source-file-meta">${esc(sourceFileMeta(doc))}</div>
+    </div>
+  `).join('');
+  wrap.innerHTML = imageCards + documentCards;
 }
 function removeImage(idx){
   const removed = state.images[idx];
@@ -2138,10 +2344,15 @@ function buildAIPrompt(opts = {}){
     : 'No separate brief supplied; use the worksheet itself as the anchor.';
   const imageCount = (state.images || []).length;
   const promptImageCount = (state.promptImages || []).length;
+  const promptDocumentCount = (state.promptDocuments || []).length;
   const imageUsage = imageUsageInstruction(getImageUsage(), imageCount);
-  const promptReferenceInstruction = promptImageCount
-    ? `Reference images: ${promptImageCount} example activity image(s) are attached. Use them as inspiration for the activity style, task type, structure, layout, and level of detail. Create original activities inspired by them. Do not copy worksheet text verbatim.`
-    : 'No example activity images are attached.';
+  const promptReferenceInstruction = [
+    promptImageCount
+      ? `Reference images: ${promptImageCount} example activity image(s) are attached. Use them as inspiration for the activity style, task type, structure, layout, and level of detail. Create original activities inspired by them. Do not copy worksheet text verbatim.`
+      : 'No example activity images are attached.',
+    buildPromptDocumentInstruction()
+  ].join('\n');
+  const promptDocumentContext = promptDocumentCount ? buildPromptDocumentContextText() : '';
   const taskCount = parseInt(qs('questionCount')?.value, 10) || state.worksheet?.tasks?.length || 6;
 
   const preamble = 'You are working on a printable worksheet for Cycle 3 students at an International French School. Write everything in English only.';
@@ -2198,6 +2409,7 @@ ${briefInstruction}
 ${templateInstruction}
 ${genImageInstruction}
 ${promptReferenceInstruction}
+${promptDocumentContext}
 ${exportInstruction}
 
 Leave "instructions", "success_criteria" and "extension" as empty strings by default unless the teacher explicitly asks for those sections in the brief.
@@ -2367,22 +2579,32 @@ Use the 1-based index numbers from the list above.`;
   return '';
 }
 
-async function callAI({prompt, modify=false, extraImages=[]}){
+async function callAI({prompt, modify=false, extraImages=[], extraDocuments=[]}){
   const apiKey = qs('apiKey').value.trim();
   const model = qs('modelName').value.trim() || 'claude-opus-4-5';
   if(!apiKey){ if(typeof openSettingsModal === 'function') openSettingsModal(); throw new Error('Add your API key in Settings first.'); }
 
   const content = [];
-  if(state.templatePdf){
+  const pdfDocuments = [];
+  if(state.templatePdf?.base64){
+    pdfDocuments.push({ name: state.templatePdf.name || 'Template PDF', base64: state.templatePdf.base64 });
+  }
+  (Array.isArray(extraDocuments) ? extraDocuments : []).forEach(doc => {
+    if(doc?.kind === 'pdf' && doc?.base64){
+      pdfDocuments.push({ name: doc.name || 'Source PDF', base64: doc.base64 });
+    }
+  });
+  pdfDocuments.forEach(doc => {
+    content.push({ type:'text', text:`Attached PDF source: ${doc.name}` });
     content.push({
       type: 'document',
       source: {
         type: 'base64',
         media_type: 'application/pdf',
-        data: state.templatePdf.base64
+        data: doc.base64
       }
     });
-  }
+  });
   if(!modify){
     state.images.forEach(img => {
       content.push({
@@ -2406,7 +2628,7 @@ async function callAI({prompt, modify=false, extraImages=[]}){
     'anthropic-version':'2023-06-01',
     'anthropic-dangerous-direct-browser-access':'true'
   };
-  if(state.templatePdf) headers['anthropic-beta'] = 'pdfs-2024-09-25';
+  if(pdfDocuments.length) headers['anthropic-beta'] = 'pdfs-2024-09-25';
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method:'POST',
@@ -2451,7 +2673,7 @@ async function generateWorksheet(){
     const wantAnswers = shouldGenerateAnswers();
     const prompt = buildAIPrompt({ mode: 'generate' });
     showStatus(wantAnswers ? 'Generating worksheet and answer key…' : 'Generating student sheet only…', 'warn');
-    const result = await callAI({prompt, extraImages: state.promptImages || []});
+    const result = await callAI({prompt, extraImages: state.promptImages || [], extraDocuments: state.promptDocuments || []});
     state.worksheet = normaliseWorksheet(result);
     state.qualityCheck = null;
     if(!wantAnswers) stripTaskAnswers(state.worksheet);
@@ -6093,6 +6315,7 @@ function makeStorageSafePayload(payload){
      Keep history/template snapshots text-first and strip heavy embedded assets. */
   safe.images = [];
   safe.promptImages = [];
+  safe.promptDocuments = [];
   safe.templatePdf = null;
 
   if(safe.worksheet){
@@ -6251,6 +6474,7 @@ snapshotState = function(){
     curriculumMode: state.curriculumMode,
     images: state.images,
     promptImages: state.promptImages,
+    promptDocuments: state.promptDocuments,
     imageUsage: getImageUsage(),
     templatePdf: state.templatePdf,
     worksheet: state.worksheet,
@@ -6285,6 +6509,7 @@ applySnapshot = function(saved){
   state.curriculumMode = saved.curriculumMode || (saved.useAICurriculum ? 'ai_both' : 'manual_both') || 'ai_both';
   state.images = saved.images || [];
   state.promptImages = saved.promptImages || [];
+  state.promptDocuments = saved.promptDocuments || [];
   state.imageUsage = saved.imageUsage || saved.fields?.imageUsage || DEFAULT_IMAGE_USAGE;
   state.templatePdf = saved.templatePdf || null;
   state.worksheet = saved.worksheet || null;
@@ -6327,6 +6552,7 @@ startNewResource = function(){
   state.worksheet = null;
   state.images = [];
   state.promptImages = [];
+  state.promptDocuments = [];
   state.templatePdf = null;
   state.qualityCheck = null;
   state.selectedOutcomes = [];
@@ -6348,7 +6574,7 @@ startNewResource = function(){
   if(qs('templatePdfInfo')) qs('templatePdfInfo').textContent = 'No PDF loaded.';
   if(qs('imageThumbs')) qs('imageThumbs').innerHTML = '';
   if(qs('promptImageThumbs')) qs('promptImageThumbs').innerHTML = '';
-  if(qs('promptImageFileStatus')) qs('promptImageFileStatus').textContent = 'No images added.';
+  if(qs('promptImageFileStatus')) qs('promptImageFileStatus').textContent = 'No source files added.';
   clearStatus();
   syncToggles();
   populateDomains();
