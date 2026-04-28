@@ -62,17 +62,23 @@
     #screen-record { width: min(1180px, calc(100vw - 64px)); }
     #batch-step-input {
       display: grid;
-      grid-template-columns: minmax(280px, 0.9fr) minmax(420px, 1.35fr);
+      grid-template-columns: minmax(320px, 0.85fr) minmax(500px, 1.15fr);
       gap: 18px;
       align-items: start;
     }
     #batch-step-input > .card { margin-bottom: 0; }
     .record-class-card,
-    .record-student-card { grid-column: 1; }
-    .record-activity-card,
-    .record-domain-card { grid-column: 2; }
-    .record-activity-card { grid-row: 1 / span 2; }
-    #batch-step-input > .btn-row { grid-column: 2; margin-top: 0; justify-content: flex-end; }
+    .record-student-card,
+    .record-domain-card { grid-column: 1; }
+    .record-activity-card {
+      grid-column: 2;
+      grid-row: 1 / span 3;
+    }
+    #batch-step-input > .btn-row {
+      grid-column: 1 / -1;
+      margin-top: 0;
+      justify-content: flex-end;
+    }
 
     /* ── Typography ── */
     .eyebrow { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 8px; }
