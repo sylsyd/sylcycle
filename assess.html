@@ -3610,13 +3610,16 @@ function renderHeatmapCoverageWatch(coverageRows, mountEl) {
   mountEl.classList.remove('hidden');
   const unusedCount = coverageRows.filter(row => row.count === 0).length;
   const mostUsedCount = Math.max(...coverageRows.map(row => row.count), 0);
-  const groupedRows = coverageRows.reduce((groups, row) => {
-    const key = `${row.domain}||${row.subdomain}`;
-    if (!groups[key]) groups[key] = { domain: row.domain, subdomain: row.subdomain, rows: [] };
-    groups[key].rows.push(row);
-    return groups;
+  const domainGroups = coverageRows.reduce((domains, row) => {
+    if (!domains[row.domain]) domains[row.domain] = { domain: row.domain, rows: [], subdomains: {} };
+    domains[row.domain].rows.push(row);
+    if (!domains[row.domain].subdomains[row.subdomain]) {
+      domains[row.domain].subdomains[row.subdomain] = { subdomain: row.subdomain, rows: [] };
+    }
+    domains[row.domain].subdomains[row.subdomain].rows.push(row);
+    return domains;
   }, {});
-  const groups = Object.values(groupedRows);
+  const groups = Object.values(domainGroups);
 
   mountEl.innerHTML = `
     <details class="hm-coverage-panel" open>
@@ -3636,23 +3639,42 @@ function renderHeatmapCoverageWatch(coverageRows, mountEl) {
         ${groups.map((group, groupIndex) => {
           const groupUnused = group.rows.filter(row => row.count === 0).length;
           const groupMax = Math.max(...group.rows.map(row => row.count), 0);
+          const subgroups = Object.values(group.subdomains);
           return `
           <details class="hm-coverage-group" ${groupIndex === 0 ? 'open' : ''}>
             <summary>
               <div class="hm-coverage-group-title">
                 <span>${esc(group.domain)}</span>
-                <span>${esc(group.subdomain)}</span>
               </div>
               <div class="hm-coverage-group-meta">
                 <span>${groupUnused} unused</span>
                 <span>${group.rows.length} outcomes</span>
+                <span>${subgroups.length} subdomain${subgroups.length !== 1 ? 's' : ''}</span>
                 <span>${groupMax} max assessments</span>
                 <span class="hm-coverage-arrow">⌄</span>
               </div>
             </summary>
-          <div class="hm-coverage-list">
-            ${group.rows.map(row => renderHeatmapCoverageRow(row, mostUsedCount)).join('')}
-          </div>
+            <div class="hm-coverage-subgroups">
+              ${subgroups.map((subgroup, subgroupIndex) => {
+                const subgroupUnused = subgroup.rows.filter(row => row.count === 0).length;
+                const subgroupMax = Math.max(...subgroup.rows.map(row => row.count), 0);
+                return `
+                  <details class="hm-coverage-subgroup" ${groupIndex === 0 && subgroupIndex === 0 ? 'open' : ''}>
+                    <summary>
+                      <div class="hm-coverage-subgroup-title">${esc(subgroup.subdomain)}</div>
+                      <div class="hm-coverage-group-meta">
+                        <span>${subgroupUnused} unused</span>
+                        <span>${subgroup.rows.length} outcomes</span>
+                        <span>${subgroupMax} max assessments</span>
+                        <span class="hm-coverage-arrow">⌄</span>
+                      </div>
+                    </summary>
+                    <div class="hm-coverage-list">
+                      ${subgroup.rows.map(row => renderHeatmapCoverageRow(row, mostUsedCount)).join('')}
+                    </div>
+                  </details>`;
+              }).join('')}
+            </div>
           </details>`;
         }).join('')}
       </div>
