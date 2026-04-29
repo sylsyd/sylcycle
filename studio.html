@@ -2890,12 +2890,21 @@ async function exportPdfMode(mode){
   return exportPdf();
 }
 
+function studioExportFilename(){
+  const title = String(state.worksheet?.title || '')
+    .replace(/[<>:"/\\|?*\x00-\x1F]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[. ]+$/g, '');
+  return `Studio - ${title || 'Worksheet'}.pdf`;
+}
+
 async function exportPdf(){
   if(!state.worksheet) return showStatus('Generate or load a worksheet first.', 'warn');
   updatePreview();
   showStatus('Building PDF…', 'warn');
 
-  const filename = (state.worksheet.title || 'worksheet').replace(/[^\w\-]+/g,'_').replace(/_+/g,'_') + '.pdf';
+  const filename = studioExportFilename();
   let cloneWrap = null;
 
   try{
