@@ -507,6 +507,7 @@
   <div id="hm-dashboard">
     <div id="hm-cards" class="hm-card-grid"></div>
     <div id="hm-card-detail" class="hm-panel hm-card-detail hidden"></div>
+    <div id="hm-coverage-watch" class="hm-panel"></div>
     <div id="hm-domain-summary" class="hm-panel"></div>
     <div id="hm-trend-summary" class="hm-panel"></div>
   </div>
@@ -3051,7 +3052,7 @@ function renderHeatmap() {
   if (!dataset.allOutcomeKeys.length) {
     document.getElementById('heatmap-list').innerHTML = `<div class="empty-state"><p>No outcomes recorded yet.</p></div>`;
     document.getElementById('hm-summary').textContent = '';
-    renderHeatmapDashboard({ empty: true, currentDomain, currentClass, cutoff, filteredStudents });
+    renderHeatmapDashboard(dataset);
     return;
   }
 
@@ -3100,6 +3101,7 @@ function buildHeatmapDataset(filteredStudents, currentDomain, cutoff) {
     });
   });
 
+  const coverageRows = buildHeatmapCoverageRows(timelineAssessments, currentDomain);
   const allOutcomeKeys = Object.keys(outcomeInfo);
   const studentsWithData = filteredStudents.filter(s => Object.keys(studentOutcomeMap[s.name]||{}).length > 0);
 
@@ -3210,12 +3212,47 @@ function buildHeatmapDataset(filteredStudents, currentDomain, cutoff) {
     studentRows,
     domainRows,
     trendRows,
+    coverageRows,
     toughestOutcome,
     strongestDomain,
     needsSupportCount,
     assessedStudentCount: assessedStudents.size,
     metRate
   };
+}
+
+function buildHeatmapCoverageRows(timelineAssessments, currentDomain) {
+  const useCounts = {};
+  timelineAssessments.forEach(entry => {
+    const domain = entry.domain || '';
+    const match = canonicalizeOutcomeChoice(domain, entry.outcomeKey);
+    const stored = match?.stored || entry.outcomeKey;
+    if (!domain || !stored) return;
+    const key = `${domain}\n${stored}`;
+    if (!useCounts[key]) useCounts[key] = { count: 0, students: new Set(), lastSeen: '' };
+    useCounts[key].count += 1;
+    if (entry.student) useCounts[key].students.add(entry.student);
+    if (entry.date && entry.date > useCounts[key].lastSeen) useCounts[key].lastSeen = entry.date;
+  });
+
+  const domains = currentDomain ? [currentDomain] : APPROVED_DOMAIN_LIST.slice();
+  return domains.flatMap(domain => getAllowedOutcomeEntries(domain).map(entry => {
+    const stats = useCounts[`${domain}\n${entry.stored}`] || { count: 0, students: new Set(), lastSeen: '' };
+    return {
+      domain,
+      subdomain: entry.subdomain || 'General',
+      outcome: entry.outcome,
+      stored: entry.stored,
+      count: stats.count || 0,
+      studentCount: stats.students ? stats.students.size : 0,
+      lastSeen: stats.lastSeen || ''
+    };
+  })).sort((a, b) =>
+    (a.count - b.count)
+    || a.domain.localeCompare(b.domain)
+    || a.subdomain.localeCompare(b.subdomain)
+    || a.outcome.localeCompare(b.outcome)
+  );
 }
 
 function buildHeatmapTrendBuckets(entries, cutoff) {
@@ -3275,14 +3312,17 @@ function heatmapBucketLabel(key, mode) {
 function renderHeatmapDashboard(dataset) {
   const cardsEl = document.getElementById('hm-cards');
   const detailEl = document.getElementById('hm-card-detail');
+  const coverageEl = document.getElementById('hm-coverage-watch');
   const domainEl = document.getElementById('hm-domain-summary');
   const trendEl = document.getElementById('hm-trend-summary');
-  if (!cardsEl || !detailEl || !domainEl || !trendEl) return;
+  if (!cardsEl || !detailEl || !coverageEl || !domainEl || !trendEl) return;
 
-  if (!dataset || dataset.empty) {
+  if (!dataset) {
     cardsEl.innerHTML = '';
     detailEl.innerHTML = '';
     detailEl.classList.add('hidden');
+    coverageEl.innerHTML = '';
+    coverageEl.classList.add('hidden');
     domainEl.innerHTML = '';
     trendEl.innerHTML = '';
     domainEl.classList.add('hidden');
@@ -3304,6 +3344,7 @@ function renderHeatmapDashboard(dataset) {
     });
   });
   renderHeatmapCardDetail(dataset, detailEl);
+  renderHeatmapCoverageWatch(dataset.coverageRows || [], coverageEl);
   renderHeatmapDomainSummary(dataset.domainRows, domainEl);
   renderHeatmapTrendSummary(dataset.trendRows, trendEl);
 }
@@ -3541,6 +3582,73 @@ function renderHeatmapDetailRow(title, sub, met, wt, nm, total) {
           ${pNm > 0 ? `<div class="hm-status-mini-seg nm" style="width:${pNm}%"></div>` : ''}
         </div>
         <div class="hm-status-mini-meta">${total} outcome${total!==1?'s':''}</div>
+      </div>
+    </div>`;
+}
+
+function renderHeatmapCoverageWatch(coverageRows, mountEl) {
+  if (!coverageRows.length) {
+    mountEl.classList.add('hidden');
+    mountEl.innerHTML = '';
+    return;
+  }
+
+  mountEl.classList.remove('hidden');
+  const unusedCount = coverageRows.filter(row => row.count === 0).length;
+  const mostUsedCount = Math.max(...coverageRows.map(row => row.count), 0);
+  const visibleRows = coverageRows.slice(0, 16);
+  const groupedRows = visibleRows.reduce((groups, row) => {
+    const key = `${row.domain}||${row.subdomain}`;
+    if (!groups[key]) groups[key] = { domain: row.domain, subdomain: row.subdomain, rows: [] };
+    groups[key].rows.push(row);
+    return groups;
+  }, {});
+
+  mountEl.innerHTML = `
+    <div class="hm-panel-head">
+      <div>
+        <div class="hm-panel-title">Coverage watch</div>
+        <div class="hm-panel-sub">Least-used learning outcomes rise to the top, so ignored areas are easy to spot before favourites take over.</div>
+      </div>
+      <div class="hm-coverage-summary">
+        <span class="hm-chip">${unusedCount} unused</span>
+        <span class="hm-chip">${coverageRows.length} outcomes tracked</span>
+        <span class="hm-chip">${mostUsedCount} max uses</span>
+      </div>
+    </div>
+    <div class="hm-coverage-groups">
+      ${Object.values(groupedRows).map(group => `
+        <div class="hm-coverage-group">
+          <div class="hm-coverage-group-title">
+            <span>${esc(group.domain)}</span>
+            <span>${esc(group.subdomain)}</span>
+          </div>
+          <div class="hm-coverage-list">
+            ${group.rows.map(row => renderHeatmapCoverageRow(row, mostUsedCount)).join('')}
+          </div>
+        </div>`).join('')}
+    </div>
+    ${coverageRows.length > visibleRows.length ? `<div class="hm-panel-sub" style="margin-top:10px">Showing the ${visibleRows.length} least-used outcomes in this filtered view.</div>` : ''}`;
+}
+
+function renderHeatmapCoverageRow(row, maxCount) {
+  const width = maxCount ? Math.max(4, Math.round((row.count / maxCount) * 100)) : 0;
+  const status = row.count === 0 ? 'unused' : row.count >= Math.max(3, maxCount) ? 'heavy' : 'used';
+  const label = row.count === 0 ? 'Not assessed yet' : `Seen ${row.count} time${row.count !== 1 ? 's' : ''}`;
+  const meta = row.count === 0
+    ? 'Top priority for coverage'
+    : `${row.studentCount} student${row.studentCount !== 1 ? 's' : ''}${row.lastSeen ? ` · Last ${formatDate(row.lastSeen)}` : ''}`;
+  return `
+    <div class="hm-coverage-row ${status}">
+      <div class="hm-coverage-main">
+        <div class="hm-coverage-outcome">${esc(row.outcome)}</div>
+        <div class="hm-coverage-meta">${esc(meta)}</div>
+      </div>
+      <div class="hm-coverage-score">
+        <div class="hm-coverage-count">${esc(label)}</div>
+        <div class="hm-coverage-track">
+          ${width > 0 ? `<div class="hm-coverage-fill" style="width:${width}%"></div>` : ''}
+        </div>
       </div>
     </div>`;
 }

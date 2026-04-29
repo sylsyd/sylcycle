@@ -548,6 +548,36 @@
     }
     .hm-student-support.is-clickable:hover { border-color: var(--accent-bd); background: var(--accent-lt); }
     .hm-support-score { font-size: 11px; font-weight: 700; color: var(--ink-mid); white-space: nowrap; }
+    .hm-coverage-summary { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .hm-coverage-groups { display: grid; gap: 12px; }
+    .hm-coverage-group {
+      border: 1px solid var(--border); border-radius: 12px; background: var(--bg); padding: 12px;
+    }
+    .hm-coverage-group-title {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 9px;
+      font-size: 11px; font-weight: 700; color: var(--ink); text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .hm-coverage-group-title span + span {
+      color: var(--accent); border: 1px solid var(--accent-bd); background: var(--accent-lt);
+      padding: 3px 7px; border-radius: 999px; text-transform: none; letter-spacing: 0;
+    }
+    .hm-coverage-list { display: grid; gap: 8px; }
+    .hm-coverage-row {
+      display: grid; grid-template-columns: minmax(0,1fr) minmax(150px, 220px); gap: 12px; align-items: center;
+      border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 10px 11px;
+    }
+    .hm-coverage-row.unused { border-color: var(--wt-bd); background: var(--wt-bg); }
+    .hm-coverage-row.heavy { border-color: var(--accent-bd); }
+    .hm-coverage-main { min-width: 0; }
+    .hm-coverage-outcome { font-size: 12px; font-weight: 600; color: var(--ink); line-height: 1.35; }
+    .hm-coverage-meta { font-size: 10.5px; color: var(--ink-soft); line-height: 1.35; margin-top: 3px; }
+    .hm-coverage-score { min-width: 0; }
+    .hm-coverage-count { font-size: 10.5px; font-weight: 700; color: var(--ink-mid); text-align: right; margin-bottom: 5px; }
+    .hm-coverage-row.unused .hm-coverage-count { color: var(--wt); }
+    .hm-coverage-track {
+      height: 9px; border-radius: 999px; overflow: hidden; background: var(--bg); border: 1px solid var(--border);
+    }
+    .hm-coverage-fill { height: 100%; border-radius: inherit; background: var(--accent); }
 
     /* ── Student profile visuals ── */
     .student-viz-card { margin-bottom: 14px; }
@@ -685,6 +715,8 @@
       .hm-card-grid { grid-template-columns: 1fr 1fr; }
       .hm-detail-grid { grid-template-columns: 1fr; }
       .hm-detail-row { grid-template-columns: 1fr; }
+      .hm-coverage-row { grid-template-columns: 1fr; }
+      .hm-coverage-count { text-align: left; }
       .hm-status-mini { min-width: 0; }
       .hm-status-mini-meta { text-align: left; }
     }
