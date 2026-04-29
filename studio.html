@@ -3036,6 +3036,55 @@ function ensureSettingsModal(settingsSection, topbarRight){
   }
 }
 
+function ensureLibraryModal(topbarRight){
+  let modal = document.getElementById('libraryModal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'libraryModal';
+    modal.className = 'settings-modal hidden';
+    modal.innerHTML = `
+      <div class="settings-modal-card">
+        <div class="settings-modal-head">
+          <div>
+            <h3>Library</h3>
+            <p>Saved worksheet snapshots. History keeps text and settings without heavy embedded images or PDF pages.</p>
+          </div>
+          <button type="button" class="settings-modal-close" onclick="closeLibraryModal()">Close</button>
+        </div>
+        <div class="settings-modal-body" id="libraryModalBody"></div>
+      </div>
+    `;
+    modal.addEventListener('click', (event)=>{ if(event.target === modal) closeLibraryModal(); });
+    document.body.appendChild(modal);
+  }
+
+  if(topbarRight && !document.getElementById('libraryLauncher')){
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.id = 'libraryLauncher';
+    button.className = 'settings-launcher';
+    button.textContent = 'Library';
+    button.onclick = ()=>openLibraryModal();
+    topbarRight.appendChild(button);
+  }
+
+  refreshLibraryModal();
+}
+
+function refreshLibraryModal(){
+  const body = document.getElementById('libraryModalBody');
+  if(body) body.innerHTML = renderHistoryPanel();
+}
+
+function openLibraryModal(){
+  refreshLibraryModal();
+  document.getElementById('libraryModal')?.classList.remove('hidden');
+}
+
+function closeLibraryModal(){
+  document.getElementById('libraryModal')?.classList.add('hidden');
+}
+
 function openSettingsModal(){
   document.getElementById('settingsModal')?.classList.remove('hidden');
 }
@@ -3063,6 +3112,7 @@ function initWizardLayout(){
   const topbarRight = document.querySelector('.topbar-right');
 
   if(generateSection) setupGenerateStepForPdfAdapt(assetsSection, generateSection);
+  ensureLibraryModal(topbarRight);
   ensureSettingsModal(settingsSection, topbarRight);
 
   if(topbarRight){
@@ -5540,7 +5590,9 @@ function pushHistorySnapshot(label='Snapshot'){
       signature,
       payload
     });
-    return setHistoryItems(items);
+    const saved = setHistoryItems(items);
+    if(saved) refreshLibraryModal();
+    return saved;
   }catch(err){
     console.warn('History snapshot skipped:', err);
     return false;
@@ -5576,6 +5628,7 @@ function renderHistoryPanel(){
 window.saveHistorySnapshot = function(){
   if(!state.worksheet) return showStatus('Generate a worksheet first.', 'warn');
   const saved = pushHistorySnapshot('Manual snapshot');
+  refreshLibraryModal();
   renderEditor();
   showStatus(saved ? 'Snapshot saved.' : 'Snapshot could not be saved because browser storage is full. The current worksheet is still usable.', saved ? 'ok' : 'warn');
 };
@@ -5583,15 +5636,19 @@ window.restoreHistorySnapshot = function(id){
   const item = getHistoryItems().find(entry => entry.id === id);
   if(!item) return showStatus('Snapshot not found.', 'warn');
   applySnapshot(item.payload);
+  refreshLibraryModal();
   showStatus('Snapshot restored.', 'ok');
 };
 window.deleteHistorySnapshot = function(id){
   setHistoryItems(getHistoryItems().filter(entry => entry.id !== id));
+  refreshLibraryModal();
   renderEditor();
   showStatus('Snapshot deleted.', 'ok');
 };
 window.clearHistorySnapshots = function(){
   localStorage.removeItem(LS_KEYS.history);
+  if(window.SylCycle) SylCycle.cloudSave(LS_KEYS.history, []);
+  refreshLibraryModal();
   renderEditor();
   showStatus('History cleared.', 'ok');
 };
@@ -6160,7 +6217,6 @@ renderEditor = function(){
       ${editorAccordionHtml({ key:'editor_answer_key', title:'Answer key', subtitle:hasAnswerKeyData(w) ? 'Teacher copy exists and can be exported.' : 'Still student-only. Generate answers later if you need them.', body:answerBody, defaultOpen:false })}
       ${editorAccordionHtml({ key:'editor_variations', title:'Generate variations', subtitle:'Spin off easier, harder, homework or same-LO versions.', body:`<div class="field"><div class="variation-grid"><button class="small-btn" onclick="generateVariation('easier')">Easier version</button><button class="small-btn" onclick="generateVariation('harder')">Harder version</button><button class="small-btn" onclick="generateVariation('different_questions')">Same worksheet, different questions</button><button class="small-btn" onclick="generateVariation('same_lo_new_topic')">Same LO, different topic</button><button class="small-btn" onclick="generateVariation('homework')">Homework version</button><button class="small-btn" onclick="generateVariation('classwork')">Classwork version</button></div></div>`, defaultOpen:false })}
       ${editorAccordionHtml({ key:'editor_modify', title:'Modify with AI', subtitle:'Use this when you want a broad rewrite instead of hand-editing every field.', body:modifyBody, defaultOpen:false })}
-      ${editorAccordionHtml({ key:'editor_history', title:'Session history', subtitle:'Local snapshots so you can undo a bad idea without a funeral.', body:renderHistoryPanel(), defaultOpen:false })}
     </div>
   `;
   ensureEditorAiOverlay();
