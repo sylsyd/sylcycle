@@ -360,16 +360,15 @@
     });
   }
 
-  /* Listen to auth state to show/hide views */
-  SylCycle.onReady(function () {
+  function renderAuthState(user) {
     const loginView = document.getElementById('loginView');
     const appView   = document.getElementById('appView');
     const headerRight = document.getElementById('headerRight');
 
-    if (SylCycle.user) {
+    if (user) {
       loginView.classList.add('hidden');
       appView.classList.remove('hidden');
-      const name = SylCycle.user.displayName || SylCycle.user.email;
+      const name = user.displayName || user.email;
       headerRight.innerHTML =
         '<div class="user-pill">' + name +
         '&nbsp;&nbsp;<button class="logout-btn" onclick="SylCycle.logout()">Log out</button></div>';
@@ -377,14 +376,22 @@
       loginView.classList.remove('hidden');
       appView.classList.add('hidden');
     }
+  }
+
+  /* Listen to auth state to show/hide views */
+  SylCycle.onReady(function () {
+    renderAuthState(SylCycle.user);
   });
 
   /* Also listen for live auth changes (Google popup resolves after onReady) */
   if (typeof firebase !== 'undefined') {
-    firebase.auth().onAuthStateChanged(user => {
-      if (user && document.getElementById('loginView').classList.contains('hidden') === false) {
-        location.reload(); /* simplest way to re-trigger full sync + view switch */
+    firebase.auth().onAuthStateChanged(async user => {
+      if (user) {
+        SylCycle.user = user;
+        SylCycle.uid = user.uid;
+        if (SylCycle.cloudSync) await SylCycle.cloudSync();
       }
+      renderAuthState(user);
     });
   }
 </script>
