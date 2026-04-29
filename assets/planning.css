@@ -89,7 +89,8 @@ button{cursor:pointer}
   color:var(--ink);font-weight:700;font-size:12px;
 }
 .btn,.small-btn,.mini-btn,.seg-btn{
-  border:0;border-radius:14px;font-weight:800;transition:.14s ease;background:#fff;color:var(--ink);
+  border:0;border-radius:14px;font-weight:800;transition:.14s ease;background:#fff;color:var(--ink);text-decoration:none;
+  display:inline-flex;align-items:center;justify-content:center;
 }
 .btn{width:100%;padding:13px 16px;background:var(--blue);color:#fff;box-shadow:0 10px 20px rgba(16,40,71,.14)}
 .btn:hover,.small-btn:hover,.mini-btn:hover,.seg-btn:hover{transform:translateY(-1px)}

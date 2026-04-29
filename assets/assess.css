@@ -255,6 +255,21 @@
     .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
 
     /* ── Settings panel ── */
+    .home-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 6px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      transition: all 0.13s;
+    }
+    .home-link:hover { border-color: var(--accent-bd); background: var(--accent-lt); }
     .settings-btn { background: none; border: none; cursor: pointer; font-size: 20px; padding: 2px 4px; color: var(--ink-soft); transition: color 0.13s; }
     .settings-btn:hover { color: var(--ink); }
 

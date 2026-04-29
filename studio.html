@@ -3036,6 +3036,16 @@ function ensureSettingsModal(settingsSection, topbarRight){
   }
 }
 
+function ensureHomeLauncher(topbarRight){
+  if(!topbarRight || document.getElementById('homeLauncher')) return;
+  const link = document.createElement('a');
+  link.id = 'homeLauncher';
+  link.className = 'settings-launcher';
+  link.href = 'index.html';
+  link.textContent = 'SylCycle';
+  topbarRight.appendChild(link);
+}
+
 function ensureLibraryModal(topbarRight){
   let modal = document.getElementById('libraryModal');
   if(!modal){
@@ -3112,6 +3122,7 @@ function initWizardLayout(){
   const topbarRight = document.querySelector('.topbar-right');
 
   if(generateSection) setupGenerateStepForPdfAdapt(assetsSection, generateSection);
+  ensureHomeLauncher(topbarRight);
   ensureLibraryModal(topbarRight);
   ensureSettingsModal(settingsSection, topbarRight);
 
