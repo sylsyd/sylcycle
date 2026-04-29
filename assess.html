@@ -3074,6 +3074,7 @@ function buildHeatmapDataset(filteredStudents, currentDomain, cutoff) {
   const domainOutcomes = {};
   const domainStats = {};
   const timelineAssessments = [];
+  const assessmentSessionMap = buildAssessmentSessionMap();
 
   filteredStudents.forEach(st => {
     if (!studentOutcomeMap[st.name]) studentOutcomeMap[st.name] = {};
@@ -3095,7 +3096,9 @@ function buildHeatmapDataset(filteredStudents, currentDomain, cutoff) {
           domain: a.domain,
           date: assessmentDate,
           status: o.status,
-          outcomeKey: key
+          outcomeKey: key,
+          assessmentId: a.id || '',
+          eventId: assessmentSessionMap[a.id] || `assessment:${a.id || `${st.name}:${assessmentDate}:${a.domain}:${key}`}`
         });
       });
     });
@@ -3221,6 +3224,17 @@ function buildHeatmapDataset(filteredStudents, currentDomain, cutoff) {
   };
 }
 
+function buildAssessmentSessionMap() {
+  const map = {};
+  DB.getSessions().forEach(session => {
+    const eventId = `session:${session.id}`;
+    (session.students || []).forEach(entry => {
+      if (entry.assessmentId) map[entry.assessmentId] = eventId;
+    });
+  });
+  return map;
+}
+
 function buildHeatmapCoverageRows(timelineAssessments, currentDomain) {
   const useCounts = {};
   timelineAssessments.forEach(entry => {
@@ -3229,8 +3243,8 @@ function buildHeatmapCoverageRows(timelineAssessments, currentDomain) {
     const stored = match?.stored || entry.outcomeKey;
     if (!domain || !stored) return;
     const key = `${domain}\n${stored}`;
-    if (!useCounts[key]) useCounts[key] = { count: 0, students: new Set(), lastSeen: '' };
-    useCounts[key].count += 1;
+    if (!useCounts[key]) useCounts[key] = { events: new Set(), students: new Set(), lastSeen: '' };
+    if (entry.eventId) useCounts[key].events.add(entry.eventId);
     if (entry.student) useCounts[key].students.add(entry.student);
     if (entry.date && entry.date > useCounts[key].lastSeen) useCounts[key].lastSeen = entry.date;
   });
@@ -3243,7 +3257,7 @@ function buildHeatmapCoverageRows(timelineAssessments, currentDomain) {
       subdomain: entry.subdomain || 'General',
       outcome: entry.outcome,
       stored: entry.stored,
-      count: stats.count || 0,
+      count: stats.events ? stats.events.size : 0,
       studentCount: stats.students ? stats.students.size : 0,
       lastSeen: stats.lastSeen || ''
     };
@@ -3614,7 +3628,7 @@ function renderHeatmapCoverageWatch(coverageRows, mountEl) {
         <div class="hm-coverage-summary">
           <span class="hm-chip">${unusedCount} unused</span>
           <span class="hm-chip">${coverageRows.length} outcomes tracked</span>
-          <span class="hm-chip">${mostUsedCount} max uses</span>
+          <span class="hm-chip">${mostUsedCount} max assessments</span>
           <span class="hm-coverage-arrow">⌄</span>
         </div>
       </summary>
@@ -3632,7 +3646,7 @@ function renderHeatmapCoverageWatch(coverageRows, mountEl) {
               <div class="hm-coverage-group-meta">
                 <span>${groupUnused} unused</span>
                 <span>${group.rows.length} outcomes</span>
-                <span>${groupMax} max uses</span>
+                <span>${groupMax} max assessments</span>
                 <span class="hm-coverage-arrow">⌄</span>
               </div>
             </summary>
@@ -3648,10 +3662,10 @@ function renderHeatmapCoverageWatch(coverageRows, mountEl) {
 function renderHeatmapCoverageRow(row, maxCount) {
   const width = maxCount ? Math.max(4, Math.round((row.count / maxCount) * 100)) : 0;
   const status = row.count === 0 ? 'unused' : row.count >= Math.max(3, maxCount) ? 'heavy' : 'used';
-  const label = row.count === 0 ? 'Not assessed yet' : `Seen ${row.count} time${row.count !== 1 ? 's' : ''}`;
+  const label = row.count === 0 ? 'Not assessed yet' : `Assessed ${row.count} time${row.count !== 1 ? 's' : ''}`;
   const meta = row.count === 0
     ? 'Top priority for coverage'
-    : `${row.studentCount} student${row.studentCount !== 1 ? 's' : ''}${row.lastSeen ? ` · Last ${formatDate(row.lastSeen)}` : ''}`;
+    : `${row.studentCount} student${row.studentCount !== 1 ? 's' : ''} included${row.lastSeen ? ` · Last ${formatDate(row.lastSeen)}` : ''}`;
   return `
     <div class="hm-coverage-row ${status}">
       <div class="hm-coverage-main">
