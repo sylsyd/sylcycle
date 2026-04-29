@@ -143,6 +143,28 @@ The apps still use localStorage as their primary read source — Firestore is sy
 
 ---
 
+## Storage keys synced to Firestore
+
+`sylcycle-auth.js` treats these localStorage keys as the cloud-sync contract. Keep this list in step with `APP_KEYS` if a tool adds or renames saved data.
+
+| Tool | localStorage keys | What they contain |
+| --- | --- | --- |
+| CycleStudio | `wg_v1_prefs` | Studio settings, including the user's API key and model preferences |
+| CycleStudio | `wg_v1_drafts` | Saved worksheet drafts |
+| CycleStudio | `wg_v1_templates` | Saved worksheet templates |
+| CycleStudio | `cyclestudio_history_v1` | Recent generated worksheet history |
+| CycleStudio | `cyclestudio_editor_accordions_v2` | Editor panel open/closed preferences |
+| CycleAssess | `ca_v2_data` | Students, classes, assessments, batch records, and heatmap data |
+| CycleAssess | `ca_v2_settings` | Assess settings, including the user's API key and default context |
+| CyclePlanner | `cycleplanner_refactor_prefs_v1` | Planner settings and preferences |
+| CyclePlanner | `cycleplanner_refactor_current_v1` | The current in-progress plan |
+| CyclePlanner | `cycleplanner_refactor_history_v1` | Saved planning history |
+| CyclePlanner | `cycleplanner_refactor_templates_v1` | Saved planning templates |
+
+Firestore stores each key under the signed-in user's private collection for that tool. For example, CycleAssess writes `ca_v2_data` to the current user's `assess` collection.
+
+---
+
 ## First-time migration
 
 The first time you log in on a device that has existing localStorage data (i.e. your laptop where you've been using the apps locally), the system detects that Firestore is empty and automatically **uploads** your local data to the cloud. After that, any new device you log in on will pull that data down.
@@ -164,4 +186,4 @@ Yes. If `sylcycle-auth.js` can't reach Firebase (or the config is left as placeh
 Not yet — each user's data is private. This could be added later as a "shared library" feature if you want it.
 
 **Q: What about the SylCycle badge/IFS logo?**
-The launcher uses a simple SC placeholder badge. You can replace the `<img>` src in index.html with your actual IFS logo (base64 or a URL).
+The launcher logo lives at `assets/sylcycle-logo.svg`, and `index.html` references it from the header.
