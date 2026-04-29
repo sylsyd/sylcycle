@@ -548,20 +548,35 @@
     }
     .hm-student-support.is-clickable:hover { border-color: var(--accent-bd); background: var(--accent-lt); }
     .hm-support-score { font-size: 11px; font-weight: 700; color: var(--ink-mid); white-space: nowrap; }
+    .hm-coverage-panel > summary,
+    .hm-coverage-group > summary {
+      list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .hm-coverage-panel > summary::-webkit-details-marker,
+    .hm-coverage-group > summary::-webkit-details-marker { display: none; }
+    .hm-coverage-panel[open] > summary { margin-bottom: 12px; }
     .hm-coverage-summary { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .hm-coverage-arrow { font-size: 17px; line-height: 1; color: var(--ink-soft); transition: transform 0.18s ease, color 0.14s; align-self: center; }
+    .hm-coverage-panel[open] > summary .hm-coverage-arrow,
+    .hm-coverage-group[open] > summary .hm-coverage-arrow { transform: rotate(180deg); color: var(--accent); }
     .hm-coverage-groups { display: grid; gap: 12px; }
     .hm-coverage-group {
       border: 1px solid var(--border); border-radius: 12px; background: var(--bg); padding: 12px;
     }
     .hm-coverage-group-title {
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 9px;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
       font-size: 11px; font-weight: 700; color: var(--ink); text-transform: uppercase; letter-spacing: 0.06em;
     }
     .hm-coverage-group-title span + span {
       color: var(--accent); border: 1px solid var(--accent-bd); background: var(--accent-lt);
       padding: 3px 7px; border-radius: 999px; text-transform: none; letter-spacing: 0;
     }
+    .hm-coverage-group-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; font-size: 10.5px; color: var(--ink-soft); font-weight: 700; }
+    .hm-coverage-group-meta span:not(.hm-coverage-arrow) {
+      border: 1px solid var(--border); background: var(--surface); padding: 4px 8px; border-radius: 999px;
+    }
     .hm-coverage-list { display: grid; gap: 8px; }
+    .hm-coverage-group[open] .hm-coverage-list { margin-top: 10px; }
     .hm-coverage-row {
       display: grid; grid-template-columns: minmax(0,1fr) minmax(150px, 220px); gap: 12px; align-items: center;
       border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 10px 11px;

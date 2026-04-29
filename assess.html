@@ -3596,39 +3596,53 @@ function renderHeatmapCoverageWatch(coverageRows, mountEl) {
   mountEl.classList.remove('hidden');
   const unusedCount = coverageRows.filter(row => row.count === 0).length;
   const mostUsedCount = Math.max(...coverageRows.map(row => row.count), 0);
-  const visibleRows = coverageRows.slice(0, 16);
-  const groupedRows = visibleRows.reduce((groups, row) => {
+  const groupedRows = coverageRows.reduce((groups, row) => {
     const key = `${row.domain}||${row.subdomain}`;
     if (!groups[key]) groups[key] = { domain: row.domain, subdomain: row.subdomain, rows: [] };
     groups[key].rows.push(row);
     return groups;
   }, {});
+  const groups = Object.values(groupedRows);
 
   mountEl.innerHTML = `
-    <div class="hm-panel-head">
-      <div>
-        <div class="hm-panel-title">Coverage watch</div>
-        <div class="hm-panel-sub">Least-used learning outcomes rise to the top, so ignored areas are easy to spot before favourites take over.</div>
-      </div>
-      <div class="hm-coverage-summary">
-        <span class="hm-chip">${unusedCount} unused</span>
-        <span class="hm-chip">${coverageRows.length} outcomes tracked</span>
-        <span class="hm-chip">${mostUsedCount} max uses</span>
-      </div>
-    </div>
-    <div class="hm-coverage-groups">
-      ${Object.values(groupedRows).map(group => `
-        <div class="hm-coverage-group">
-          <div class="hm-coverage-group-title">
-            <span>${esc(group.domain)}</span>
-            <span>${esc(group.subdomain)}</span>
-          </div>
+    <details class="hm-coverage-panel" open>
+      <summary>
+        <div>
+          <div class="hm-panel-title">Coverage watch</div>
+          <div class="hm-panel-sub">Least-used learning outcomes rise to the top, so ignored areas are easy to spot before favourites take over.</div>
+        </div>
+        <div class="hm-coverage-summary">
+          <span class="hm-chip">${unusedCount} unused</span>
+          <span class="hm-chip">${coverageRows.length} outcomes tracked</span>
+          <span class="hm-chip">${mostUsedCount} max uses</span>
+          <span class="hm-coverage-arrow">⌄</span>
+        </div>
+      </summary>
+      <div class="hm-coverage-groups">
+        ${groups.map((group, groupIndex) => {
+          const groupUnused = group.rows.filter(row => row.count === 0).length;
+          const groupMax = Math.max(...group.rows.map(row => row.count), 0);
+          return `
+          <details class="hm-coverage-group" ${groupIndex === 0 ? 'open' : ''}>
+            <summary>
+              <div class="hm-coverage-group-title">
+                <span>${esc(group.domain)}</span>
+                <span>${esc(group.subdomain)}</span>
+              </div>
+              <div class="hm-coverage-group-meta">
+                <span>${groupUnused} unused</span>
+                <span>${group.rows.length} outcomes</span>
+                <span>${groupMax} max uses</span>
+                <span class="hm-coverage-arrow">⌄</span>
+              </div>
+            </summary>
           <div class="hm-coverage-list">
             ${group.rows.map(row => renderHeatmapCoverageRow(row, mostUsedCount)).join('')}
           </div>
-        </div>`).join('')}
-    </div>
-    ${coverageRows.length > visibleRows.length ? `<div class="hm-panel-sub" style="margin-top:10px">Showing the ${visibleRows.length} least-used outcomes in this filtered view.</div>` : ''}`;
+          </details>`;
+        }).join('')}
+      </div>
+    </details>`;
 }
 
 function renderHeatmapCoverageRow(row, maxCount) {
