@@ -643,19 +643,7 @@
 <script src="assets/cycle3-domain-library.js"></script>
 <script>
 const CYCLESTUDIO_DOMAIN_LIBRARY = window.CYCLE3_DOMAIN_LIBRARY || {};
-
-const CYCLESTUDIO_TO_CYCLEASSESS_DOMAIN_MAP = {
-  "Mathematics": "Mathématiques",
-  "French": "Français",
-  "English Literacy": "English Literacy",
-  "Science and Technology": "Sciences et technologie",
-  "History and Geography": "Histoire-Géographie",
-  "Civics and Moral Education": "EMC",
-  "Visual Arts": "Arts plastiques",
-  "Music": "Éducation musicale",
-  "PE": "EPS",
-  "Modern Languages": "Langues vivantes"
-};
+const CYCLESTUDIO_TO_CYCLEASSESS_DOMAIN_MAP = window.CYCLE3_ASSESS_DOMAIN_MAP || {};
 
 function cloneDomainEntry(entry) {
   if (Array.isArray(entry)) return entry.slice();

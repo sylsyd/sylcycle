@@ -228,3 +228,16 @@ window.CYCLE3_DOMAIN_LIBRARY = {
     "Use basic vocabulary and grammatical structures"
   ]
 };
+
+window.CYCLE3_ASSESS_DOMAIN_MAP = {
+  "Mathematics": "Math\u00e9matiques",
+  "French": "Fran\u00e7ais",
+  "English Literacy": "English Literacy",
+  "Science and Technology": "Sciences et technologie",
+  "History and Geography": "Histoire-G\u00e9ographie",
+  "Civics and Moral Education": "EMC",
+  "Visual Arts": "Arts plastiques",
+  "Music": "\u00c9ducation musicale",
+  "PE": "EPS",
+  "Modern Languages": "Langues vivantes"
+};
