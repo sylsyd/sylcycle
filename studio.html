@@ -17,7 +17,7 @@
 <script src="sylcycle-auth.js"></script>
 
 </head>
-<body>
+<body class="studio-booting">
 <div class="app-shell">
 <div class="topbar">
 <div class="brand">
@@ -6475,6 +6475,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
     applyWorksheetFontCssVars(getWorksheetFontSize());
     renderTemplateStarter();
     goWizardStep(state.currentWizardStep || 1);
+    document.body.classList.remove('studio-booting');
   }
   if(window.SylCycle && SylCycle.onReady) SylCycle.onReady(_initStudio);
   else _initStudio();

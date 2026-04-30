@@ -22,6 +22,21 @@
     background:linear-gradient(180deg,#dfeafb 0%,#f3f8ff 100%);
     color:var(--ink);
   }
+  body.studio-booting .app-shell{
+    visibility:hidden;
+  }
+  body.studio-booting::before{
+    content:"Loading CycleStudio...";
+    position:fixed;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--ink-soft);
+    font-weight:700;
+    background:linear-gradient(180deg,#dfeafb 0%,#f3f8ff 100%);
+    z-index:9999;
+  }
   .app-shell{
     max-width:1520px;
     margin:0 auto;
