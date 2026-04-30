@@ -26,16 +26,45 @@
     visibility:hidden;
   }
   body.studio-booting::before{
-    content:"Loading CycleStudio...";
+    content:"CS";
     position:fixed;
-    inset:0;
+    top:50%;
+    left:50%;
+    width:72px;
+    height:72px;
+    border-radius:22px;
     display:flex;
     align-items:center;
     justify-content:center;
-    color:var(--ink-soft);
-    font-weight:700;
-    background:linear-gradient(180deg,#dfeafb 0%,#f3f8ff 100%);
+    color:#fff;
+    font-size:24px;
+    font-weight:900;
+    background:linear-gradient(135deg,#12325f 0%,#1959c8 100%);
+    box-shadow:0 24px 60px rgba(18,50,95,.22);
+    transform:translate(-50%,-62%);
     z-index:9999;
+  }
+  body.studio-booting::after{
+    content:"Loading CycleStudio";
+    position:fixed;
+    top:calc(50% + 48px);
+    left:50%;
+    transform:translateX(-50%);
+    color:var(--ink-soft);
+    font-weight:800;
+    letter-spacing:.02em;
+    padding-top:24px;
+    background:
+      radial-gradient(circle closest-side,#1959c8 90%,transparent) 0 0/8px 8px no-repeat,
+      radial-gradient(circle closest-side,#1959c8 90%,transparent) 16px 0/8px 8px no-repeat,
+      radial-gradient(circle closest-side,#1959c8 90%,transparent) 32px 0/8px 8px no-repeat;
+    animation:studioLoadingDots 1s infinite linear;
+    z-index:9999;
+  }
+  @keyframes studioLoadingDots{
+    0%,100%{background-position:0 0,16px 0,32px 0}
+    33%{background-position:0 6px,16px 0,32px 0}
+    66%{background-position:0 0,16px 6px,32px 0}
   }
   .app-shell{
     max-width:1520px;
