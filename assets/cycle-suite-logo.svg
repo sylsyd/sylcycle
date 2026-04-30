@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="title">
+  <title>Cycle Suite logo</title>
+  <defs>
+    <linearGradient id="suiteBlue" x1="168" y1="34" x2="220" y2="160" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#68c7f5"/>
+      <stop offset="1" stop-color="#4899df"/>
+    </linearGradient>
+    <linearGradient id="suiteRed" x1="50" y1="188" x2="207" y2="188" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#c40035"/>
+      <stop offset="1" stop-color="#e82635"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="240" rx="48" fill="#fff"/>
+  <g fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round">
+    <path d="M61 153A78 78 0 0 1 156 43l14 32A44 44 0 0 0 91 142z" fill="#08356d"/>
+    <path d="M151 43a78 78 0 0 1 34 120l-34 6a44 44 0 0 0-8-89l23-32z" fill="url(#suiteBlue)"/>
+    <path d="M184 158a78 78 0 0 1-132 0l10-34a44 44 0 0 0 87 13z" fill="url(#suiteRed)"/>
+  </g>
+</svg>
