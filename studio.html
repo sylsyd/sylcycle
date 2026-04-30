@@ -3332,7 +3332,7 @@ function trimRichBreaks(html=''){
   return value;
 }
 function plainTextToRichHtml(val=''){
-  return esc(String(val || '')).replace(/\n/g, '<br>');
+  return esc(decodeXmlEntities(String(val || ''))).replace(/\n/g, '<br>');
 }
 function sanitiseRichTextHtml(value=''){
   const raw = String(value || '');
