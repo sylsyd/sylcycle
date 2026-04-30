@@ -136,15 +136,17 @@
         <summary>
           <div>
             <h3>Source prompt material</h3>
-            <p class="sub">Optional PDF or image references for the AI to use when creating the plan.</p>
+            <p class="sub">Optional PDF, PPTX or image references for the AI to use when creating the plan.</p>
           </div>
           <span class="summary-chevron" aria-hidden="true">⌄</span>
         </summary>
         <div class="setup-body">
           <input id="sourcePdfInput" class="hidden" type="file" accept="application/pdf,.pdf">
+          <input id="sourcePptxInput" class="hidden" type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation">
           <input id="sourceImageInput" class="hidden" type="file" accept="image/*" multiple>
           <div class="source-tools">
             <button type="button" class="small-btn" data-action="choose-source-pdf">Upload PDF</button>
+            <button type="button" class="small-btn" data-action="choose-source-pptx">Upload PPTX</button>
             <button type="button" class="small-btn" data-action="choose-source-image">Upload image</button>
             <button type="button" class="small-btn" data-action="paste-source-image">Paste image</button>
           </div>
@@ -157,7 +159,7 @@
             <textarea id="sourceDetailsInput" placeholder="Tell the AI how to use the uploaded material: extract the structure, follow this topic, adapt page 2 only, use the image as inspiration, etc."></textarea>
           </div>
           <div class="source-list" id="sourceFileList"></div>
-          <p class="tiny" style="margin-top:8px">Files are used as prompt context for AI generation. They are not saved permanently in local storage.</p>
+          <p class="tiny" style="margin-top:8px">Files are used as prompt context for AI generation. PPTX slide text is extracted in the browser. Files are not saved permanently in local storage.</p>
         </div>
       </details>
 
@@ -324,6 +326,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 /* =============================================================
    CyclePlanner JS — organised by responsibility (refactor/optimise pass 2)
@@ -482,21 +485,49 @@ function fileToDataUrl(file){
 function sourceKind(file){
   const type = file?.type || '';
   if(type.includes('pdf') || /\.pdf$/i.test(file?.name || '')) return 'pdf';
+  if(type.includes('presentationml') || /\.pptx$/i.test(file?.name || '')) return 'pptx';
   if(type.startsWith('image/')) return 'image';
   return 'file';
+}
+function decodeXmlEntities(str=''){
+  const map = {amp:'&', lt:'<', gt:'>', quot:'"', apos:"'"};
+  return String(str || '')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n, 10)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)))
+    .replace(/&([a-z]+);/gi, (_, entity) => map[entity] || `&${entity};`);
+}
+async function extractPptxText(file){
+  if(!window.JSZip) throw new Error('PPTX support did not load. Try again in a moment, or export the slides as PDF.');
+  const zip = await window.JSZip.loadAsync(await file.arrayBuffer());
+  const slideFiles = Object.keys(zip.files)
+    .filter(name => /^ppt\/slides\/slide\d+\.xml$/i.test(name))
+    .sort((a,b) => (parseInt(a.match(/slide(\d+)\.xml/i)?.[1] || '0', 10) - parseInt(b.match(/slide(\d+)\.xml/i)?.[1] || '0', 10)));
+  const slides = [];
+  for(const name of slideFiles){
+    const xml = await zip.files[name].async('string');
+    const bits = Array.from(xml.matchAll(/<a:t[^>]*>([\s\S]*?)<\/a:t>/g))
+      .map(match => decodeXmlEntities(match[1]).replace(/\s+/g, ' ').trim())
+      .filter(Boolean);
+    if(bits.length) slides.push(`Slide ${slides.length + 1}: ${bits.join(' ')}`);
+  }
+  const text = slides.join('\n').trim();
+  if(!text) throw new Error('No readable text was found in that PPTX. If it is mostly visual, export it as PDF instead.');
+  return text;
 }
 async function addSourceFile(file){
   if(!file) return false;
   const kind = sourceKind(file);
-  if(kind !== 'pdf' && kind !== 'image') return false;
+  if(kind !== 'pdf' && kind !== 'image' && kind !== 'pptx') return false;
+  const extractedText = kind === 'pptx' ? await extractPptxText(file) : '';
   const dataUrl = await fileToDataUrl(file);
   state.sourceFiles.push({
     id: makeId(),
-    name: file.name || (kind === 'pdf' ? 'Uploaded PDF' : 'Uploaded image'),
+    name: file.name || (kind === 'pdf' ? 'Uploaded PDF' : kind === 'pptx' ? 'Uploaded PPTX' : 'Uploaded image'),
     kind,
-    mimeType: file.type || (kind === 'pdf' ? 'application/pdf' : 'image/png'),
+    mimeType: file.type || (kind === 'pdf' ? 'application/pdf' : kind === 'pptx' ? 'application/vnd.openxmlformats-officedocument.presentationml.presentation' : 'image/png'),
     dataUrl,
-    base64: String(dataUrl).split(',')[1] || ''
+    base64: String(dataUrl).split(',')[1] || '',
+    extractedText
   });
   renderSourceFiles();
   return true;
@@ -512,6 +543,13 @@ function removeSourceFile(id){
   state.sourceFiles = state.sourceFiles.filter(file => file.id !== id);
   renderSourceFiles();
 }
+function sourcePromptText(){
+  return state.sourceFiles
+    .filter(file => file.kind === 'pptx' && file.extractedText)
+    .map(file => `PPTX source: ${file.name}\n${file.extractedText}`)
+    .join('\n\n')
+    .slice(0, 24000);
+}
 function renderSourceFiles(){
   const root = qs('sourceFileList');
   if(!root) return;
@@ -522,8 +560,8 @@ function renderSourceFiles(){
   root.innerHTML = state.sourceFiles.map(file=>`
     <div class="source-item">
       <div class="source-file-left">
-        ${file.kind === 'image' ? `<img class="source-thumb" src="${file.dataUrl}" alt="${esc(file.name)}">` : `<div class="source-icon">PDF</div>`}
-        <div><strong>${esc(file.name)}</strong><span>${file.kind === 'pdf' ? 'PDF source' : 'Image source'} · used for AI generation</span></div>
+        ${file.kind === 'image' ? `<img class="source-thumb" src="${file.dataUrl}" alt="${esc(file.name)}">` : `<div class="source-icon">${file.kind === 'pptx' ? 'PPTX' : 'PDF'}</div>`}
+        <div><strong>${esc(file.name)}</strong><span>${file.kind === 'pdf' ? 'PDF source' : file.kind === 'pptx' ? 'PPTX slide text' : 'Image source'} · used for AI generation</span></div>
       </div>
       <button type="button" class="mini-btn danger" data-source-remove="${esc(file.id)}">Remove</button>
     </div>
@@ -1375,6 +1413,7 @@ function buildPrompt(extra=''){
   const sourceSummary = state.sourceFiles.length
     ? `Attached source files: ${state.sourceFiles.map(file => file.name).join(', ')}.`
     : 'No source files attached.';
+  const sourceText = sourcePromptText();
   const domain = qs('domainSelect').value;
   const schema = blankPlan(state.type);
   const curriculumRules = state.curriculumMode === 'ai_both'
@@ -1390,6 +1429,7 @@ Teacher brief: ${brief || 'No brief provided; create a useful plan.'}
 Context: ${context}
 Source prompt material: ${sourceSummary}
 Source details/instructions: ${sourceDetails || 'None.'}
+${sourceText ? `Extracted PPTX slide text:\n${sourceText}` : 'No extracted PPTX slide text.'}
 When source files are attached, use them as planning context or inspiration. Follow the teacher's source details/instructions, but do not blindly copy unsuitable material.
 
 Curriculum rules:
@@ -2034,6 +2074,7 @@ function handleAction(action){
     'close-templates':closeTemplates,
     'generate':generatePlan,
     'choose-source-pdf':()=>qs('sourcePdfInput')?.click(),
+    'choose-source-pptx':()=>qs('sourcePptxInput')?.click(),
     'choose-source-image':()=>qs('sourceImageInput')?.click(),
     'paste-source-image':pasteSourceImage,
     'save-history':()=>saveCurrent('history'),
@@ -2095,6 +2136,13 @@ function bindEvents(){
     if(event.target.id === 'sequenceWeekPreset'){ handleCountChange('sequenceWeek'); return; }
     if(event.target.id === 'sourcePdfInput'){
       addSourceFiles(event.target.files).then(count=>setStatus(count ? `${count} PDF source added.` : 'No PDF source added.', count ? 'ok' : 'warn'));
+      event.target.value = '';
+      return;
+    }
+    if(event.target.id === 'sourcePptxInput'){
+      addSourceFiles(event.target.files)
+        .then(count=>setStatus(count ? `${count} PPTX source added.` : 'No PPTX source added.', count ? 'ok' : 'warn'))
+        .catch(err=>setStatus(err.message || 'Could not add PPTX source.', 'err'));
       event.target.value = '';
       return;
     }
