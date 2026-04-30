@@ -641,6 +641,7 @@
   </div>
 </div>
 <script src="assets/cycle3-domain-library.js"></script>
+<script src="assets/storage.js"></script>
 <script>
 const CYCLESTUDIO_DOMAIN_LIBRARY = window.CYCLE3_DOMAIN_LIBRARY || {};
 const CYCLESTUDIO_TO_CYCLEASSESS_DOMAIN_MAP = window.CYCLE3_ASSESS_DOMAIN_MAP || {};
@@ -933,26 +934,40 @@ const DB = {
   KEY: 'ca_v2_data',
   SETTINGS_KEY: 'ca_v2_settings',
 
+  writeLocalJson(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch(e) {
+      return false;
+    }
+  },
+
   loadData() {
+    if (window.SylCycleStorage) return SylCycleStorage.readJson(this.KEY, {students:{}});
     try { return JSON.parse(localStorage.getItem(this.KEY) || '{"students":{}}'); }
     catch(e) { return {students:{}}; }
   },
   saveData(data) {
-    try {
-      localStorage.setItem(this.KEY, JSON.stringify(data));
+    const saved = window.SylCycleStorage
+      ? SylCycleStorage.writeJson(this.KEY, data)
+      : this.writeLocalJson(this.KEY, data);
+    if (saved) {
       if (window.SylCycle) SylCycle.cloudSave(this.KEY, data);
-    }
-    catch(e) {
-      if (e.name === 'QuotaExceededError') flash('Storage nearly full — export a backup soon.', 'warn');
+    } else {
+      flash('Storage nearly full -- export a backup soon.', 'warn');
     }
   },
   loadSettings() {
+    if (window.SylCycleStorage) return SylCycleStorage.readJson(this.SETTINGS_KEY, {});
     try { return JSON.parse(localStorage.getItem(this.SETTINGS_KEY) || '{}'); }
     catch(e) { return {}; }
   },
   saveSettings(s) {
-    localStorage.setItem(this.SETTINGS_KEY, JSON.stringify(s));
-    if (window.SylCycle) SylCycle.cloudSave(this.SETTINGS_KEY, s);
+    const saved = window.SylCycleStorage
+      ? SylCycleStorage.writeJson(this.SETTINGS_KEY, s)
+      : this.writeLocalJson(this.SETTINGS_KEY, s);
+    if (saved && window.SylCycle) SylCycle.cloudSave(this.SETTINGS_KEY, s);
   },
 
   saveAssessment(name, assessment) {
