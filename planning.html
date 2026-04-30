@@ -328,6 +328,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="assets/cycle3-domain-library.js"></script>
+<script src="assets/storage.js"></script>
 <script>
 /* =============================================================
    CyclePlanner JS — organised by responsibility (refactor/optimise pass 2)
@@ -455,12 +456,16 @@ function listHtml(items=[]){
   return items.length ? `<ul>${items.map(item=>`<li>${esc(item)}</li>`).join('')}</ul>` : '<p class="tiny">None yet.</p>';
 }
 function readJSON(key, fallback){
+  if(window.SylCycleStorage) return SylCycleStorage.readJson(key, fallback);
   try{return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));}
   catch(err){return fallback;}
 }
 function writeJSON(key, value){
-  try{ localStorage.setItem(key, JSON.stringify(value)); }
-  catch(err){ console.warn('CyclePlanner storage write failed:', err); }
+  if(window.SylCycleStorage) SylCycleStorage.writeJson(key, value);
+  else {
+    try{ localStorage.setItem(key, JSON.stringify(value)); }
+    catch(err){ console.warn('CyclePlanner storage write failed:', err); }
+  }
   if(window.SylCycle) SylCycle.cloudSave(key, value);
 }
 function unique(items=[]){
