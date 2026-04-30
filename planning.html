@@ -1813,6 +1813,67 @@ function pdfTextSection(pdf, cursor, title, text, accent=false){
 function pdfArraySection(pdf, cursor, title, items, accent=false){
   if((items || []).filter(Boolean).length) pdfSection(pdf, cursor, title, () => pdfWriteBulletList(pdf, cursor, items), {accent});
 }
+function pdfDrawLessonFlowTable(pdf, cursor, rows=[]){
+  const tableX = PDF_TEXT_EXPORT.margin;
+  const tableW = PDF_TEXT_EXPORT.contentW;
+  const cols = [
+    {label:'Phase', width:36},
+    {label:'Time', width:16},
+    {label:'Teacher role', width:82},
+    {label:'Student task', width:46}
+  ];
+  const padding = 2.6;
+  const headerH = 10;
+  const rowGap = 1.1;
+
+  const drawHeader = () => {
+    pdfEnsureSpace(pdf, cursor, headerH + 6);
+    let x = tableX;
+    pdf.setFillColor(...PDF_TEXT_EXPORT.colours.soft);
+    pdf.setDrawColor(...PDF_TEXT_EXPORT.colours.line);
+    pdf.rect(tableX, cursor.y, tableW, headerH, 'FD');
+    cols.forEach(col => {
+      pdf.line(x, cursor.y, x, cursor.y + headerH);
+      pdfSetFont(pdf, 9.2, 'bold', PDF_TEXT_EXPORT.colours.ink);
+      pdf.text(col.label, x + padding, cursor.y + 6.5);
+      x += col.width;
+    });
+    pdf.line(tableX + tableW, cursor.y, tableX + tableW, cursor.y + headerH);
+    cursor.y += headerH;
+  };
+
+  drawHeader();
+  rows.forEach(row => {
+    const cells = [
+      [pdfPlain(row.phase || 'Phase'), pdfPlain(row.notes || '')].filter(Boolean).join('\n'),
+      pdfPlain(row.duration || ''),
+      pdfPlain(row.teacherRole || ''),
+      pdfPlain(row.studentTask || '')
+    ];
+    const wrapped = cells.map((text, index) => {
+      pdfSetFont(pdf, index === 0 ? 8.8 : 8.6, index === 0 ? 'bold' : 'normal', PDF_TEXT_EXPORT.colours.ink);
+      return pdf.splitTextToSize(text || ' ', cols[index].width - padding * 2);
+    });
+    const rowH = Math.max(14, ...wrapped.map(lines => lines.length * pdfLineHeight(8.6, 1.22) + padding * 2));
+    if(cursor.y + rowH > PDF_TEXT_EXPORT.h - PDF_TEXT_EXPORT.margin){
+      pdf.addPage();
+      cursor.y = PDF_TEXT_EXPORT.margin + 5;
+      drawHeader();
+    }
+    let x = tableX;
+    pdf.setDrawColor(...PDF_TEXT_EXPORT.colours.line);
+    pdf.rect(tableX, cursor.y, tableW, rowH);
+    cols.forEach((col, index) => {
+      pdf.line(x, cursor.y, x, cursor.y + rowH);
+      pdfSetFont(pdf, index === 0 ? 8.8 : 8.6, index === 0 ? 'bold' : 'normal', PDF_TEXT_EXPORT.colours.ink);
+      pdf.text(wrapped[index], x + padding, cursor.y + padding + 3.2, {lineHeightFactor:1.22});
+      x += col.width;
+    });
+    pdf.line(tableX + tableW, cursor.y, tableX + tableW, cursor.y + rowH);
+    cursor.y += rowH + rowGap;
+  });
+  cursor.y += 2;
+}
 function pdfLessonPlan(pdf, cursor, plan){
   pdfHeader(pdf, cursor, plan, 'Lesson plan');
   pdfCurriculum(pdf, cursor, plan);
@@ -1822,18 +1883,7 @@ function pdfLessonPlan(pdf, cursor, plan){
   pdfArraySection(pdf, cursor, 'Vocabulary', plan.vocabulary);
   pdfTextSection(pdf, cursor, 'Prior knowledge', plan.priorKnowledge);
   if((plan.lessonFlow || []).length){
-    pdfSection(pdf, cursor, 'Lesson flow', () => {
-      (plan.lessonFlow || []).forEach((row, index) => {
-        pdfEnsureSpace(pdf, cursor, 20);
-        pdfSetFont(pdf, 10.5, 'bold', PDF_TEXT_EXPORT.colours.ink);
-        pdf.text(pdfPlain(`${index + 1}. ${row.phase || 'Phase'}${row.duration ? ' · ' + row.duration : ''}`), PDF_TEXT_EXPORT.margin, cursor.y);
-        cursor.y += 5;
-        pdfWriteWrapped(pdf, cursor, `Teacher: ${row.teacherRole || ''}`, {x:PDF_TEXT_EXPORT.margin + 4, width:PDF_TEXT_EXPORT.contentW - 4, size:9.6, gapAfter:1});
-        pdfWriteWrapped(pdf, cursor, `Students: ${row.studentTask || ''}`, {x:PDF_TEXT_EXPORT.margin + 4, width:PDF_TEXT_EXPORT.contentW - 4, size:9.6, gapAfter:1});
-        if(pdfPlain(row.notes)) pdfWriteWrapped(pdf, cursor, `Notes: ${row.notes}`, {x:PDF_TEXT_EXPORT.margin + 4, width:PDF_TEXT_EXPORT.contentW - 4, size:9.2, colour:PDF_TEXT_EXPORT.colours.muted, gapAfter:1});
-        cursor.y += 2;
-      });
-    });
+    pdfSection(pdf, cursor, 'Lesson flow', () => pdfDrawLessonFlowTable(pdf, cursor, plan.lessonFlow || []));
   }
   pdfTextSection(pdf, cursor, 'Support', plan.differentiation?.support);
   pdfTextSection(pdf, cursor, 'Extension', plan.differentiation?.extension);
