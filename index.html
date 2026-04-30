@@ -126,42 +126,6 @@
       box-shadow: 0 4px 14px rgba(20,65,140,0.12);
     }
     .google-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
-    .divider {
-      display: flex; align-items: center; gap: 14px;
-      margin: 22px 0; font-size: 11px; color: var(--ink-soft); font-weight: 600;
-    }
-    .divider::before, .divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
-    .email-form { text-align: left; }
-    .email-form label {
-      display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px;
-    }
-    .email-form input {
-      width: 100%; padding: 11px 14px;
-      border: 1.5px solid var(--border); border-radius: 12px;
-      font: 400 14px Inter, sans-serif; color: var(--ink);
-      outline: none; transition: 0.15s;
-      margin-bottom: 10px;
-    }
-    .email-form input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(25,89,200,.1);
-    }
-    .email-submit {
-      width: 100%; padding: 13px;
-      background: var(--accent); color: #fff; border: none;
-      border-radius: 12px; font: 800 14px Inter, sans-serif;
-      cursor: pointer; transition: background 0.15s;
-    }
-    .email-submit:hover { background: var(--accent-dark); }
-    .toggle-mode {
-      margin-top: 12px; font-size: 12px;
-      color: var(--accent); cursor: pointer;
-      font-weight: 600; text-decoration: underline;
-      text-underline-offset: 2px; border: none; background: none;
-      font-family: inherit;
-    }
     .login-error {
       margin-top: 12px; padding: 10px 14px;
       background: #fff0f0; border: 1px solid #e8a0a0;
@@ -273,17 +237,6 @@
       Sign in with Google
     </button>
 
-    <div class="divider">or use email</div>
-
-    <div class="email-form">
-      <label for="emailInput">Email</label>
-      <input type="email" id="emailInput" placeholder="you@school.edu">
-      <label for="passInput">Password</label>
-      <input type="password" id="passInput" placeholder="••••••••">
-      <button class="email-submit" id="emailBtn" onclick="emailSignIn()">Sign in</button>
-      <button class="toggle-mode" id="toggleMode" onclick="toggleEmailMode()">Need an account? Sign up</button>
-    </div>
-
     <div class="login-error" id="loginError"></div>
   </div>
 </main>
@@ -319,45 +272,26 @@
 <footer>SylCycle · Built for Cycle 3 · International French Curriculum</footer>
 
 <script>
-  let isSignUp = false;
-
   function showError(msg) {
     const el = document.getElementById('loginError');
     el.textContent = msg;
     el.style.display = msg ? 'block' : 'none';
   }
 
-  function toggleEmailMode() {
-    isSignUp = !isSignUp;
-    document.getElementById('emailBtn').textContent = isSignUp ? 'Create account' : 'Sign in';
-    document.getElementById('toggleMode').textContent = isSignUp
-      ? 'Already have an account? Sign in'
-      : 'Need an account? Sign up';
-    showError('');
-  }
-
   function googleSignIn() {
     showError('');
     const provider = new firebase.auth.GoogleAuthProvider();
-    firebase.auth().signInWithPopup(provider).catch(err => showError(err.message));
+    firebase.auth().signInWithPopup(provider)
+      .then(result => handleSignedInUser(result.user))
+      .catch(err => showError(err.message));
   }
 
-  function emailSignIn() {
-    showError('');
-    const email = document.getElementById('emailInput').value.trim();
-    const pass  = document.getElementById('passInput').value;
-    if (!email || !pass) return showError('Enter both email and password.');
-    const fn = isSignUp
-      ? firebase.auth().createUserWithEmailAndPassword(email, pass)
-      : firebase.auth().signInWithEmailAndPassword(email, pass);
-    fn.catch(err => {
-      let msg = err.message;
-      if (err.code === 'auth/user-not-found')     msg = 'No account found — click "Sign up" to create one.';
-      if (err.code === 'auth/wrong-password')      msg = 'Incorrect password.';
-      if (err.code === 'auth/email-already-in-use') msg = 'Email already registered — try signing in instead.';
-      if (err.code === 'auth/weak-password')       msg = 'Password must be at least 6 characters.';
-      showError(msg);
-    });
+  async function handleSignedInUser(user) {
+    if (!user) return renderAuthState(null);
+    SylCycle.user = user;
+    SylCycle.uid = user.uid;
+    if (SylCycle.cloudSync) await SylCycle.cloudSync();
+    renderAuthState(user);
   }
 
   function renderAuthState(user) {
@@ -378,22 +312,14 @@
     }
   }
 
-  /* Listen to auth state to show/hide views */
   SylCycle.onReady(function () {
     renderAuthState(SylCycle.user);
   });
 
-  /* Also listen for live auth changes (Google popup resolves after onReady) */
   if (typeof firebase !== 'undefined') {
-    firebase.auth().onAuthStateChanged(async user => {
-      if (user) {
-        SylCycle.user = user;
-        SylCycle.uid = user.uid;
-        if (SylCycle.cloudSync) await SylCycle.cloudSync();
-      }
-      renderAuthState(user);
-    });
+    firebase.auth().onAuthStateChanged(handleSignedInUser);
   }
+
 </script>
 
 </body>
