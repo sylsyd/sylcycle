@@ -131,6 +131,7 @@
 <option selected="" value="6">6 tasks</option>
 <option value="7">7 tasks</option>
 <option value="8">8 tasks</option>
+<option value="ai">AI suggested</option>
 </select>
 </div>
 </div>
@@ -802,9 +803,13 @@ const PREF_DEFAULTS = {
   showLearningObjectives: false,
   fontSize: '12'
 };
+const AI_SUGGESTED_TASK_COUNT = 'ai';
 
 function qs(id){ return document.getElementById(id); }
 function qsa(sel, root=document){ return Array.from(root.querySelectorAll(sel)); }
+function isTaskCountAiSuggested(){
+  return (qs('questionCount')?.value || '') === AI_SUGGESTED_TASK_COUNT;
+}
 function readStoredPrefs(){
   try{
     const raw = JSON.parse(localStorage.getItem(LS_KEYS.prefs) || '{}');
@@ -1481,7 +1486,11 @@ function buildAIPrompt(opts = {}){
     buildPromptDocumentInstruction()
   ].join('\n');
   const promptDocumentContext = promptDocumentCount ? buildPromptDocumentContextText() : '';
-  const taskCount = parseInt(qs('questionCount')?.value, 10) || state.worksheet?.tasks?.length || 6;
+  const taskCountAiSuggested = isTaskCountAiSuggested();
+  const taskCount = taskCountAiSuggested ? (state.worksheet?.tasks?.length || 6) : (parseInt(qs('questionCount')?.value, 10) || state.worksheet?.tasks?.length || 6);
+  const taskCountInstruction = taskCountAiSuggested
+    ? 'The teacher selected AI suggested for task count. Choose a sensible number of tasks for the worksheet brief, normally 3-8. Return that concrete number of task objects; do not write "AI suggested" anywhere in the worksheet.'
+    : `Target approximately ${taskCount} tasks.`;
 
   const preamble = 'You are working on a printable worksheet for Cycle 3 students at an International French School. Write everything in English only.';
   const worksheetJson = state.worksheet ? JSON.stringify(buildWorksheetAiContext(), null, 2) : '{}';
@@ -1530,7 +1539,7 @@ function buildAIPrompt(opts = {}){
 Write EVERYTHING in English only.
 Keep the final product clean, practical, school-appropriate and easy to print on A4 portrait pages.
 ${difficulty}
-Target approximately ${taskCount} tasks.
+${taskCountInstruction}
 ${domainInstruction}
 ${outcomeInstruction}
 ${briefInstruction}
@@ -1542,7 +1551,7 @@ ${exportInstruction}
 
 Leave "instructions", "success_criteria" and "extension" as empty strings by default unless the teacher explicitly asks for those sections in the brief.
 
-${schemaHint(taskCount, includeAnswers)}
+${schemaHint(taskCount, includeAnswers, taskCountAiSuggested)}
 
 Extra rule: when a teacher brief is provided, treat it as non-negotiable topic control. Do not swap it for a different subject.`;
   }
@@ -1614,7 +1623,7 @@ Variation instruction: ${variationInstruction(opts.variationMode || 'easier', op
 
 ${imageUsage}
 
-${schemaHint(taskCount)}
+${schemaHint(taskCount, undefined, taskCountAiSuggested)}
 
 Keep the result practical, printable and coherent.`;
   }
@@ -4163,7 +4172,10 @@ function forceEditorRefresh(){
     updatePreview();
   }, 180);
 }
-function schemaHint(taskCount, includeAnswers = (hasAnswerKeyData() || shouldGenerateAnswers())){
+function schemaHint(taskCount, includeAnswers = (hasAnswerKeyData() || shouldGenerateAnswers()), aiSuggestedTaskCount = false){
+  const taskCountRule = aiSuggestedTaskCount
+    ? '- "tasks" must contain between 1 and 8 tasks. Choose the count that best fits the worksheet brief, level, and source material.'
+    : `- "tasks" must contain between ${Math.max(1, taskCount-1)} and ${Math.min(8, taskCount+1)} tasks.`;
   if(includeAnswers){
     return `Return ONLY valid JSON with this exact schema:
 {
@@ -4190,7 +4202,7 @@ function schemaHint(taskCount, includeAnswers = (hasAnswerKeyData() || shouldGen
 Rules:
 - "domain" must be one exact domain string from the allowed list only.
 - "learning_outcomes" must contain 2 to 4 outcomes copied VERBATIM from the allowed curriculum bank for the chosen domain only. Do not invent, paraphrase, merge or rewrite outcomes.
-- "tasks" must contain between ${Math.max(1, taskCount-1)} and ${Math.min(8, taskCount+1)} tasks.
+${taskCountRule}
 - Each task needs a clear prompt.
 - Use "passage" only when a task genuinely needs a separate reading extract, sentence set, word bank, data set or other stimulus. Otherwise return an empty string.
 - Use "options" only when multiple-choice or selection options genuinely help. Otherwise return an empty array.
@@ -4224,7 +4236,7 @@ Rules:
 Rules:
 - "domain" must be one exact domain string from the allowed list only.
 - "learning_outcomes" must contain 2 to 4 outcomes copied VERBATIM from the allowed curriculum bank for the chosen domain only. Do not invent, paraphrase, merge or rewrite outcomes.
-- "tasks" must contain between ${Math.max(1, taskCount-1)} and ${Math.min(8, taskCount+1)} tasks.
+${taskCountRule}
 - Each task needs a clear prompt.
 - Use "passage" only when a task genuinely needs a separate reading extract, sentence set, word bank, data set or other stimulus. Otherwise return an empty string.
 - Use "options" only when multiple-choice or selection options genuinely help. Otherwise return an empty array.
