@@ -45,6 +45,7 @@
     .app-logo { font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: -0.03em; }
     .app-logo em { color: var(--accent); font-style: normal; }
     .app-logo sup { font-size: 9px; font-weight: 600; color: var(--ink-soft); letter-spacing: 0.05em; text-transform: uppercase; vertical-align: super; margin-left: 3px; }
+    .suite-mark { width: 30px; height: 30px; object-fit: contain; border-radius: 7px; }
 
     /* ── Bottom nav ── */
     .bottom-nav {
@@ -275,6 +276,7 @@
     .home-link {
       display: inline-flex;
       align-items: center;
+      gap: 7px;
       min-height: 30px;
       padding: 6px 12px;
       border: 1.5px solid var(--border);
@@ -286,8 +288,10 @@
       font-weight: 700;
       transition: all 0.13s;
     }
+    .home-link img { width: 16px; height: 16px; object-fit: contain; flex: 0 0 auto; }
     .home-link:hover { border-color: var(--accent-bd); background: var(--accent-lt); }
-    .settings-btn { background: none; border: none; cursor: pointer; font-size: 20px; padding: 2px 4px; color: var(--ink-soft); transition: color 0.13s; }
+    .settings-btn { background: none; border: none; cursor: pointer; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; padding: 0; color: var(--ink-soft); transition: color 0.13s; }
+    .settings-btn svg { width: 20px; height: 20px; }
     .settings-btn:hover { color: var(--ink); }
 
 
