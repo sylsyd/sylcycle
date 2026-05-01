@@ -77,7 +77,7 @@
           <div class="grid-2 setup-grid" style="margin-top:14px">
             <div class="field">
               <label for="yearLevel">Year level</label>
-              <select id="yearLevel"><option>CM1</option><option>CM2</option><option>CM1/CM2</option></select>
+              <select id="yearLevel"></select>
             </div>
             <div class="field setup-option" id="lessonLengthOption">
               <label for="durationPreset">Lesson length</label>
@@ -137,7 +137,7 @@
 
       <div class="section">
         <h3>Curriculum</h3>
-        <p class="sub">Same Cycle 3 spine as CycleStudio and CycleAssess. No invented LO nonsense.</p>
+        <p class="sub" id="curriculumCycleNote">Same Cycle 3 spine as CycleStudio and CycleAssess. No invented LO nonsense.</p>
         <div class="field">
           <label>Curriculum mode</label>
           <div class="segmented" id="curriculumModeButtons">
@@ -147,7 +147,7 @@
           </div>
         </div>
         <div id="domainArea" class="field hidden">
-          <label for="domainSelect">Cycle 3 domain</label>
+          <label for="domainSelect"><span id="domainCycleLabel">Curriculum</span> domain</label>
           <select id="domainSelect"></select>
         </div>
         <div id="outcomeArea" class="field hidden">
@@ -306,8 +306,10 @@
           <div class="field"><label for="apiKey">Anthropic API key</label><input id="apiKey" type="password" placeholder="sk-ant-api03-…"></div>
           <div class="field"><label for="modelName">Model ID</label><input id="modelName" placeholder="claude-opus-4-5"></div>
         </div>
-        <div class="field"><label for="defaultContext">Default planning context</label><textarea id="defaultContext" placeholder="International French School. Cycle 3. English taught within French curriculum context. Prefer concise, practical teacher notes."></textarea></div>
+        <div class="field"><label for="preferredCycle">Preferred teaching cycle</label><select id="preferredCycle"></select></div>
+        <div class="field"><label for="defaultContext">Default planning context</label><textarea id="defaultContext" placeholder="International French School. English taught within French curriculum context. Prefer concise, practical teacher notes."></textarea></div>
         <p class="tiny">The default context is sent with AI planning requests so you do not keep retyping the same setup.</p>
+        <p class="tiny">Your preferred cycle is remembered. Year level is still chosen each time you use Planner.</p>
         <p class="tiny"><strong>Build:</strong> refactor/optimise checkpoint. Keep doing this before adding large features.</p>
       </div>
       <div class="section maintenance-note">
@@ -325,6 +327,22 @@
       <button class="small-btn" data-action="close-templates">Close</button>
     </div>
     <div class="modal-body" id="templateModalList"></div>
+  </div>
+</div>
+
+<div class="modal" id="cyclePreferenceModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div><h3>Choose your teaching cycle</h3><p class="sub">Planner will remember this, and you can change it later in Settings.</p></div>
+    </div>
+    <div class="modal-body">
+      <div class="cycle-choice-grid">
+        <button class="btn secondary" data-cycle-choice="cycle1">Cycle 1</button>
+        <button class="btn secondary" data-cycle-choice="cycle2">Cycle 2</button>
+        <button class="btn crimson" data-cycle-choice="cycle3">Cycle 3</button>
+      </div>
+      <p class="tiny">Cycle 1 and Cycle 2 curriculum outcomes will be added from official sources next. Until then, the Planner shell keeps using the existing Cycle 3 curriculum bank.</p>
+    </div>
   </div>
 </div>
 
@@ -348,8 +366,25 @@
    ============================================================= */
 
 /* 1. Data + state */
-const DOMAIN_LIBRARY = window.CYCLE3_DOMAIN_LIBRARY || {};
-const DOMAIN_NAMES = Object.keys(DOMAIN_LIBRARY);
+const CYCLE_LABELS = {
+  cycle1:'Cycle 1',
+  cycle2:'Cycle 2',
+  cycle3:'Cycle 3'
+};
+const CYCLE_YEAR_LEVELS = {
+  cycle1:['PS','MS','GS'],
+  cycle2:['CP','CE1','CE2'],
+  cycle3:['CM1','CM2','CM1/CM2']
+};
+const CYCLE3_DOMAIN_LIBRARY = window.CYCLE3_DOMAIN_LIBRARY || {};
+const CYCLE_DOMAIN_LIBRARIES = {
+  cycle1:CYCLE3_DOMAIN_LIBRARY,
+  cycle2:CYCLE3_DOMAIN_LIBRARY,
+  cycle3:CYCLE3_DOMAIN_LIBRARY
+};
+let currentCycle = 'cycle3';
+let DOMAIN_LIBRARY = CYCLE_DOMAIN_LIBRARIES.cycle3;
+let DOMAIN_NAMES = Object.keys(DOMAIN_LIBRARY);
 const APP_VERSION = '0.2.1-refactor-optimised';
 
 const PLAN_LABELS = {
@@ -373,19 +408,20 @@ const STORAGE = {
 };
 const SAVE_DEBOUNCE_MS = 300;
 const DEFAULT_PREFS = {
-  yearLevel:'CM1',
+  preferredCycle:'cycle3',
   duration:'ai',
   unitLessonCount:'ai',
   sequenceWeekCount:'ai',
   brief:'',
   extraContext:'',
   sourceDetails:'',
+  yearLevel:'CM1',
   planningType:'lesson',
   curriculumMode:'ai_both',
   domain:'English Literacy',
   apiKey:'',
   modelName:'claude-opus-4-5',
-  defaultContext:'International French School. Cycle 3. English taught within French curriculum context. Prefer concise, practical teacher notes.'
+  defaultContext:'International French School. English taught within French curriculum context. Prefer concise, practical teacher notes.'
 };
 const state = {
   tab:'setup',
@@ -473,6 +509,56 @@ function writeJSON(key, value){
     catch(err){ console.warn('CyclePlanner storage write failed:', err); }
   }
   if(window.SylCycle) SylCycle.cloudSave(key, value);
+}
+function normaliseCycle(value){
+  return CYCLE_LABELS[value] ? value : 'cycle3';
+}
+function getCycleLabel(cycle=currentCycle){
+  return CYCLE_LABELS[normaliseCycle(cycle)];
+}
+function getCycleYears(cycle=currentCycle){
+  return CYCLE_YEAR_LEVELS[normaliseCycle(cycle)] || CYCLE_YEAR_LEVELS.cycle3;
+}
+function hasStoredCyclePreference(){
+  const stored = readJSON(STORAGE.prefs, {});
+  return Object.prototype.hasOwnProperty.call(stored, 'preferredCycle');
+}
+function setCurrentCycle(cycle){
+  currentCycle = normaliseCycle(cycle);
+  DOMAIN_LIBRARY = CYCLE_DOMAIN_LIBRARIES[currentCycle] || CYCLE_DOMAIN_LIBRARIES.cycle3 || {};
+  DOMAIN_NAMES = Object.keys(DOMAIN_LIBRARY);
+}
+function populatePreferredCycleSelect(){
+  const select = qs('preferredCycle');
+  if(!select) return;
+  select.innerHTML = Object.entries(CYCLE_LABELS)
+    .map(([value,label])=>`<option value="${esc(value)}">${esc(label)}</option>`)
+    .join('');
+  select.value = currentCycle;
+}
+function populateYearLevels(preferredYear=''){
+  const select = qs('yearLevel');
+  if(!select) return;
+  const years = getCycleYears();
+  select.innerHTML = years.map(year=>`<option value="${esc(year)}">${esc(year)}</option>`).join('');
+  select.value = years.includes(preferredYear) ? preferredYear : years[0];
+}
+function applyCyclePreference(cycle, preferredYear=''){
+  setCurrentCycle(cycle);
+  populatePreferredCycleSelect();
+  populateYearLevels(preferredYear);
+  populateDomains();
+  const domainSelect = qs('domainSelect');
+  if(domainSelect && !DOMAIN_LIBRARY[domainSelect.value]){
+    domainSelect.value = DOMAIN_LIBRARY['English Literacy'] ? 'English Literacy' : DOMAIN_NAMES[0] || '';
+  }
+  state.selectedOutcomes = state.selectedOutcomes.filter(outcome => getFlat(domainSelect?.value || '').includes(outcome));
+  if(qs('domainCycleLabel')) qs('domainCycleLabel').textContent = 'Curriculum';
+  if(qs('curriculumCycleNote')){
+    qs('curriculumCycleNote').textContent = `${getCycleLabel()} selected. Cycle 1 and Cycle 2 curriculum data will be added from official sources next; the existing Cycle 3 bank remains active for now.`;
+  }
+  renderCurriculumMode();
+  renderCreateSummary();
 }
 function unique(items=[]){
   return [...new Set(items.filter(Boolean))];
@@ -658,6 +744,7 @@ function getPrefs(){
 function collectPrefs(){
   return {
     ...getPrefs(),
+    preferredCycle:currentCycle,
     yearLevel:qs('yearLevel').value,
     duration:getDurationValue(),
     unitLessonCount:getUnitLessonCount(),
@@ -679,7 +766,7 @@ function savePrefs(){
 const savePrefsSoon = debounce(savePrefs);
 function loadPrefs(){
   const p = getPrefs();
-  qs('yearLevel').value = p.yearLevel;
+  applyCyclePreference(p.preferredCycle, p.yearLevel);
   setDurationUI(p.duration);
   setCountUI('unitLesson', p.unitLessonCount || '6');
   setCountUI('sequenceWeek', p.sequenceWeekCount || '6');
@@ -1572,6 +1659,10 @@ async function callAI(prompt, options={}){
 }
 async function generatePlan(){
   clearStatus();
+  if(currentCycle !== 'cycle3'){
+    setStatus(`${getCycleLabel()} is selected, but its official curriculum bank has not been imported yet. Switch to Cycle 3 for generation until the next curriculum step lands.`, 'warn');
+    return;
+  }
   savePrefs();
   const generationLabel = getGenerationLabel();
   setCreateBusy(true, `Generating your ${generationLabel}…`, 'Units and scope maps can take 20–60 seconds. Nothing is frozen; the robot is just chewing.');
@@ -2178,6 +2269,13 @@ function handleAction(action){
 }
 function bindEvents(){
   document.addEventListener('click', event=>{
+    const cycleChoice = event.target.closest('[data-cycle-choice]');
+    if(cycleChoice){
+      applyCyclePreference(cycleChoice.dataset.cycleChoice, qs('yearLevel')?.value || '');
+      savePrefs();
+      qs('cyclePreferenceModal')?.classList.remove('open');
+      return;
+    }
     const go = event.target.closest('[data-go]');
     if(go){goTab(go.dataset.go);return;}
     const sourceRemove = event.target.closest('[data-source-remove]');
@@ -2231,6 +2329,16 @@ function bindEvents(){
       return;
     }
     if(event.target.id === 'planningTypeSelect') selectPlanningType(event.target.value);
+    if(event.target.id === 'preferredCycle'){
+      applyCyclePreference(event.target.value, qs('yearLevel')?.value || '');
+      savePrefs();
+      return;
+    }
+    if(event.target.id === 'yearLevel'){
+      savePrefs();
+      renderCreateSummary();
+      return;
+    }
     if(event.target.id === 'domainSelect'){
       state.selectedOutcomes = [];
       renderCurriculumMode();
@@ -2265,9 +2373,10 @@ function bindEvents(){
   }));
 }
 function init(){
-  populateDomains();
+  const shouldAskCycle = !hasStoredCyclePreference();
   loadPrefs();
-  qs('domainSelect').value = getPrefs().domain || 'English Literacy';
+  const savedDomain = getPrefs().domain || 'English Literacy';
+  qs('domainSelect').value = DOMAIN_LIBRARY[savedDomain] ? savedDomain : (DOMAIN_LIBRARY['English Literacy'] ? 'English Literacy' : DOMAIN_NAMES[0] || '');
   selectPlanningType(state.type);
   renderCurriculumMode();
   renderCreateSummary();
@@ -2280,6 +2389,7 @@ function init(){
   }
   renderAll();
   bindEvents();
+  if(shouldAskCycle) qs('cyclePreferenceModal')?.classList.add('open');
 }
 window.addEventListener('DOMContentLoaded', function(){
   if(window.SylCycle && SylCycle.onReady) SylCycle.onReady(init);
