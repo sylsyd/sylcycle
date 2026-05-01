@@ -82,6 +82,7 @@
             <div class="field setup-option" id="lessonLengthOption">
               <label for="durationPreset">Lesson length</label>
               <select id="durationPreset">
+                <option value="ai">AI suggested</option>
                 <option value="15 min">15 minutes</option>
                 <option value="30 min">30 minutes</option>
                 <option value="45 min">45 minutes</option>
@@ -94,6 +95,7 @@
             <div class="field setup-option hidden" id="unitLessonOption">
               <label for="unitLessonPreset">Number of lessons</label>
               <select id="unitLessonPreset">
+                <option value="ai">AI suggested</option>
                 <option value="3">3 lessons</option>
                 <option value="4">4 lessons</option>
                 <option value="5">5 lessons</option>
@@ -108,6 +110,7 @@
             <div class="field setup-option hidden" id="sequenceWeekOption">
               <label for="sequenceWeekPreset">Number of weeks</label>
               <select id="sequenceWeekPreset">
+                <option value="ai">AI suggested</option>
                 <option value="3">3 weeks</option>
                 <option value="4">4 weeks</option>
                 <option value="5">5 weeks</option>
@@ -359,6 +362,9 @@ const PLAN_DESCRIPTIONS = {
   unit:'A connected sequence of lessons with shared outcomes, lesson-by-lesson focus and assessment evidence.',
   sequence:'A broad map across weeks or blocks, useful for coverage, pacing and scope planning.'
 };
+function planTypeChipHtml(type=state.type){
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span>${esc(PLAN_LABELS[type] || 'Lesson plan')}</span>`;
+}
 const STORAGE = {
   prefs:'cycleplanner_refactor_prefs_v1',
   current:'cycleplanner_refactor_current_v1',
@@ -368,9 +374,9 @@ const STORAGE = {
 const SAVE_DEBOUNCE_MS = 300;
 const DEFAULT_PREFS = {
   yearLevel:'CM1',
-  duration:'60 min',
-  unitLessonCount:'6',
-  sequenceWeekCount:'6',
+  duration:'ai',
+  unitLessonCount:'ai',
+  sequenceWeekCount:'ai',
   brief:'',
   extraContext:'',
   sourceDetails:'',
@@ -631,9 +637,9 @@ function renderAllAndPersist(){
 }
 
 function getGenerationLabel(){
-  if(state.type === 'unit') return `${getUnitLessonCount()}-lesson unit plan`;
-  if(state.type === 'sequence') return `${getSequenceWeekCount()}-week scope & sequence`;
-  return `${getDurationValue()} lesson plan`;
+  if(state.type === 'unit') return isCountAiSuggested('unitLesson') ? 'AI-suggested unit plan' : `${getUnitLessonCount()}-lesson unit plan`;
+  if(state.type === 'sequence') return isCountAiSuggested('sequenceWeek') ? 'AI-suggested scope & sequence' : `${getSequenceWeekCount()}-week scope & sequence`;
+  return isDurationAiSuggested() ? 'AI-suggested lesson plan' : `${getDurationValue()} lesson plan`;
 }
 function setCreateBusy(on, title='Generating…', text='This can take a little while.'){
   const box = qs('createLoading');
@@ -687,9 +693,20 @@ function loadPrefs(){
   state.type = p.planningType;
   state.curriculumMode = p.curriculumMode;
 }
+const AI_SUGGESTED_VALUE = 'ai';
+const AI_SUGGESTED_LABEL = 'AI suggested';
 const STANDARD_DURATIONS = ['15 min','30 min','45 min','60 min'];
+function isAiSuggestedValue(value){
+  return String(value || '').trim().toLowerCase() === AI_SUGGESTED_VALUE;
+}
+function concreteSetupValue(value){
+  return isAiSuggestedValue(value) ? '' : value;
+}
+function isDurationAiSuggested(){ return qs('durationPreset')?.value === AI_SUGGESTED_VALUE; }
+function isCountAiSuggested(kind){ return qs(`${kind}Preset`)?.value === AI_SUGGESTED_VALUE; }
 function getDurationValue(){
   const preset = qs('durationPreset')?.value || '';
+  if(preset === AI_SUGGESTED_VALUE) return AI_SUGGESTED_VALUE;
   if(preset === 'custom') return (qs('durationCustom')?.value || '').trim() || 'Custom';
   if(preset) return preset;
   return qs('durationInput')?.value || '60 min';
@@ -700,7 +717,12 @@ function setDurationUI(value='60 min'){
   const custom = qs('durationCustom');
   const hidden = qs('durationInput');
   if(!preset || !custom || !hidden) return;
-  if(STANDARD_DURATIONS.includes(clean)){
+  if(isAiSuggestedValue(clean)){
+    preset.value = AI_SUGGESTED_VALUE;
+    custom.value = '';
+    custom.classList.add('hidden');
+    hidden.value = AI_SUGGESTED_VALUE;
+  }else if(STANDARD_DURATIONS.includes(clean)){
     preset.value = clean;
     custom.value = '';
     custom.classList.add('hidden');
@@ -725,7 +747,7 @@ function handleDurationChange(){
   savePrefs();
   renderCreateSummary();
   if(state.plan){
-    state.plan.duration = getDurationValue();
+    if(!isDurationAiSuggested()) state.plan.duration = getDurationValue();
     schedulePreviewUpdate();
   }
 }
@@ -736,6 +758,7 @@ function getCountValue(kind){
   const preset = qs(`${kind}Preset`)?.value || '';
   const custom = qs(`${kind}Custom`)?.value || '';
   const hidden = qs(`${kind}Count`);
+  if(preset === AI_SUGGESTED_VALUE) return AI_SUGGESTED_VALUE;
   if(preset === 'custom') return String(custom || hidden?.value || '').trim() || '6';
   if(preset) return preset;
   return hidden?.value || '6';
@@ -749,7 +772,12 @@ function setCountUI(kind, value='6'){
   const hidden = qs(`${kind}Count`);
   if(!preset || !custom || !hidden) return;
   const standard = kind === 'sequenceWeek' ? STANDARD_SEQUENCE_WEEK_COUNTS : STANDARD_UNIT_LESSON_COUNTS;
-  if(standard.includes(clean)){
+  if(isAiSuggestedValue(clean)){
+    preset.value = AI_SUGGESTED_VALUE;
+    custom.value = '';
+    custom.classList.add('hidden');
+    hidden.value = AI_SUGGESTED_VALUE;
+  }else if(standard.includes(clean)){
     preset.value = clean;
     custom.value = '';
     custom.classList.add('hidden');
@@ -774,15 +802,15 @@ function handleCountChange(kind){
   savePrefs();
   renderCreateSummary();
   if(state.plan){
-    if(kind === 'unitLesson') state.plan.lessonCount = getUnitLessonCount();
-    if(kind === 'sequenceWeek') state.plan.weekCount = getSequenceWeekCount();
+    if(kind === 'unitLesson' && !isCountAiSuggested('unitLesson')) state.plan.lessonCount = getUnitLessonCount();
+    if(kind === 'sequenceWeek' && !isCountAiSuggested('sequenceWeek')) state.plan.weekCount = getSequenceWeekCount();
     schedulePreviewUpdate();
   }
 }
 function getPlanningScaleText(type=state.type){
-  if(type === 'unit') return `${getUnitLessonCount()} lessons`;
-  if(type === 'sequence') return `${getSequenceWeekCount()} weeks`;
-  return getDurationValue();
+  if(type === 'unit') return isCountAiSuggested('unitLesson') ? AI_SUGGESTED_LABEL : `${getUnitLessonCount()} lessons`;
+  if(type === 'sequence') return isCountAiSuggested('sequenceWeek') ? AI_SUGGESTED_LABEL : `${getSequenceWeekCount()} weeks`;
+  return isDurationAiSuggested() ? AI_SUGGESTED_LABEL : getDurationValue();
 }
 function syncSetupControls(type=state.type){
   qs('lessonLengthOption')?.classList.toggle('hidden', type !== 'lesson');
@@ -942,9 +970,9 @@ function baseFields(type){
     type,
     title:'Untitled ' + PLAN_LABELS[type].toLowerCase(),
     yearLevel:qs('yearLevel')?.value || 'CM1',
-    duration:getDurationValue(),
-    lessonCount: type === 'unit' ? getUnitLessonCount() : '',
-    weekCount: type === 'sequence' ? getSequenceWeekCount() : '',
+    duration:isDurationAiSuggested() ? '' : getDurationValue(),
+    lessonCount: type === 'unit' ? (isCountAiSuggested('unitLesson') ? '' : getUnitLessonCount()) : '',
+    weekCount: type === 'sequence' ? (isCountAiSuggested('sequenceWeek') ? '' : getSequenceWeekCount()) : '',
     domain: state.curriculumMode === 'ai_both' ? '' : qs('domainSelect')?.value || '',
     learningOutcomes: state.curriculumMode === 'manual_both' ? [...state.selectedOutcomes] : [],
     context:qs('extraContextInput')?.value || ''
@@ -954,7 +982,7 @@ function blankPlan(type=state.type){
   if(type === 'unit'){
     return {
       ...baseFields('unit'),
-      lessonCount:getUnitLessonCount(),
+      lessonCount:isCountAiSuggested('unitLesson') ? '' : getUnitLessonCount(),
       overview:'',
       drivingQuestion:'',
       vocabulary:[],
@@ -968,7 +996,7 @@ function blankPlan(type=state.type){
   if(type === 'sequence'){
     return {
       ...baseFields('sequence'),
-      weekCount:getSequenceWeekCount(),
+      weekCount:isCountAiSuggested('sequenceWeek') ? '' : getSequenceWeekCount(),
       overview:'',
       termOrBlock:'',
       weeks:[],
@@ -1067,7 +1095,16 @@ function inferUnitActivities(title=''){
   return 'Introduce the focus with a short stimulus; investigate or compare examples in pairs/groups; record findings through a table, diagram, short explanation or exit ticket.';
 }
 function expectedUnitLessonCount(plan=state.plan){
+  if(isCountAiSuggested('unitLesson')){
+    return clampInt(concreteSetupValue(plan?.lessonCount) || (Array.isArray(plan?.lessons) ? plan.lessons.length : 0), 1, 24, 6);
+  }
   return clampInt(plan?.lessonCount || getUnitLessonCount(), 1, 24, clampInt(getUnitLessonCount(), 1, 24, 6));
+}
+function expectedSequenceWeekCount(plan=state.plan){
+  if(isCountAiSuggested('sequenceWeek')){
+    return clampInt(concreteSetupValue(plan?.weekCount) || (Array.isArray(plan?.weeks) ? plan.weeks.length : 0), 1, 40, 6);
+  }
+  return clampInt(plan?.weekCount || getSequenceWeekCount(), 1, 40, clampInt(getSequenceWeekCount(), 1, 40, 6));
 }
 function unitPlaceholderLesson(plan, index, total){
   const titleSeed = cleanText(plan?.title || 'this unit');
@@ -1120,6 +1157,18 @@ function repairUnitLessonRows(plan){
 }
 function repairSequenceWeekRows(plan){
   if(!Array.isArray(plan.weeks)) plan.weeks = [];
+  const targetCount = expectedSequenceWeekCount(plan);
+  const originalCount = plan.weeks.length;
+  if(originalCount < targetCount){
+    addQualityWarning(plan, `AI returned ${originalCount} week${originalCount === 1 ? '' : 's'} for a ${targetCount}-week scope map. Missing week rows were added as placeholders.`);
+    while(plan.weeks.length < targetCount){
+      plan.weeks.push({week:`Week ${plan.weeks.length + 1}`,focus:'Add a clear weekly learning focus.',domain:plan.domain || 'Domain to confirm',lessons:'Outline the key lessons, tasks or learning activities for this week.',assessment:'Identify evidence to collect during or at the end of the week.'});
+    }
+  }else if(originalCount > targetCount){
+    addQualityWarning(plan, `AI returned ${originalCount} weeks for a ${targetCount}-week scope map. Extra rows were trimmed to match the setup.`);
+    plan.weeks = plan.weeks.slice(0, targetCount);
+  }
+  plan.weekCount = String(targetCount);
   plan.weeks = plan.weeks.map((week, index) => {
     const row = {...(week || {})};
     row.week = String(row.week || `Week ${index + 1}`).trim();
@@ -1136,7 +1185,11 @@ function normalisePlan(input, type=state.type){
   const plan = {...base, ...(input || {})};
   plan.type = type;
   plan.yearLevel ||= base.yearLevel;
-  plan.duration ||= base.duration;
+  if(type === 'lesson' && isDurationAiSuggested()){
+    plan.duration = cleanText(concreteSetupValue(plan.duration) || '45 min');
+  }else{
+    plan.duration ||= base.duration;
+  }
   plan.learningOutcomes = Array.isArray(plan.learningOutcomes) ? plan.learningOutcomes : [];
   repairCurriculum(plan);
   if(type === 'lesson'){
@@ -1157,9 +1210,13 @@ function normalisePlan(input, type=state.type){
     plan.cycleAssessHooks = {...base.cycleAssessHooks, ...(plan.cycleAssessHooks || {})};
   }
   if(type === 'unit'){
-    // The setup selection is the source of truth. If the user asked for 5 lessons,
-    // the plan must contain 5 lesson cards, even if the AI tried to return fewer.
-    plan.lessonCount = String(clampInt(getUnitLessonCount(), 1, 24, 6));
+    // Fixed setup selections are the source of truth. When the teacher picks
+    // AI suggested, the model's returned count becomes the source of truth.
+    if(!isCountAiSuggested('unitLesson')){
+      plan.lessonCount = String(clampInt(getUnitLessonCount(), 1, 24, 6));
+    }else{
+      plan.lessonCount = String(clampInt(concreteSetupValue(plan.lessonCount) || (Array.isArray(plan.lessons) ? plan.lessons.length : 0), 1, 24, 6));
+    }
     plan.vocabulary = Array.isArray(plan.vocabulary) ? plan.vocabulary : [];
     plan.lessons = Array.isArray(plan.lessons) ? plan.lessons : [];
     repairUnitLessonRows(plan);
@@ -1167,7 +1224,11 @@ function normalisePlan(input, type=state.type){
     plan.cycleAssessHooks = {...base.cycleAssessHooks, ...(plan.cycleAssessHooks || {})};
   }
   if(type === 'sequence'){
-    plan.weekCount = plan.weekCount || String((plan.weeks || []).length || getSequenceWeekCount());
+    if(!isCountAiSuggested('sequenceWeek')){
+      plan.weekCount = String(clampInt(getSequenceWeekCount(), 1, 40, 6));
+    }else{
+      plan.weekCount = String(clampInt(concreteSetupValue(plan.weekCount) || (Array.isArray(plan.weeks) ? plan.weeks.length : 0), 1, 40, 6));
+    }
     plan.weeks = Array.isArray(plan.weeks) ? plan.weeks : [];
     repairSequenceWeekRows(plan);
     plan.cycleAssessHooks = {...base.cycleAssessHooks, ...(plan.cycleAssessHooks || {})};
@@ -1187,7 +1248,7 @@ function goTab(tab){
 function selectPlanningType(type){
   state.type = type;
   qs('planningTypeSelect').value = type;
-  qs('typeChip').textContent = PLAN_LABELS[type];
+  qs('typeChip').innerHTML = planTypeChipHtml(type);
   qs('planTypeDescription').textContent = PLAN_DESCRIPTIONS[type];
   qs('setupTitle').textContent = PLAN_LABELS[type].replace('Scope & sequence','Scope & sequence') + ' setup';
   syncSetupControls(type);
@@ -1207,9 +1268,9 @@ function renderCreateSummary(){
 function syncCurrentPlanSetup(){
   if(!state.plan) return;
   state.plan.yearLevel = qs('yearLevel').value;
-  state.plan.duration = getDurationValue();
-  if(state.plan.type === 'unit') state.plan.lessonCount = getUnitLessonCount();
-  if(state.plan.type === 'sequence') state.plan.weekCount = getSequenceWeekCount();
+  if(!isDurationAiSuggested()) state.plan.duration = getDurationValue();
+  if(state.plan.type === 'unit' && !isCountAiSuggested('unitLesson')) state.plan.lessonCount = getUnitLessonCount();
+  if(state.plan.type === 'sequence' && !isCountAiSuggested('sequenceWeek')) state.plan.weekCount = getSequenceWeekCount();
   if(!state.plan.context) state.plan.context = qs('extraContextInput').value;
   applyCurriculumToPlan();
 }
@@ -1422,6 +1483,17 @@ function buildPrompt(extra=''){
   const sourceText = sourcePromptText();
   const domain = qs('domainSelect').value;
   const schema = blankPlan(state.type);
+  const scaleRules = state.type === 'lesson'
+    ? (isDurationAiSuggested()
+      ? 'The teacher selected AI suggested lesson length. Choose a realistic lesson duration from the brief, such as 30 min, 45 min, 60 min, 75 min or 90 min. Return that concrete value in duration, not "AI suggested". Make lessonFlow timings add up sensibly to that duration.'
+      : `Use this exact lesson duration: ${getDurationValue()}. Make lessonFlow timings add up sensibly to that duration.`)
+    : state.type === 'unit'
+      ? (isCountAiSuggested('unitLesson')
+        ? 'The teacher selected AI suggested unit length. Choose a realistic number of lessons from the brief, normally 3-10 unless the prompt clearly needs more. Return that concrete number in lessonCount and create exactly that many lesson objects.'
+        : `Use exactly ${getUnitLessonCount()} lessons. Return lessonCount as "${getUnitLessonCount()}" and create exactly ${getUnitLessonCount()} lesson objects.`)
+      : (isCountAiSuggested('sequenceWeek')
+        ? 'The teacher selected AI suggested scope length. Choose a realistic number of weeks from the brief, normally 3-12 unless the prompt clearly needs a longer map. Return that concrete number in weekCount and create exactly that many week rows.'
+        : `Use exactly ${getSequenceWeekCount()} weeks. Return weekCount as "${getSequenceWeekCount()}" and create exactly ${getSequenceWeekCount()} week rows.`);
   const curriculumRules = state.curriculumMode === 'ai_both'
     ? `Choose one domain exactly from this list: ${DOMAIN_NAMES.join(', ')}. Choose outcomes verbatim from this bank:\n${catalogue()}`
     : state.curriculumMode === 'manual_domain_ai_lo'
@@ -1431,6 +1503,7 @@ function buildPrompt(extra=''){
 Planning type: ${state.type}
 Year: ${qs('yearLevel').value}
 Planning scale: ${getPlanningScaleText()}
+Scale rules: ${scaleRules}
 Teacher brief: ${brief || 'No brief provided; create a useful plan.'}
 Context: ${context}
 Source prompt material: ${sourceSummary}
@@ -1446,8 +1519,8 @@ For lesson plans, every lessonFlow row must have useful text in phase, duration,
 If a lesson plan is based on a unit plan or source plan, align tightly to the matching lesson: objectives, activities, assessment evidence, next steps and CycleAssess hook should clearly connect to that unit sequence.
 When a lesson relies on charts, maps, picture cards, handouts or templates, list those resources clearly in Materials. If the resource is not supplied by the teacher, describe exactly what should be created in studioHandOffIdea instead of pretending it already exists.
 For geography lessons comparing water, energy, food, resources or sustainability, avoid oversimplified questions such as "Why doesn't France need NEWater?" or "countries with lots of water". Use precise place-based language: different needs, constraints, infrastructure, resources, scale and management choices.
-For unit plans, the lessons array must contain EXACTLY ${getUnitLessonCount()} lesson objects because the teacher selected ${getUnitLessonCount()} lessons. No fewer, no more. Every lesson row must include title, duration, focus, activities and assessmentEvidence. Do not leave focus or activities blank. Keep lesson-sequence cells print-friendly: focus under 22 words, activities as 2-3 concise classroom actions, and evidence under 25 words. Avoid long paragraphs inside table cells. Do not use numbered-list text such as "1. ... 2. ... 3. ..." inside activities; use short sentence fragments separated by semicolons or new lines.
-For scope and sequence plans, the weeks array must match the requested number of weeks. Every week row must include week, focus, domain, lessons and assessment.
+For unit plans, the lessons array must match the concrete lessonCount you return. No fewer, no more. Every lesson row must include title, duration, focus, activities and assessmentEvidence. Do not leave focus or activities blank. Keep lesson-sequence cells print-friendly: focus under 22 words, activities as 2-3 concise classroom actions, and evidence under 25 words. Avoid long paragraphs inside table cells. Do not use numbered-list text such as "1. ... 2. ... 3. ..." inside activities; use short sentence fragments separated by semicolons or new lines.
+For scope and sequence plans, the weeks array must match the concrete weekCount you return. Every week row must include week, focus, domain, lessons and assessment.
 If the topic is scientific, choose Science and Technology, not English Literacy. Always return a non-empty domain and 2-4 exact learningOutcomes copied from the allowed bank when curriculum mode lets AI choose them.
 Bigger worksheets and resource packs should be described only in the studioHandOffIdea field. Do not put CycleStudio hand-off ideas inside reflection. Leave reflection blank unless it contains actual after-teaching reflection notes.
 ${extra}
