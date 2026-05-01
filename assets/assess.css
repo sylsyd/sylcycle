@@ -78,14 +78,16 @@
     }
     #batch-step-input > .card { margin-bottom: 0; }
     .record-class-card,
-    .record-student-card,
-    .record-domain-card { grid-column: 1; }
+    .record-student-card { grid-column: 1; }
     .record-activity-card {
       grid-column: 2;
-      grid-row: 1 / span 3;
+      grid-row: 1 / span 2;
+    }
+    .record-domain-card {
+      grid-column: 2;
     }
     #batch-step-input > .btn-row {
-      grid-column: 1 / -1;
+      grid-column: 2;
       margin-top: 0;
       justify-content: flex-end;
     }

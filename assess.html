@@ -4618,7 +4618,7 @@ function resetBatchFlow() {
 }
 
 function showBatchStep(step) {
-  document.getElementById('batch-step-input').style.display = step === 'input' ? 'block' : 'none';
+  document.getElementById('batch-step-input').style.display = step === 'input' ? '' : 'none';
   document.getElementById('batch-step-grid').style.display  = step === 'grid'  ? 'block' : 'none';
 }
 
