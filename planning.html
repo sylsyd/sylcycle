@@ -132,6 +132,27 @@
         </div>
       </details>
 
+      <div class="section">
+        <h3>Curriculum</h3>
+        <p class="sub">Same Cycle 3 spine as CycleStudio and CycleAssess. No invented LO nonsense.</p>
+        <div class="field">
+          <label>Curriculum mode</label>
+          <div class="segmented" id="curriculumModeButtons">
+            <button type="button" class="seg-btn" data-curr="ai_both">AI chooses all</button>
+            <button type="button" class="seg-btn" data-curr="manual_domain_ai_lo">Domain + AI LOs</button>
+            <button type="button" class="seg-btn" data-curr="manual_both">Teacher chooses</button>
+          </div>
+        </div>
+        <div id="domainArea" class="field hidden">
+          <label for="domainSelect">Cycle 3 domain</label>
+          <select id="domainSelect"></select>
+        </div>
+        <div id="outcomeArea" class="field hidden">
+          <label>Learning outcomes</label>
+          <div class="outcomes-box" id="outcomesBox"></div>
+        </div>
+      </div>
+
       <details class="section setup-details" id="sourceDetails" open>
         <summary>
           <div>
@@ -162,27 +183,6 @@
           <p class="tiny" style="margin-top:8px">Files are used as prompt context for AI generation. PPTX slide text is extracted in the browser. Files are not saved permanently in local storage.</p>
         </div>
       </details>
-
-      <div class="section">
-        <h3>Curriculum</h3>
-        <p class="sub">Same Cycle 3 spine as CycleStudio and CycleAssess. No invented LO nonsense.</p>
-        <div class="field">
-          <label>Curriculum mode</label>
-          <div class="segmented" id="curriculumModeButtons">
-            <button type="button" class="seg-btn" data-curr="ai_both">AI chooses all</button>
-            <button type="button" class="seg-btn" data-curr="manual_domain_ai_lo">Domain + AI LOs</button>
-            <button type="button" class="seg-btn" data-curr="manual_both">Teacher chooses</button>
-          </div>
-        </div>
-        <div id="domainArea" class="field hidden">
-          <label for="domainSelect">Cycle 3 domain</label>
-          <select id="domainSelect"></select>
-        </div>
-        <div id="outcomeArea" class="field hidden">
-          <label>Learning outcomes</label>
-          <div class="outcomes-box" id="outcomesBox"></div>
-        </div>
-      </div>
     </div>
   </section>
 
