@@ -66,7 +66,9 @@ button{cursor:pointer}
   color:var(--crimson);
   display:flex;align-items:center;justify-content:center;
   font-weight:900;letter-spacing:-.08em;
+  overflow:hidden;
 }
+.brand-badge img{width:42px;height:42px;object-fit:contain}
 .brand h1{margin:0;font-size:26px;line-height:1;font-weight:800;letter-spacing:-.035em}
 .brand h1 em{font-style:normal;color:var(--crimson)}
 .brand p{margin:6px 0 0;color:var(--muted);font-size:13px}
@@ -88,6 +90,8 @@ button{cursor:pointer}
   background:#fff;border:1px solid var(--line);
   color:var(--ink);font-weight:700;font-size:12px;
 }
+.chip svg,.small-btn svg,.small-btn img{width:16px;height:16px;flex:0 0 auto}
+.small-btn img{object-fit:contain}
 .btn,.small-btn,.mini-btn,.seg-btn{
   border:0;border-radius:14px;font-weight:800;transition:.14s ease;background:#fff;color:var(--ink);text-decoration:none;
   display:inline-flex;align-items:center;justify-content:center;
@@ -101,7 +105,7 @@ button{cursor:pointer}
 .btn.outline-crimson{background:#fff;color:var(--crimson-dark);border:1.5px solid var(--crimson-line);box-shadow:none}
 .btn.outline-crimson:hover{background:var(--crimson-soft)}
 .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
-.small-btn{padding:9px 12px;font-size:12px}
+.small-btn{padding:9px 12px;font-size:12px;gap:7px}
 .small-btn.export{background:var(--crimson);border-color:var(--crimson);color:#fff}
 .small-btn.export:hover{background:var(--crimson-dark)}
 .small-btn.danger,.mini-btn.danger{color:var(--danger)}
