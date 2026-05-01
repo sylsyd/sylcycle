@@ -6,8 +6,8 @@
 - `planning.html`
 - `assess.html`
 
-Studio and Planner read `window.CYCLE3_DOMAIN_LIBRARY` directly.
+Studio, Planner, and Assess read `window.CYCLE3_DOMAIN_LIBRARY` directly, so the three tools use the same English-facing domain names and learning outcomes.
 
-Assess also reads `window.CYCLE3_DOMAIN_LIBRARY`, then uses `window.CYCLE3_ASSESS_DOMAIN_MAP` from the same file to convert Studio/Planner domain names into the French-labelled domain names used in CycleAssess.
+Assess normalizes older saved records that used French-labelled domain names so existing assessment history still counts under the matching shared domain.
 
 When changing curriculum domains, subdomains, or outcomes, update the shared asset first so the three tools stay aligned.

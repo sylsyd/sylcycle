@@ -127,16 +127,16 @@
         <div class="section-label">Domain</div>
         <select id="batch-domain-select" style="font-size:13.5px;padding:9px 12px" onchange="onBatchDomainChange()">
           <option value="">Identify automatically</option>
-          <option value="Mathématiques">Mathématiques</option>
-          <option value="Français">Français</option>
-          <option value="Sciences et technologie">Sciences et technologie</option>
-          <option value="Histoire-Géographie">Histoire-Géographie</option>
-          <option value="EMC">EMC</option>
-          <option value="Arts plastiques">Arts plastiques</option>
-          <option value="Éducation musicale">Éducation musicale</option>
-          <option value="EPS">EPS</option>
+          <option value="Mathematics">Mathematics</option>
+          <option value="French">French</option>
           <option value="English Literacy">English Literacy</option>
-        <option value="Langues vivantes">Langues vivantes</option>
+          <option value="Science and Technology">Science and Technology</option>
+          <option value="History and Geography">History and Geography</option>
+          <option value="Civics and Moral Education">Civics and Moral Education</option>
+          <option value="Visual Arts">Visual Arts</option>
+          <option value="Music">Music</option>
+          <option value="PE">PE</option>
+          <option value="Modern Languages">Modern Languages</option>
         </select>
         <div class="outcome-picker" id="batch-outcome-picker">
           <div class="outcome-divider">Learning outcomes</div>
@@ -250,17 +250,17 @@
     <div class="card">
       <div class="section-label">Domain</div>
       <select id="domain-select" style="font-size:13.5px;padding:9px 12px" onchange="onDomainChange()">
-        <option value="">Identify automatically</option>
-        <option value="Mathématiques">Mathématiques</option>
-        <option value="Français">Français</option>
-        <option value="Sciences et technologie">Sciences et technologie</option>
-        <option value="Histoire-Géographie">Histoire-Géographie</option>
-        <option value="EMC">EMC</option>
-        <option value="Arts plastiques">Arts plastiques</option>
-        <option value="Éducation musicale">Éducation musicale</option>
-        <option value="EPS">EPS</option>
-        <option value="English Literacy">English Literacy</option>
-        <option value="Langues vivantes">Langues vivantes</option>
+          <option value="">Identify automatically</option>
+          <option value="Mathematics">Mathematics</option>
+          <option value="French">French</option>
+          <option value="English Literacy">English Literacy</option>
+          <option value="Science and Technology">Science and Technology</option>
+          <option value="History and Geography">History and Geography</option>
+          <option value="Civics and Moral Education">Civics and Moral Education</option>
+          <option value="Visual Arts">Visual Arts</option>
+          <option value="Music">Music</option>
+          <option value="PE">PE</option>
+          <option value="Modern Languages">Modern Languages</option>
       </select>
       <div class="outcome-picker" id="outcome-picker">
         <div class="outcome-divider">Learning outcomes</div>
@@ -381,17 +381,17 @@
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
         <div id="result-domain" class="domain-chip" style="margin-bottom:0"></div>
         <select id="domain-override" onchange="overrideDomain(this.value)" style="font-size:11.5px;padding:3px 9px;border:1.5px solid var(--border);border-radius:20px;background:var(--bg);color:var(--ink-mid);font-family:'Sora',sans-serif;cursor:pointer;outline:none">
-          <option value="">Change domain…</option>
-          <option value="Mathématiques">Mathématiques</option>
-          <option value="Français">Français</option>
-          <option value="Sciences et technologie">Sciences et technologie</option>
-          <option value="Histoire-Géographie">Histoire-Géographie</option>
-          <option value="EMC">EMC</option>
-          <option value="Arts plastiques">Arts plastiques</option>
-          <option value="Éducation musicale">Éducation musicale</option>
-          <option value="EPS">EPS</option>
+          <option value="">Change domain...</option>
+          <option value="Mathematics">Mathematics</option>
+          <option value="French">French</option>
           <option value="English Literacy">English Literacy</option>
-        <option value="Langues vivantes">Langues vivantes</option>
+          <option value="Science and Technology">Science and Technology</option>
+          <option value="History and Geography">History and Geography</option>
+          <option value="Civics and Moral Education">Civics and Moral Education</option>
+          <option value="Visual Arts">Visual Arts</option>
+          <option value="Music">Music</option>
+          <option value="PE">PE</option>
+          <option value="Modern Languages">Modern Languages</option>
         </select>
       </div>
       <div id="outcome-list" class="outcome-list"></div>
@@ -644,7 +644,6 @@
 <script src="assets/storage.js"></script>
 <script>
 const CYCLESTUDIO_DOMAIN_LIBRARY = window.CYCLE3_DOMAIN_LIBRARY || {};
-const CYCLESTUDIO_TO_CYCLEASSESS_DOMAIN_MAP = window.CYCLE3_ASSESS_DOMAIN_MAP || {};
 
 function cloneDomainEntry(entry) {
   if (Array.isArray(entry)) return entry.slice();
@@ -663,8 +662,8 @@ function flattenDomainEntry(entry) {
 }
 
 const CYCLE3_DOMAIN_STRUCTURE = Object.fromEntries(
-  Object.entries(CYCLESTUDIO_DOMAIN_LIBRARY).map(([studioDomain, entry]) => [
-    CYCLESTUDIO_TO_CYCLEASSESS_DOMAIN_MAP[studioDomain] || studioDomain,
+  Object.entries(CYCLESTUDIO_DOMAIN_LIBRARY).map(([domain, entry]) => [
+    domain,
     cloneDomainEntry(entry)
   ])
 );
@@ -715,22 +714,29 @@ function renderOutcomeOptions(domain, optsId, prefix, toggleFnName) {
 
 const APPROVED_DOMAIN_LIST = Object.keys(CYCLE3_DOMAIN_STRUCTURE);
 const APPROVED_DOMAIN_ALIASES = {
-  'langues vivantes': 'Langues vivantes',
-  'langues vivantes etrangeres ou regionales': 'Langues vivantes',
-  'langues vivantes etrangeres': 'Langues vivantes',
-  'langue vivante': 'Langues vivantes',
-  'mathematiques': 'Mathématiques',
-  'francais': 'Français',
-  'francais langue etrangere': 'Langues vivantes',
-  'francais langue vivante': 'Langues vivantes',
-  'education musicale': 'Éducation musicale',
-  'histoire geographie': 'Histoire-Géographie',
+  'mathematiques': 'Mathematics',
+  'maths': 'Mathematics',
+  'francais': 'French',
+  'french': 'French',
   'english literacy': 'English Literacy',
   'anglais': 'English Literacy',
-  'emc': 'EMC',
-  'eps': 'EPS',
-  'arts plastiques': 'Arts plastiques',
-  'sciences et technologie': 'Sciences et technologie'
+  'sciences et technologie': 'Science and Technology',
+  'science and technology': 'Science and Technology',
+  'histoire geographie': 'History and Geography',
+  'history and geography': 'History and Geography',
+  'emc': 'Civics and Moral Education',
+  'civics and moral education': 'Civics and Moral Education',
+  'arts plastiques': 'Visual Arts',
+  'visual arts': 'Visual Arts',
+  'education musicale': 'Music',
+  'music': 'Music',
+  'eps': 'PE',
+  'pe': 'PE',
+  'langues vivantes': 'Modern Languages',
+  'langues vivantes etrangeres ou regionales': 'Modern Languages',
+  'langues vivantes etrangeres': 'Modern Languages',
+  'langue vivante': 'Modern Languages',
+  'modern languages': 'Modern Languages'
 };
 
 function normalizeCurriculumText(value = '') {
@@ -755,11 +761,61 @@ function getApprovedDomainListText() {
   return APPROVED_DOMAIN_LIST.join(', ');
 }
 
+function populateDomainSelectOptions(selectId, placeholder) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  select.innerHTML = `<option value="">${esc(placeholder)}</option>` +
+    APPROVED_DOMAIN_LIST.map(domain => `<option value="${escAttr(domain)}">${esc(domain)}</option>`).join('');
+}
+
+function populateAllDomainSelects() {
+  populateDomainSelectOptions('domain-select', 'Identify automatically');
+  populateDomainSelectOptions('batch-domain-select', 'Identify automatically');
+  populateDomainSelectOptions('domain-override', 'Change domain...');
+}
+
 function normalizeApprovedDomain(value = '') {
   const raw = String(value || '').trim();
   if (!raw) return '';
   const normalized = normalizeCurriculumText(raw);
-  return APPROVED_DOMAIN_ALIASES[normalized] || raw;
+  if (APPROVED_DOMAIN_ALIASES[normalized]) return APPROVED_DOMAIN_ALIASES[normalized];
+  return APPROVED_DOMAIN_LIST.find(domain => normalizeCurriculumText(domain) === normalized) || raw;
+}
+
+function normalizeStoredDomain(value = '') {
+  const domain = normalizeApprovedDomain(value);
+  return APPROVED_DOMAIN_LIST.includes(domain) ? domain : String(value || '').trim();
+}
+
+function normalizeStoredAssessmentData(data) {
+  if (!data || typeof data !== 'object') return { students: {} };
+  data.students = data.students && typeof data.students === 'object' ? data.students : {};
+  Object.values(data.students).forEach(student => {
+    if (!student || typeof student !== 'object') return;
+    if (Array.isArray(student.assessments)) {
+      student.assessments.forEach(assessment => {
+        if (assessment && assessment.domain) assessment.domain = normalizeStoredDomain(assessment.domain);
+      });
+    }
+    if (student.domainComments && typeof student.domainComments === 'object') {
+      const nextComments = {};
+      Object.entries(student.domainComments).forEach(([domain, comment]) => {
+        nextComments[normalizeStoredDomain(domain)] = comment;
+      });
+      student.domainComments = nextComments;
+    }
+  });
+  if (Array.isArray(data.sessions)) {
+    data.sessions.forEach(session => {
+      if (session && session.domain) session.domain = normalizeStoredDomain(session.domain);
+      if (session && Array.isArray(session.students)) {
+        session.students.forEach(entry => {
+          if (entry && entry.domain) entry.domain = normalizeStoredDomain(entry.domain);
+        });
+      }
+    });
+  }
+  return data;
 }
 
 function getAllowedOutcomeEntries(domain) {
@@ -906,8 +962,8 @@ ${getApprovedDomainListText()}
 
 Critical school rule:
 - English spelling, vocabulary, reading, writing, grammar and language arts ALWAYS belong to "English Literacy".
-- "Langues vivantes" is ONLY for foreign-language learning.
-- French literacy belongs to "Français".
+- "Modern Languages" is ONLY for foreign-language learning.
+- French literacy belongs to "French".
 ${descriptionLine}
 
 Return ONLY valid JSON:
@@ -944,8 +1000,8 @@ const DB = {
   },
 
   loadData() {
-    if (window.SylCycleStorage) return SylCycleStorage.readJson(this.KEY, {students:{}});
-    try { return JSON.parse(localStorage.getItem(this.KEY) || '{"students":{}}'); }
+    if (window.SylCycleStorage) return normalizeStoredAssessmentData(SylCycleStorage.readJson(this.KEY, {students:{}}));
+    try { return normalizeStoredAssessmentData(JSON.parse(localStorage.getItem(this.KEY) || '{"students":{}}')); }
     catch(e) { return {students:{}}; }
   },
   saveData(data) {
@@ -1102,6 +1158,7 @@ const STATUS_LABEL = { met: 'Met', wt: 'Working Towards', nm: 'Not Met' };
    INIT
 ══════════════════════════════════════════ */
 function initApp() {
+  populateAllDomainSelects();
   const settings = DB.loadSettings();
   if (settings.apiKey) {
     window.__key = settings.apiKey;
@@ -4274,7 +4331,7 @@ function showBatchGrid(options = {}) {
   document.getElementById('batch-activity-summary').textContent = batchContext.description || '';
   document.getElementById('batch-domain-chip').textContent = '📚 ' + batchContext.domain;
   const warnEl = document.getElementById('batch-domain-warn');
-  warnEl.style.display = batchContext.domain === 'Langues vivantes' ? 'flex' : 'none';
+  warnEl.style.display = batchContext.domain === 'Modern Languages' ? 'flex' : 'none';
   renderBatchOutcomes();
 
   if (!preserveStatuses) batchStudentStatuses = {};
