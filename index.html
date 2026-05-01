@@ -41,7 +41,7 @@
     }
 
     header {
-      padding: 16px 28px;
+      padding: 14px 28px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -59,13 +59,21 @@
       box-shadow: 0 2px 8px rgba(20,65,140,0.08);
       overflow: hidden;
     }
-    .header-badge img { width: 54px; height: 54px; object-fit: contain; }
+    .header-badge img { width: 58px; height: 58px; object-fit: cover; }
+    .brand-copy { display: flex; flex-direction: column; gap: 4px; }
     .brand-name {
       font-family: Merriweather, Georgia, serif;
       font-size: 22px; font-weight: 700;
       letter-spacing: -0.03em; color: var(--ink);
+      line-height: 1.05;
     }
     .brand-name span { color: var(--accent); }
+    .brand-subtitle {
+      font-size: 12px;
+      color: var(--ink-soft);
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
     .header-right {
       display: flex; align-items: center; gap: 14px;
       font-size: 12px; color: var(--ink-soft);
@@ -89,6 +97,10 @@
       align-items: center;
       justify-content: center;
       padding: 48px 24px;
+    }
+    #appView {
+      align-items: flex-start;
+      padding-top: 72px;
     }
 
     /* ── Login card ── */
@@ -142,10 +154,11 @@
       max-width: 860px;
     }
     .app-card {
+      position: relative;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 24px;
-      padding: 32px 28px 28px;
+      padding: 28px 26px 24px;
       text-decoration: none;
       display: flex;
       flex-direction: column;
@@ -154,6 +167,15 @@
       transition: all 0.2s ease;
       cursor: pointer;
     }
+    .app-card::before {
+      content: '';
+      width: 32px;
+      height: 6px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+      background: var(--accent-lt);
+      border: 1px solid var(--border);
+    }
     .app-card:hover {
       transform: translateY(-4px);
       box-shadow: var(--shadow-lg);
@@ -161,22 +183,22 @@
     .card-label {
       font-size: 11px; font-weight: 800;
       text-transform: uppercase; letter-spacing: 0.12em;
-      margin-bottom: 8px;
+      margin-bottom: 7px;
     }
     .card-title {
       font-family: Merriweather, Georgia, serif;
       font-size: 24px; font-weight: 700;
       letter-spacing: -0.03em; line-height: 1.1;
-      margin-bottom: 10px;
+      margin-bottom: 9px;
     }
     .card-desc {
       font-size: 13px; color: var(--ink-soft);
-      line-height: 1.6; flex: 1; margin-bottom: 24px;
+      line-height: 1.58; flex: 1; margin-bottom: 20px;
     }
     .card-cta {
       display: inline-flex; align-items: center; gap: 7px;
       font-size: 13px; font-weight: 800; letter-spacing: -0.01em;
-      padding: 11px 20px; border-radius: 14px;
+      padding: 10px 18px; border-radius: 13px;
       cursor: pointer; font-family: Inter, sans-serif;
       transition: all 0.15s ease; border: 1.5px solid;
     }
@@ -184,23 +206,26 @@
     .app-card:hover .card-cta .arrow { transform: translateX(3px); }
 
     .card-plan .card-label { color: #c0272d; }
+    .card-plan::before { background: #fff0f0; border-color: #e8a0a0; }
     .card-plan .card-cta { background: #fff0f0; color: #c0272d; border-color: #e8a0a0; }
     .card-plan:hover { border-color: #e8a0a0; }
 
     .card-create .card-label { color: #3a82c4; }
+    .card-create::before { background: #e3f0ff; border-color: #adc7f7; }
     .card-create .card-title { color: #3a82c4; }
     .card-create .card-cta { background: #e3f0ff; color: #3a82c4; border-color: #adc7f7; }
     .card-create:hover { border-color: #adc7f7; }
 
     .card-assess .card-label { color: #2060a0; }
+    .card-assess::before { background: var(--accent-lt); border-color: var(--border-strong); }
     .card-assess .card-title { color: #2060a0; }
     .card-assess .card-cta { background: var(--accent-lt); color: #2060a0; border-color: var(--border-strong); }
     .card-assess:hover { border-color: var(--border-strong); }
 
     footer {
-      text-align: center; padding: 20px;
-      font-size: 11px; color: var(--ink-soft);
-      font-weight: 600; letter-spacing: 0.02em;
+      text-align: center; padding: 14px 20px;
+      font-size: 10px; color: rgba(90,114,147,.75);
+      font-weight: 600; letter-spacing: 0.01em;
     }
 
     .hidden { display: none !important; }
@@ -216,9 +241,12 @@
 <header>
   <div class="header-brand">
     <div class="header-badge">
-      <img src="assets/cycle-suite-logo.png" alt="Cycle Suite">
+      <img src="assets/cycle-suite-mark.png" alt="Cycle Suite">
     </div>
-    <div class="brand-name">Cycle <span>Suite</span></div>
+    <div class="brand-copy">
+      <div class="brand-name">Cycle <span>Suite</span></div>
+      <div class="brand-subtitle">Planning, resources, and assessment for Cycle 3</div>
+    </div>
   </div>
   <div class="header-right" id="headerRight">
     <div class="built-by">Built by<br><strong>Syl Magnin</strong></div>
