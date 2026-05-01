@@ -18,6 +18,23 @@
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; padding-bottom: var(--nav-h); }
+    body.assess-booting .screen,
+    body.assess-booting .bottom-nav {
+      display: none !important;
+    }
+    body.assess-booting::before {
+      content: "Loading CycleAssess...";
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ink-soft);
+      font-size: 13px;
+      font-weight: 700;
+      background: var(--bg);
+      z-index: 9999;
+    }
 
     /* ── Header ── */
     .app-header {
