@@ -191,8 +191,40 @@ window.CYCLE_DOMAIN_LIBRARIES = {
     "Music": {},
     "PE": {},
     "Questioning the World": {
-      "Space and Time": [],
-      "Living Things, Objects and Matter": []
+      "Questioning the World of Living Things, Matter and Objects": [
+        "Identify the three states of matter and observe changes of state",
+        "Identify a change in the state of water in everyday phenomena",
+        "Know characteristics of the living world, its interactions, diversity and functions",
+        "Identify what animals and plants need to live and grow",
+        "Observe and describe the development of animals and plants",
+        "Identify interactions between living things and their environment",
+        "Recognise simple food chains and relationships between living things",
+        "Recognise basic health behaviours linked to diet, hygiene, sleep and physical activity",
+        "Understand the function and operation of simple manufactured objects",
+        "Make or use a simple technical object to answer a need",
+        "Begin to use digital tools and simple digital environments responsibly"
+      ],
+      "Questioning Space and Time": [
+        "Locate oneself and locate objects or people in familiar spaces",
+        "Use vocabulary to describe positions and movements",
+        "Produce simple representations of familiar spaces",
+        "Read simple plans, maps and representations of space",
+        "Recognise major contrasts between familiar and less familiar spaces",
+        "Situate events in relation to each other",
+        "Use tools to measure and represent time",
+        "Identify rhythms of time such as days, weeks, months and seasons",
+        "Compare ways of life at different times",
+        "Understand that lifestyles and environments change over time"
+      ],
+      "Exploring Organisations of the World": [
+        "Compare a familiar environment with other environments",
+        "Identify landscapes and ways people live in different spaces",
+        "Understand that people organise spaces to meet needs",
+        "Recognise roles of local places, services and activities",
+        "Identify how human activities transform spaces",
+        "Use documents, photographs, maps or accounts to describe places and lifestyles",
+        "Build simple geographical and historical reference points"
+      ]
     },
     "Civics and Moral Education": {},
     "Affective and Relational Education": {}
