@@ -187,7 +187,36 @@ window.CYCLE_DOMAIN_LIBRARIES = {
         "Compare information shown in simple data displays"
       ]
     },
-    "Visual Arts": {},
+    "Visual Arts": {
+      "Representing the World": [
+        "Use drawing to represent, tell, imagine or record observations",
+        "Observe and produce images of familiar objects, spaces or situations",
+        "Explore different tools, supports and gestures to represent the visible world",
+        "Transform an observed object or image through drawing, collage, modelling or photography",
+        "Compare personal productions with images and artworks"
+      ],
+      "Expression of Emotions": [
+        "Use colour, line, shape, material and gesture to express an emotion",
+        "Choose visual means to communicate a feeling, atmosphere or intention",
+        "Experiment with contrasts, textures and compositions for expressive effect",
+        "Talk about the emotions suggested by one's own work or an artwork",
+        "Respect different interpretations of an image or artwork"
+      ],
+      "Narration and Testimony through Images": [
+        "Create images to tell an event, story or personal experience",
+        "Organise images in sequence to show time, action or change",
+        "Use framing, point of view and composition to guide meaning",
+        "Combine drawing, photography, collage or digital images to build a narrative",
+        "Explain how images can inform, remember or give testimony"
+      ],
+      "Making and Exhibiting": [
+        "Carry out a visual arts project individually or with others",
+        "Adapt choices during making in response to materials, tools and intentions",
+        "Present a production and explain simple artistic choices",
+        "Look carefully at classmates' productions and give respectful feedback",
+        "Use basic visual arts vocabulary to describe work and process"
+      ]
+    },
     "Music": {},
     "PE": {},
     "Questioning the World": {
