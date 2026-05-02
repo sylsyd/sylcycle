@@ -2109,6 +2109,69 @@ function pdfDrawLessonFlowTable(pdf, cursor, rows=[]){
   });
   cursor.y += 2;
 }
+function pdfDrawSequenceMapTable(pdf, cursor, rows=[]){
+  const tableX = PDF_TEXT_EXPORT.margin;
+  const tableW = PDF_TEXT_EXPORT.contentW;
+  const cols = [
+    {label:'Week', width:18},
+    {label:'Focus', width:40},
+    {label:'Domain', width:38},
+    {label:'Lessons / activities', width:58},
+    {label:'Assessment', width:26}
+  ];
+  const padding = 2.4;
+  const headerH = 10;
+  const rowGap = 1.1;
+
+  const drawHeader = () => {
+    pdfEnsureSpace(pdf, cursor, headerH + 6);
+    let x = tableX;
+    pdf.setFillColor(...PDF_TEXT_EXPORT.colours.soft);
+    pdf.setDrawColor(...PDF_TEXT_EXPORT.colours.line);
+    pdf.rect(tableX, cursor.y, tableW, headerH, 'FD');
+    cols.forEach(col => {
+      pdf.line(x, cursor.y, x, cursor.y + headerH);
+      pdfSetFont(pdf, 8.8, 'bold', PDF_TEXT_EXPORT.colours.ink);
+      pdf.text(col.label, x + padding, cursor.y + 6.5);
+      x += col.width;
+    });
+    pdf.line(tableX + tableW, cursor.y, tableX + tableW, cursor.y + headerH);
+    cursor.y += headerH;
+  };
+
+  drawHeader();
+  rows.forEach((row, index) => {
+    const cells = [
+      pdfPlain(row.week || String(index + 1)),
+      pdfPlain(row.focus || ''),
+      pdfPlain(row.domain || ''),
+      pdfPlain(row.lessons || ''),
+      pdfPlain(row.assessment || '')
+    ];
+    const wrapped = cells.map((text, cellIndex) => {
+      pdfSetFont(pdf, cellIndex === 0 ? 8.8 : 8.4, cellIndex === 0 ? 'bold' : 'normal', PDF_TEXT_EXPORT.colours.ink);
+      return pdf.splitTextToSize(text || ' ', cols[cellIndex].width - padding * 2);
+    });
+    const rowH = Math.max(14, ...wrapped.map(lines => lines.length * pdfLineHeight(8.4, 1.2) + padding * 2));
+    if(cursor.y + rowH > PDF_TEXT_EXPORT.h - PDF_TEXT_EXPORT.margin){
+      pdf.addPage();
+      cursor.y = PDF_TEXT_EXPORT.margin + 5;
+      drawHeader();
+    }
+    let x = tableX;
+    pdf.setDrawColor(...PDF_TEXT_EXPORT.colours.line);
+    pdf.rect(tableX, cursor.y, tableW, rowH);
+    cols.forEach((col, cellIndex) => {
+      pdf.line(x, cursor.y, x, cursor.y + rowH);
+      pdfSetFont(pdf, cellIndex === 0 ? 8.8 : 8.4, cellIndex === 0 ? 'bold' : 'normal', PDF_TEXT_EXPORT.colours.ink);
+      pdf.text(wrapped[cellIndex], x + padding, cursor.y + padding + 3.1, {lineHeightFactor:1.2});
+      x += col.width;
+    });
+    pdf.line(tableX + tableW, cursor.y, tableX + tableW, cursor.y + rowH);
+    cursor.y += rowH + rowGap;
+  });
+  cursor.y += 2;
+}
 function pdfLessonPlan(pdf, cursor, plan){
   pdfHeader(pdf, cursor, plan, 'Lesson plan');
   pdfCurriculum(pdf, cursor, plan);
@@ -2170,18 +2233,7 @@ function pdfSequencePlan(pdf, cursor, plan){
   pdfTextSection(pdf, cursor, 'Overview', plan.overview, true);
   pdfTextSection(pdf, cursor, 'Term / block', plan.termOrBlock);
   if((plan.weeks || []).length){
-    pdfSection(pdf, cursor, 'Sequence map', () => {
-      (plan.weeks || []).forEach((row, index) => {
-        pdfEnsureSpace(pdf, cursor, 22);
-        pdfSetFont(pdf, 10.5, 'bold', PDF_TEXT_EXPORT.colours.ink);
-        pdf.text(pdfPlain(`${row.week || 'Week ' + (index + 1)}${row.domain ? ' · ' + row.domain : ''}`), PDF_TEXT_EXPORT.margin, cursor.y);
-        cursor.y += 5;
-        pdfWriteWrapped(pdf, cursor, `Focus: ${row.focus || ''}`, {x:PDF_TEXT_EXPORT.margin + 3, width:PDF_TEXT_EXPORT.contentW - 3, size:9.6, gapAfter:1});
-        pdfWriteWrapped(pdf, cursor, `Lessons / activities: ${row.lessons || ''}`, {x:PDF_TEXT_EXPORT.margin + 3, width:PDF_TEXT_EXPORT.contentW - 3, size:9.6, gapAfter:1});
-        pdfWriteWrapped(pdf, cursor, `Assessment: ${row.assessment || ''}`, {x:PDF_TEXT_EXPORT.margin + 3, width:PDF_TEXT_EXPORT.contentW - 3, size:9.4, colour:PDF_TEXT_EXPORT.colours.muted, gapAfter:1});
-        cursor.y += 2;
-      });
-    });
+    pdfSection(pdf, cursor, 'Sequence map', () => pdfDrawSequenceMapTable(pdf, cursor, plan.weeks || []));
   }
   pdfTextSection(pdf, cursor, 'Coverage notes', plan.coverageNotes, true);
   pdfTextSection(pdf, cursor, 'CycleAssess hook', plan.cycleAssessHooks?.coverageNotes);
