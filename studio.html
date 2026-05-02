@@ -595,6 +595,12 @@ const CYCLE_YEAR_LEVELS = {
   cycle2:['CP','CE1','CE2'],
   cycle3:['CM1','CM2','CM1/CM2']
 };
+const DIFFICULTY_LEVELS = {
+  easy: 'Easy',
+  moderate: 'Moderate',
+  challenging: 'Challenging',
+  advanced: 'Advanced'
+};
 const CYCLE_DOMAIN_LIBRARIES = window.CYCLE_DOMAIN_LIBRARIES || {cycle3:window.CYCLE3_DOMAIN_LIBRARY || {}};
 let currentCycle = 'cycle3';
 let DOMAIN_LIBRARY = CYCLE_DOMAIN_LIBRARIES.cycle3 || {};
@@ -617,6 +623,36 @@ function setCurrentCycle(cycle){
 function getStudioYearLevel(){
   return qs('studioYearLevel')?.value || getCycleYears()[0] || 'CM1';
 }
+function difficultyYearKey(year=getStudioYearLevel()){
+  return String(year || 'CM1').toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+function parseDifficulty(value=''){
+  const raw = String(value || '').trim();
+  const legacy = {
+    easy: 'easy',
+    moderate: 'moderate',
+    challenging: 'challenging',
+    advanced: 'advanced'
+  };
+  if(legacy[raw]) return { yearKey: difficultyYearKey(), level: legacy[raw] };
+  const match = raw.match(/^([a-z0-9]+)_(easy|moderate|challenging|advanced)$/);
+  return match ? { yearKey: match[1], level: match[2] } : { yearKey: difficultyYearKey(), level: 'moderate' };
+}
+function difficultyValueFor(year=getStudioYearLevel(), level='moderate'){
+  const safeLevel = DIFFICULTY_LEVELS[level] ? level : 'moderate';
+  return `${difficultyYearKey(year)}_${safeLevel}`;
+}
+function populateDifficultyOptions(preferredValue=''){
+  const select = qs('difficulty');
+  if(!select) return;
+  const year = getStudioYearLevel();
+  const parsed = parseDifficulty(preferredValue || select.value);
+  const selectedLevel = DIFFICULTY_LEVELS[parsed.level] ? parsed.level : 'moderate';
+  select.innerHTML = Object.entries(DIFFICULTY_LEVELS)
+    .map(([level, label]) => `<option value="${esc(difficultyValueFor(year, level))}">${esc(year)} - ${esc(label)}</option>`)
+    .join('');
+  select.value = difficultyValueFor(year, selectedLevel);
+}
 function defaultStudioDomain(){
   if(DOMAIN_LIBRARY['English Literacy']) return 'English Literacy';
   if(DOMAIN_LIBRARY['Literacy']) return 'Literacy';
@@ -632,6 +668,19 @@ function studioCyclePromptGuidance(){
     return `Age and cycle fit: This is Cycle 2 (${year}). Keep the resource suitable for early primary learners. Use clear steps, short readable text, strong scaffolding, concrete examples and tasks that fit CP/CE1/CE2 independence.`;
   }
   return `Age and cycle fit: This is Cycle 3 (${year}). Keep the resource suitable for upper-primary learners, with clear instructions, purposeful challenge and enough scaffolding for classroom use.`;
+}
+function studioAgeGroupText(){
+  switch(getStudioYearLevel()){
+    case 'PS': return '3 to 4 year olds';
+    case 'MS': return '4 to 5 year olds';
+    case 'GS': return '5 to 6 year olds';
+    case 'CP': return '6 to 7 year olds';
+    case 'CE1': return '7 to 8 year olds';
+    case 'CE2': return '8 to 9 year olds';
+    case 'CM2': return '10 to 11 year olds';
+    case 'CM1/CM2': return '9 to 11 year olds';
+    default: return '9 to 10 year olds';
+  }
 }
 function populateStudioCycleSelect(){
   const select = qs('studioCycleSelect');
@@ -650,6 +699,7 @@ function applyStudioCycle(cycle, preferredYear=''){
   setCurrentCycle(cycle);
   populateStudioCycleSelect();
   populateStudioYearLevels(preferredYear);
+  populateDifficultyOptions(qs('difficulty')?.value || readStoredPrefs().difficulty || '');
   populateDomains();
   const domainSelect = qs('domainSelect');
   if(domainSelect && !DOMAIN_LIBRARY[domainSelect.value]){
@@ -954,15 +1004,12 @@ function stripTaskAnswers(worksheet){
 }
 
 function normaliseDifficulty(val=''){
-  const map = {
-    easy: 'cm1_easy',
-    moderate: 'cm1_moderate',
-    challenging: 'cm1_challenging',
-    advanced: 'cm1_advanced'
-  };
-  const next = map[val] || val || 'cm1_moderate';
-  const allowed = new Set(['cm1_easy','cm1_moderate','cm1_challenging','cm1_advanced','cm2_easy','cm2_moderate','cm2_challenging','cm2_advanced']);
-  return allowed.has(next) ? next : 'cm1_moderate';
+  const parsed = parseDifficulty(val);
+  const currentYearKey = difficultyYearKey();
+  const cycleYearKeys = getCycleYears().map(year => difficultyYearKey(year));
+  const yearKey = cycleYearKeys.includes(parsed.yearKey) ? parsed.yearKey : currentYearKey;
+  const level = DIFFICULTY_LEVELS[parsed.level] ? parsed.level : 'moderate';
+  return `${yearKey}_${level}`;
 }
 
 function esc(str=''){
@@ -1031,6 +1078,15 @@ function bindPrefInputs(){
     cycleSelect.dataset.cycleBound = '1';
     cycleSelect.addEventListener('change', () => {
       applyStudioCycle(cycleSelect.value, qs('studioYearLevel')?.value || '');
+      savePrefs();
+      syncToggles();
+    });
+  }
+  const yearSelect = qs('studioYearLevel');
+  if(yearSelect && yearSelect.dataset.yearBound !== '1'){
+    yearSelect.dataset.yearBound = '1';
+    yearSelect.addEventListener('change', () => {
+      applyStudioCycle(currentCycle, yearSelect.value || '');
       savePrefs();
       syncToggles();
     });
@@ -1549,15 +1605,17 @@ function fileToDataUrl(file){
 }
 
 function difficultyInstruction(val){
-  switch(val){
-    case 'cm1_easy': return 'Create a very accessible worksheet for CM1 students. Keep instructions clear, language simple, scaffolding strong and cognitive load light.';
-    case 'cm1_challenging': return 'Create a challenging worksheet for confident CM1 students. Require stronger inference, precision and independence without becoming absurdly hard.';
-    case 'cm1_advanced': return 'Create an advanced worksheet for high-attaining CM1 students. Push complexity, reasoning, depth and writing quality while staying age-appropriate.';
-    case 'cm2_easy': return 'Create an accessible worksheet for CM2 students who still need support. Keep expectations age-appropriate for CM2, but provide strong scaffolding and very clear wording.';
-    case 'cm2_moderate': return 'Create a solid moderate-difficulty worksheet for mainstream CM2 students.';
-    case 'cm2_challenging': return 'Create a challenging worksheet for confident CM2 students. Expect stronger independence, sharper reasoning and more sustained responses.';
-    case 'cm2_advanced': return 'Create an advanced worksheet for high-attaining CM2 students. Push complexity, reasoning, depth and precision while staying age-appropriate.';
-    default: return 'Create a solid moderate-difficulty worksheet for mainstream CM1 students.';
+  const parsed = parseDifficulty(normaliseDifficulty(val));
+  const year = getStudioYearLevel();
+  switch(parsed.level){
+    case 'easy':
+      return `Create a very accessible worksheet for ${year} students. Keep instructions clear, language simple, scaffolding strong and cognitive load light.`;
+    case 'challenging':
+      return `Create a challenging worksheet for confident ${year} students. Require stronger thinking, precision and independence while staying age-appropriate.`;
+    case 'advanced':
+      return `Create an advanced worksheet for high-attaining ${year} students. Push complexity, reasoning, depth and precision while staying age-appropriate.`;
+    default:
+      return `Create a solid moderate-difficulty worksheet for mainstream ${year} students.`;
   }
 }
 
@@ -3809,7 +3867,7 @@ function worksheetImageEditorHtml(img, idx){
 }
 function buildTaskImagePrompt(task, idx){
   const title = cleanText(state.worksheet?.title || 'Worksheet activity');
-  const level = String(qs('difficulty')?.value || 'cm1_moderate').startsWith('cm2') ? '10 to 11 year olds' : '9 to 10 year olds';
+  const level = studioAgeGroupText();
   const parts = [
     'Create a clean, child-friendly educational illustration for a primary school worksheet.',
     `Worksheet title: ${title}.`,
@@ -5179,7 +5237,7 @@ normaliseWorksheet = function(result){
 
 function buildWorksheetHeaderImagePrompt(){
   const title = cleanText(state.worksheet?.title || 'Worksheet activity');
-  const level = String(qs('difficulty')?.value || 'cm1_moderate').startsWith('cm2') ? '10 to 11 year olds' : '9 to 10 year olds';
+  const level = studioAgeGroupText();
   return [
     'Create a clean, child-friendly educational illustration for a primary school worksheet header.',
     `Worksheet title: ${title}.`,
@@ -5888,9 +5946,9 @@ applySnapshot = function(saved){
   qs('modelName').value = f.modelName || qs('modelName').value;
   qs('outputMode').value = f.outputMode || 'student';
   qs('worksheetBrief').value = f.worksheetBrief || '';
-  qs('difficulty').value = normaliseDifficulty(f.difficulty || 'cm1_moderate');
   qs('questionCount').value = f.questionCount || '6';
   applyStudioCycle(snapshotCycle, snapshotYear);
+  qs('difficulty').value = normaliseDifficulty(f.difficulty || saved.difficulty || 'moderate');
   const savedDomain = canonicaliseDomain(f.domainSelect || state.worksheet?.domain || '') || defaultStudioDomain();
   qs('domainSelect').value = savedDomain;
   if(state.worksheet) state.worksheet.domain = canonicaliseDomain(state.worksheet.domain || savedDomain) || savedDomain;
@@ -5927,7 +5985,7 @@ startNewResource = function(){
   saveEditorAccordionState();
   qs('worksheetBrief').value = '';
   qs('templateText').value = '';
-  qs('difficulty').value = 'cm1_moderate';
+  populateDifficultyOptions('moderate');
   qs('questionCount').value = '6';
   qs('domainSelect').selectedIndex = 0;
   if(qs('imageUsage')) qs('imageUsage').value = DEFAULT_IMAGE_USAGE;
