@@ -119,7 +119,7 @@ window.CYCLE_DOMAIN_LIBRARIES = {
     "Affective and Relational Education": {}
   },
   cycle2: {
-    "French": {
+    "Literacy": {
       "Reading": [
         "Identify words with increasing ease",
         "Read aloud with accuracy, fluency and appropriate expression",
@@ -187,7 +187,6 @@ window.CYCLE_DOMAIN_LIBRARIES = {
         "Compare information shown in simple data displays"
       ]
     },
-    "Modern Languages": {},
     "Visual Arts": {},
     "Music": {},
     "PE": {},

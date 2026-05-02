@@ -24,10 +24,10 @@ The last stable build before Cycle 1 and Cycle 2 work is recorded in `docs/stabl
 - Start with `planning.html` only.
 - The first code move is a preference shell: Planner can store a preferred teaching cycle, switch the year-level dropdown between PS/MS/GS, CP/CE1/CE2, and CM1/CM2 options, and ask first-time users to choose a cycle.
 - The second code move adds a domain/subdomain structure for Cycle 1 and Cycle 2 in `assets/cycle-domain-library.js`, with outcome lists intentionally left empty until the official outcome text is imported.
-- The first outcome import fills Cycle 1 language/mathematics and Cycle 2 French/mathematics from the 2025 BO programmes. Other Cycle 1 and Cycle 2 areas remain empty until their official programme sources are imported separately.
+- The first outcome import fills Cycle 1 language/mathematics and Cycle 2 literacy/mathematics from the 2025 BO programmes. Other Cycle 1 and Cycle 2 areas remain empty until their official programme sources are imported separately.
 - Planner may generate for Cycle 1 and Cycle 2 only from domains whose official outcomes have been imported. Empty domains remain visible as pending but are disabled in the domain picker.
 - Keep the existing Cycle 3 library working as-is while Cycle 1 and Cycle 2 data are added.
 - Store the user's preferred cycle. It is fine to remember the last selected year level too, as long as the year-level dropdown remains easy to change each time.
 - Keep UI names English-facing, matching Studio and Planner style, while preserving a clear source trail back to the official French programme names.
-- Future naming pass: rename the Cycle 2 `French` domain to `Literacy` or `English Literacy` for the app's English-teacher workflow, and remove `Modern Languages` if it is not useful for Cycle Suite's scope.
+- Cycle 2 uses the English-facing domain name `Literacy` for the official French programme source, because the app workflow is for English teachers. `Modern Languages` is not included in Planner's Cycle 2 app scope.
 - Add compatibility carefully if existing saved plans mention Cycle 3-only defaults.

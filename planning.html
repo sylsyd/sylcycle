@@ -951,6 +951,7 @@ function scoreTextAgainstTokens(textNorm, tokens){
 function canonicalDomain(value=''){
   const raw = String(value || '').trim();
   if(!raw) return '';
+  if(currentCycle === 'cycle2' && raw === 'French') return 'Literacy';
   if(DOMAIN_NAMES.includes(raw)) return raw;
   const norm = normaliseForMatch(raw);
   return DOMAIN_NAMES.find(name => normaliseForMatch(name) === norm) || DOMAIN_NAMES.find(name => normaliseForMatch(name).includes(norm) || norm.includes(normaliseForMatch(name))) || '';
@@ -959,6 +960,7 @@ function domainKeywordSeed(domain){
   switch(domain){
     case 'Science and Technology': return ['science','scientific','light','shadow','shadows','source','sources','torch','opaque','transparent','translucent','energy','sound','electricity','force','motion','material','materials','experiment','investigation','observe','observations','model'];
     case 'English Literacy': return ['reading','read','writing','write','sentence','grammar','spelling','punctuation','vocabulary','inference','comprehension','text','author'];
+    case 'Literacy': return ['reading','read','writing','write','sentence','grammar','spelling','punctuation','vocabulary','inference','comprehension','text','oral','speak','speaking'];
     case 'Mathematics': return ['number','calculate','calculation','fraction','decimal','measure','measurement','geometry','shape','angle','area','perimeter','graph','data'];
     case 'History and Geography': return ['history','geography','map','place','settlement','land','resource','resources','timeline','travel','region','country'];
     case 'Civics and Moral Education': return ['citizen','rights','responsibilities','rules','debate','republic','discrimination','ethical'];
