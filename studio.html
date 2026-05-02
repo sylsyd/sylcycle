@@ -5713,6 +5713,8 @@ function buildHistorySignature(snapshot){
     options: Array.isArray(task.options) ? task.options : []
   })) : [];
   return JSON.stringify({
+    preferredCycle: snapshot?.preferredCycle || snapshot?.fields?.preferredCycle || 'cycle3',
+    yearLevel: snapshot?.yearLevel || snapshot?.fields?.yearLevel || '',
     title: worksheet.title || '',
     domain: worksheet.domain || '',
     outcomes: worksheet.learning_outcomes || [],
@@ -5725,6 +5727,19 @@ function buildHistorySignature(snapshot){
     displayOptions: snapshot?.displayOptions || {}
   });
 }
+
+function getSnapshotCycle(saved){
+  const f = saved?.fields || {};
+  return normaliseCycle(saved?.preferredCycle || saved?.cycle || f.preferredCycle || f.cycle || 'cycle3');
+}
+
+function getSnapshotYearLevel(saved, cycle){
+  const f = saved?.fields || {};
+  const years = getCycleYears(cycle);
+  const preferred = saved?.yearLevel || f.yearLevel || '';
+  return years.includes(preferred) ? preferred : years[0];
+}
+
 function pushHistorySnapshot(label='Snapshot'){
   if(!state.worksheet) return false;
   try{
@@ -5804,7 +5819,11 @@ window.clearHistorySnapshots = function(){
 };
 
 snapshotState = function(){
+  const snapshotCycle = currentCycle;
+  const snapshotYear = qs('studioYearLevel')?.value || getCycleYears(snapshotCycle)[0] || 'CM1';
   return {
+    preferredCycle: snapshotCycle,
+    yearLevel: snapshotYear,
     curriculumMode: state.curriculumMode,
     images: state.images,
     promptImages: state.promptImages,
@@ -5829,8 +5848,8 @@ snapshotState = function(){
       worksheetBrief: qs('worksheetBrief').value,
       difficulty: qs('difficulty').value,
       questionCount: qs('questionCount').value,
-      preferredCycle: currentCycle,
-      yearLevel: qs('studioYearLevel')?.value || getCycleYears()[0] || 'CM1',
+      preferredCycle: snapshotCycle,
+      yearLevel: snapshotYear,
       domainSelect: qs('domainSelect').value,
       templateText: qs('templateText').value,
       imageApiKey: '',
@@ -5842,6 +5861,10 @@ snapshotState = function(){
 
 applySnapshot = function(saved){
   if(!saved) return;
+  const f = saved.fields || {};
+  const snapshotCycle = getSnapshotCycle(saved);
+  const snapshotYear = getSnapshotYearLevel(saved, snapshotCycle);
+  const savedOutcomes = saved.selectedOutcomes || saved.worksheet?.learning_outcomes || [];
   state.curriculumMode = saved.curriculumMode || (saved.useAICurriculum ? 'ai_both' : 'manual_both') || 'ai_both';
   state.images = saved.images || [];
   state.promptImages = saved.promptImages || [];
@@ -5851,7 +5874,7 @@ applySnapshot = function(saved){
   state.worksheet = saved.worksheet || null;
   state.qualityCheck = saved.qualityCheck || null;
   if(state.worksheet) state.worksheet.worksheet_images = resolveWorksheetImages(state.worksheet.worksheet_images, []);
-  state.selectedOutcomes = saved.selectedOutcomes || [];
+  state.selectedOutcomes = savedOutcomes;
   state.loStatus = saved.loStatus || {};
   state.displayOptions = {
     instructions: saved.displayOptions?.instructions !== false,
@@ -5861,15 +5884,18 @@ applySnapshot = function(saved){
   };
   state.editorAccordions = saved.editorAccordions || state.editorAccordions || {};
   saveEditorAccordionState();
-  const f = saved.fields || {};
   qs('apiKey').value = f.apiKey || qs('apiKey').value;
   qs('modelName').value = f.modelName || qs('modelName').value;
   qs('outputMode').value = f.outputMode || 'student';
   qs('worksheetBrief').value = f.worksheetBrief || '';
   qs('difficulty').value = normaliseDifficulty(f.difficulty || 'cm1_moderate');
   qs('questionCount').value = f.questionCount || '6';
-  applyStudioCycle(f.preferredCycle || readStoredPrefs().preferredCycle || 'cycle3', f.yearLevel || readStoredPrefs().yearLevel || '');
-  qs('domainSelect').value = f.domainSelect || '';
+  applyStudioCycle(snapshotCycle, snapshotYear);
+  const savedDomain = canonicaliseDomain(f.domainSelect || state.worksheet?.domain || '') || defaultStudioDomain();
+  qs('domainSelect').value = savedDomain;
+  if(state.worksheet) state.worksheet.domain = canonicaliseDomain(state.worksheet.domain || savedDomain) || savedDomain;
+  state.selectedOutcomes = uniqueList(savedOutcomes);
+  if(state.worksheet && state.selectedOutcomes.length) state.worksheet.learning_outcomes = [...state.selectedOutcomes];
   qs('templateText').value = f.templateText || '';
   if(qs('imageApiKey')) qs('imageApiKey').value = f.imageApiKey || '';
   if(qs('imageModel')) qs('imageModel').value = f.imageModel || 'gpt-image-1.5';
