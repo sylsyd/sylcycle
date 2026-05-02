@@ -1574,6 +1574,21 @@ function renderAll(){
 }
 
 /* 8. AI actions */
+function cyclePromptGuidance(){
+  const year = qs('yearLevel')?.value || '';
+  if(currentCycle === 'cycle1'){
+    return `Cycle 1 age guidance for ${year}: plan for maternelle learners. Use play-based, sensory, oral, movement-rich and hands-on activities. Keep teacher talk short. Avoid worksheet-heavy lessons unless the teacher explicitly asks for a simple mark-making, sorting, matching or visual recording task. Use routines, stories, songs, manipulation, observation, role play, small-group exploration and adult-guided language. Assessment evidence should be observable: what children say, do, sort, build, draw, choose, explain or show.`;
+  }
+  if(currentCycle === 'cycle2'){
+    const yearGuidance = {
+      CP:'CP guidance: keep reading and writing demands short and highly scaffolded. Use oral rehearsal, modelling, manipulatives, images, shared reading, short written responses and frequent checking for understanding.',
+      CE1:'CE1 guidance: use short independent tasks with clear models, guided practice, partner talk and growing written explanation. Keep instructions explicit and concrete.',
+      CE2:'CE2 guidance: pupils can handle more structured reasoning, comparison and written explanation, but still need models, vocabulary support and clear steps.'
+    }[year] || 'Cycle 2 guidance: plan for early-primary learners with explicit modelling, concrete materials, oral rehearsal, guided practice and short independent tasks.';
+    return `Cycle 2 age guidance for ${year}: ${yearGuidance} Make activities practical and age-appropriate for CP/CE1/CE2. Avoid upper-primary abstraction, long lectures, long essays or mature debate formats unless simplified carefully.`;
+  }
+  return 'Cycle 3 age guidance: plan for upper-primary learners with explicit teaching, discussion, structured practice, reasoning, collaboration and increasingly independent written work.';
+}
 function buildPrompt(extra=''){
   const prefs = getPrefs();
   const brief = qs('briefInput').value.trim();
@@ -1586,6 +1601,7 @@ function buildPrompt(extra=''){
   const domain = qs('domainSelect').value;
   const schema = blankPlan(state.type);
   const usableDomains = availableDomainNames();
+  const ageGuidance = cyclePromptGuidance();
   const scaleRules = state.type === 'lesson'
     ? (isDurationAiSuggested()
       ? 'The teacher selected AI suggested lesson length. Choose a realistic lesson duration from the brief, such as 30 min, 45 min, 60 min, 75 min or 90 min. Return that concrete value in duration, not "AI suggested". Make lessonFlow timings add up sensibly to that duration.'
@@ -1607,6 +1623,7 @@ Planning type: ${state.type}
 Year: ${qs('yearLevel').value}
 Planning scale: ${getPlanningScaleText()}
 Scale rules: ${scaleRules}
+Age and cycle fit: ${ageGuidance}
 Teacher brief: ${brief || 'No brief provided; create a useful plan.'}
 Context: ${context}
 Source prompt material: ${sourceSummary}
@@ -1617,14 +1634,14 @@ When source files are attached, use them as planning context or inspiration. Fol
 Curriculum rules:
 ${curriculumRules}
 
-Must include light classroom resources where useful: key questions, exit ticket, misconceptionCheck, assessment evidence.
+Must include light classroom resources where useful: key questions, exit ticket, misconceptionCheck, assessment evidence. For Cycle 1, these resources should usually be oral, visual, practical, observational or play-based rather than formal written worksheets.
 For lesson plans, every lessonFlow row must have useful text in phase, duration, teacherRole and studentTask. Do not leave teacherRole or studentTask blank.
 If a lesson plan is based on a unit plan or source plan, align tightly to the matching lesson: objectives, activities, assessment evidence, next steps and CycleAssess hook should clearly connect to that unit sequence.
 When a lesson relies on charts, maps, picture cards, handouts or templates, list those resources clearly in Materials. If the resource is not supplied by the teacher, describe exactly what should be created in studioHandOffIdea instead of pretending it already exists.
 For geography lessons comparing water, energy, food, resources or sustainability, avoid oversimplified questions such as "Why doesn't France need NEWater?" or "countries with lots of water". Use precise place-based language: different needs, constraints, infrastructure, resources, scale and management choices.
 For unit plans, the lessons array must match the concrete lessonCount you return. No fewer, no more. Every lesson row must include title, duration, focus, activities and assessmentEvidence. Do not leave focus or activities blank. Keep lesson-sequence cells print-friendly: focus under 22 words, activities as 2-3 concise classroom actions, and evidence under 25 words. Avoid long paragraphs inside table cells. Do not use numbered-list text such as "1. ... 2. ... 3. ..." inside activities; use short sentence fragments separated by semicolons or new lines.
 For scope and sequence plans, the weeks array must match the concrete weekCount you return. Every week row must include week, focus, domain, lessons and assessment.
-If the topic is scientific, choose Science and Technology, not English Literacy. Always return a non-empty domain and 2-4 exact learningOutcomes copied from the allowed bank when curriculum mode lets AI choose them.
+If the topic is scientific, choose the science/world-discovery domain available in the selected cycle, not literacy. Always return a non-empty domain and 2-4 exact learningOutcomes copied from the allowed bank when curriculum mode lets AI choose them.
 Bigger worksheets and resource packs should be described only in the studioHandOffIdea field. Do not put CycleStudio hand-off ideas inside reflection. Leave reflection blank unless it contains actual after-teaching reflection notes.
 ${extra}
 
