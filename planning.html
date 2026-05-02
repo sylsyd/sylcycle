@@ -341,7 +341,7 @@
         <button class="btn secondary" data-cycle-choice="cycle2">Cycle 2</button>
         <button class="btn crimson" data-cycle-choice="cycle3">Cycle 3</button>
       </div>
-      <p class="tiny">Cycle 1 and Cycle 2 curriculum outcomes will be added from official sources next. Until then, the Planner shell keeps using the existing Cycle 3 curriculum bank.</p>
+      <p class="tiny">Planner will show the matching year levels and curriculum bank for the cycle you choose.</p>
     </div>
   </div>
 </div>
@@ -552,7 +552,7 @@ function applyCyclePreference(cycle, preferredYear=''){
   state.selectedOutcomes = state.selectedOutcomes.filter(outcome => getFlat(domainSelect?.value || '').includes(outcome));
   if(qs('domainCycleLabel')) qs('domainCycleLabel').textContent = 'Curriculum';
   if(qs('curriculumCycleNote')){
-    qs('curriculumCycleNote').textContent = `${getCycleLabel()} selected. Cycle 1 and Cycle 2 curriculum data will be added from official sources next; the existing Cycle 3 bank remains active for now.`;
+    qs('curriculumCycleNote').textContent = `${getCycleLabel()} selected. Choose a domain, or let AI choose from the available curriculum bank.`;
   }
   renderCurriculumMode();
   renderCreateSummary();
@@ -1023,7 +1023,7 @@ function repairCurriculum(plan){
 function populateDomains(){
   qs('domainSelect').innerHTML = DOMAIN_NAMES.map(name=>{
     const pending = !domainHasOutcomes(name);
-    return `<option value="${esc(name)}" ${pending ? 'disabled' : ''}>${esc(name)}${pending ? ' (outcomes pending)' : ''}</option>`;
+    return `<option value="${esc(name)}" ${pending ? 'disabled' : ''}>${esc(name)}${pending ? ' (not available yet)' : ''}</option>`;
   }).join('');
 }
 function renderCurriculumMode(){
@@ -1037,7 +1037,7 @@ function renderOutcomePicker(){
   const selected = new Set(state.selectedOutcomes);
   const grouped = getGrouped(domain);
   if(!domainHasOutcomes(domain)){
-    qs('outcomesBox').innerHTML = '<p class="tiny">Official outcomes for this domain have not been imported yet.</p>';
+    qs('outcomesBox').innerHTML = '<p class="tiny">This domain is not available yet.</p>';
     return;
   }
   const row = outcome => `
@@ -1677,11 +1677,11 @@ async function generatePlan(){
   clearStatus();
   const usableDomains = availableDomainNames();
   if(!usableDomains.length){
-    setStatus(`${getCycleLabel()} is selected, but no official outcomes have been imported for it yet.`, 'warn');
+    setStatus(`${getCycleLabel()} does not have an available curriculum bank yet.`, 'warn');
     return;
   }
   if(state.curriculumMode !== 'ai_both' && !selectedDomainHasOutcomes()){
-    setStatus(`Official outcomes for ${qs('domainSelect').value || 'this domain'} have not been imported yet. Choose an available domain for now.`, 'warn');
+    setStatus(`${qs('domainSelect').value || 'This domain'} is not available yet. Choose another domain.`, 'warn');
     return;
   }
   if(state.curriculumMode === 'manual_both' && !state.selectedOutcomes.length){

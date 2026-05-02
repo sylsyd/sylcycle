@@ -41,7 +41,7 @@ The last stable build before Cycle 1 and Cycle 2 work is recorded in `docs/stabl
 - The next Cycle 1 import fills `Artistic Activities` from the official maternelle programme structure: visual/plastic productions, looking at images and artworks, sound worlds, and live performance.
 - The next Cycle 1 import fills `Affective and Relational Education` from the official 2025 EVAR programme, using the maternelle age bands before age 4, from age 4, and from age 5.
 - The final Cycle 1 import fills `Physical Activity` from the official maternelle programme structure: acting in space/time/with objects, adapting balance and movement, expressive movement, and cooperating/opposing.
-- Planner may generate for Cycle 1 and Cycle 2 only from domains whose official outcomes have been imported. Empty domains remain visible as pending but are disabled in the domain picker.
+- Planner generates only from domains whose outcomes exist in `assets/cycle-domain-library.js`. Empty domains, if added in future, remain visible but disabled until their source-backed outcomes are added.
 - Keep the existing Cycle 3 library working as-is while Cycle 1 and Cycle 2 data are added.
 - Store the user's preferred cycle. It is fine to remember the last selected year level too, as long as the year-level dropdown remains easy to change each time.
 - Keep UI names English-facing, matching Studio and Planner style, while preserving a clear source trail back to the official French programme names.
