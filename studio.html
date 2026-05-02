@@ -567,6 +567,7 @@ Click here, then press Ctrl/Cmd + V to paste a screenshot.
 </style>
 
 <script src="assets/cycle3-domain-library.js"></script>
+<script src="assets/cycle-domain-library.js"></script>
 <script>
 
 // ══════════════════════════════════════════════════════════════
@@ -576,8 +577,29 @@ Click here, then press Ctrl/Cmd + V to paste a screenshot.
 
 // ── Base: domain library, state, core utilities ──
 
-const DOMAIN_LIBRARY = window.CYCLE3_DOMAIN_LIBRARY || {};
-const DOMAIN_NAMES = Object.keys(DOMAIN_LIBRARY);
+const CYCLE_LABELS = {
+  cycle1:'Cycle 1',
+  cycle2:'Cycle 2',
+  cycle3:'Cycle 3'
+};
+const CYCLE_YEAR_LEVELS = {
+  cycle1:['PS','MS','GS'],
+  cycle2:['CP','CE1','CE2'],
+  cycle3:['CM1','CM2','CM1/CM2']
+};
+const CYCLE_DOMAIN_LIBRARIES = window.CYCLE_DOMAIN_LIBRARIES || {cycle3:window.CYCLE3_DOMAIN_LIBRARY || {}};
+let currentCycle = 'cycle3';
+let DOMAIN_LIBRARY = CYCLE_DOMAIN_LIBRARIES.cycle3 || {};
+let DOMAIN_NAMES = Object.keys(DOMAIN_LIBRARY);
+
+function normaliseCycle(value){
+  return CYCLE_LABELS[value] ? value : 'cycle3';
+}
+function setCurrentCycle(cycle){
+  currentCycle = normaliseCycle(cycle);
+  DOMAIN_LIBRARY = CYCLE_DOMAIN_LIBRARIES[currentCycle] || CYCLE_DOMAIN_LIBRARIES.cycle3 || {};
+  DOMAIN_NAMES = Object.keys(DOMAIN_LIBRARY);
+}
 
 function getGroupedDomainOutcomes(domain){
   const entry = DOMAIN_LIBRARY[domain];
