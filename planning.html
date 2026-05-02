@@ -545,8 +545,9 @@ function applyCyclePreference(cycle, preferredYear=''){
   populateYearLevels(preferredYear);
   populateDomains();
   const domainSelect = qs('domainSelect');
-  if(domainSelect && !DOMAIN_LIBRARY[domainSelect.value]){
-    domainSelect.value = DOMAIN_LIBRARY['English Literacy'] ? 'English Literacy' : DOMAIN_NAMES[0] || '';
+  if(domainSelect && (!DOMAIN_LIBRARY[domainSelect.value] || !domainHasOutcomes(domainSelect.value))){
+    const fallbackDomain = availableDomainNames()[0] || DOMAIN_NAMES[0] || '';
+    domainSelect.value = fallbackDomain;
   }
   state.selectedOutcomes = state.selectedOutcomes.filter(outcome => getFlat(domainSelect?.value || '').includes(outcome));
   if(qs('domainCycleLabel')) qs('domainCycleLabel').textContent = 'Curriculum';
@@ -922,6 +923,15 @@ function getFlat(domain){
   if(entry && typeof entry === 'object') return Object.values(entry).flat();
   return [];
 }
+function domainHasOutcomes(domain){
+  return getFlat(domain).length > 0;
+}
+function availableDomainNames(){
+  return DOMAIN_NAMES.filter(domainHasOutcomes);
+}
+function selectedDomainHasOutcomes(){
+  return domainHasOutcomes(qs('domainSelect')?.value || '');
+}
 const MATCH_STOPWORDS = new Set(['and','the','for','with','from','into','their','them','this','that','these','those','using','use','your','about','across','within','between','through','around','while','where','when','what','which','over','under','such','than','then','they','have','has','had','its','our','out','off','all','too','can','may','how','will','are','was','were']);
 function normaliseForMatch(value=''){
   return String(value || '')
@@ -1009,7 +1019,10 @@ function repairCurriculum(plan){
   return plan;
 }
 function populateDomains(){
-  qs('domainSelect').innerHTML = DOMAIN_NAMES.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
+  qs('domainSelect').innerHTML = DOMAIN_NAMES.map(name=>{
+    const pending = !domainHasOutcomes(name);
+    return `<option value="${esc(name)}" ${pending ? 'disabled' : ''}>${esc(name)}${pending ? ' (outcomes pending)' : ''}</option>`;
+  }).join('');
 }
 function renderCurriculumMode(){
   qsa('[data-curr]').forEach(btn=>btn.classList.toggle('active', btn.dataset.curr === state.curriculumMode));
@@ -1021,6 +1034,10 @@ function renderOutcomePicker(){
   const domain = qs('domainSelect').value;
   const selected = new Set(state.selectedOutcomes);
   const grouped = getGrouped(domain);
+  if(!domainHasOutcomes(domain)){
+    qs('outcomesBox').innerHTML = '<p class="tiny">Official outcomes for this domain have not been imported yet.</p>';
+    return;
+  }
   const row = outcome => `
     <label class="outcome-option">
       <input type="checkbox" data-outcome="${esc(outcome)}" ${selected.has(outcome) ? 'checked' : ''}>
@@ -1037,7 +1054,7 @@ function applyCurriculumToPlan(){
   if(state.curriculumMode === 'manual_both') state.plan.learningOutcomes = [...state.selectedOutcomes];
 }
 function catalogue(domain=''){
-  const domains = domain && DOMAIN_LIBRARY[domain] ? [domain] : DOMAIN_NAMES;
+  const domains = domain && DOMAIN_LIBRARY[domain] ? [domain] : availableDomainNames();
   return domains.map(name=>{
     const grouped = getGrouped(name);
     if(grouped){
@@ -1566,6 +1583,7 @@ function buildPrompt(extra=''){
   const sourceText = sourcePromptText();
   const domain = qs('domainSelect').value;
   const schema = blankPlan(state.type);
+  const usableDomains = availableDomainNames();
   const scaleRules = state.type === 'lesson'
     ? (isDurationAiSuggested()
       ? 'The teacher selected AI suggested lesson length. Choose a realistic lesson duration from the brief, such as 30 min, 45 min, 60 min, 75 min or 90 min. Return that concrete value in duration, not "AI suggested". Make lessonFlow timings add up sensibly to that duration.'
@@ -1578,11 +1596,11 @@ function buildPrompt(extra=''){
         ? 'The teacher selected AI suggested scope length. Choose a realistic number of weeks from the brief, normally 3-12 unless the prompt clearly needs a longer map. Return that concrete number in weekCount and create exactly that many week rows.'
         : `Use exactly ${getSequenceWeekCount()} weeks. Return weekCount as "${getSequenceWeekCount()}" and create exactly ${getSequenceWeekCount()} week rows.`);
   const curriculumRules = state.curriculumMode === 'ai_both'
-    ? `Choose one domain exactly from this list: ${DOMAIN_NAMES.join(', ')}. Choose outcomes verbatim from this bank:\n${catalogue()}`
+    ? `Choose one domain exactly from this list: ${usableDomains.join(', ')}. Choose outcomes verbatim from this bank:\n${catalogue()}`
     : state.curriculumMode === 'manual_domain_ai_lo'
       ? `Use this domain exactly: ${domain}. Choose 2-4 outcomes verbatim from this bank only:\n${catalogue(domain)}`
       : `Use this domain exactly: ${domain}. Use these outcomes exactly:\n${state.selectedOutcomes.map(x=>'- '+x).join('\n')}`;
-  return `You are CyclePlanner, planning for a teacher at an International French School using Cycle 3. Write everything in English. Style: concise, practical teacher notes.
+  return `You are CyclePlanner, planning for a teacher at an International French School using ${getCycleLabel()}. Write everything in English. Style: concise, practical teacher notes.
 Planning type: ${state.type}
 Year: ${qs('yearLevel').value}
 Planning scale: ${getPlanningScaleText()}
@@ -1655,8 +1673,17 @@ async function callAI(prompt, options={}){
 }
 async function generatePlan(){
   clearStatus();
-  if(currentCycle !== 'cycle3'){
-    setStatus(`${getCycleLabel()} is selected, but its official curriculum bank has not been imported yet. Switch to Cycle 3 for generation until the next curriculum step lands.`, 'warn');
+  const usableDomains = availableDomainNames();
+  if(!usableDomains.length){
+    setStatus(`${getCycleLabel()} is selected, but no official outcomes have been imported for it yet.`, 'warn');
+    return;
+  }
+  if(state.curriculumMode !== 'ai_both' && !selectedDomainHasOutcomes()){
+    setStatus(`Official outcomes for ${qs('domainSelect').value || 'this domain'} have not been imported yet. Choose an available domain for now.`, 'warn');
+    return;
+  }
+  if(state.curriculumMode === 'manual_both' && !state.selectedOutcomes.length){
+    setStatus('Choose at least one learning outcome before generating.', 'warn');
     return;
   }
   savePrefs();
@@ -2372,7 +2399,7 @@ function init(){
   const shouldAskCycle = !hasStoredCyclePreference();
   loadPrefs();
   const savedDomain = getPrefs().domain || 'English Literacy';
-  qs('domainSelect').value = DOMAIN_LIBRARY[savedDomain] ? savedDomain : (DOMAIN_LIBRARY['English Literacy'] ? 'English Literacy' : DOMAIN_NAMES[0] || '');
+  qs('domainSelect').value = DOMAIN_LIBRARY[savedDomain] && domainHasOutcomes(savedDomain) ? savedDomain : (availableDomainNames()[0] || DOMAIN_NAMES[0] || '');
   selectPlanningType(state.type);
   renderCurriculumMode();
   renderCreateSummary();
