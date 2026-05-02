@@ -226,7 +226,50 @@ window.CYCLE_DOMAIN_LIBRARIES = {
         "Build simple geographical and historical reference points"
       ]
     },
-    "Civics and Moral Education": {},
+    "Civics and Moral Education": {
+      "CP: Recognising Oneself as an Individual and Pupil": [
+        "Recognise oneself as an individual and as a pupil",
+        "Respect oneself and respect others",
+        "Identify emotions and begin to express them appropriately",
+        "Understand that each person has rights and duties in the classroom",
+        "Take part in class life by listening, speaking and following shared rules"
+      ],
+      "CP: Living Together in the Classroom": [
+        "Understand why classroom rules are needed",
+        "Cooperate with classmates in simple shared tasks",
+        "Resolve small conflicts through speech and adult-guided discussion",
+        "Recognise fair and unfair behaviours in familiar situations",
+        "Use polite language and respectful behaviour in daily school life"
+      ],
+      "CE1: Respecting Others": [
+        "Recognise and respect differences between people",
+        "Identify stereotypes, mockery or rejection in simple situations",
+        "Understand that respect applies to words, actions and online behaviour",
+        "Develop empathy by considering another person's point of view",
+        "Act against exclusion or unfair treatment in classroom situations"
+      ],
+      "CE1: Rules, Rights and Responsibilities": [
+        "Understand that rules protect people and help groups live together",
+        "Distinguish between a right and a responsibility",
+        "Identify responsibilities linked to being a pupil and member of a class",
+        "Take part in simple collective decisions",
+        "Explain why a rule can be discussed, improved or applied fairly"
+      ],
+      "CE2: Belonging to the Republic": [
+        "Identify symbols and values of the French Republic",
+        "Understand the meaning of liberty, equality and fraternity in simple situations",
+        "Recognise that citizens share common rules and institutions",
+        "Describe ways pupils can take part in collective life",
+        "Connect school life with wider civic values and responsibilities"
+      ],
+      "CE2: Building Critical Judgement": [
+        "Distinguish fact, opinion and belief in simple examples",
+        "Listen to different viewpoints before forming a judgement",
+        "Give reasons for an opinion in a respectful exchange",
+        "Use discussion to question information, rumours or unfair statements",
+        "Begin to understand why democratic debate requires respect and evidence"
+      ]
+    },
     "Affective and Relational Education": {}
   },
   cycle3: window.CYCLE3_DOMAIN_LIBRARY || {}
