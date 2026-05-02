@@ -107,9 +107,34 @@ window.CYCLE_DOMAIN_LIBRARIES = {
       "Cooperating and Opposing": []
     },
     "Artistic Activities": {
-      "Visual Production": [],
-      "Sound Worlds": [],
-      "Live Performance": []
+      "Visual and Plastic Productions": [
+        "Choose and use tools, materials and supports to make a visual production",
+        "Explore drawing, painting, collage, modelling and construction through practice",
+        "Adapt gestures and actions to the material, tool or intended effect",
+        "Create images or objects from imagination, observation or memory",
+        "Describe a production and explain simple choices made while creating"
+      ],
+      "Looking at Images and Artworks": [
+        "Observe images, objects and artworks carefully",
+        "Express what is seen, felt or understood when looking at an artwork",
+        "Compare productions and artworks using simple visual vocabulary",
+        "Build first cultural references through encounters with varied artworks",
+        "Respect different responses to images and artistic productions"
+      ],
+      "Sound Worlds": [
+        "Listen to and identify sounds from voices, instruments and the environment",
+        "Sing simple songs, rhymes and chants with the group",
+        "Explore vocal, body and instrumental sounds",
+        "Reproduce, vary or organise a simple rhythm or sound pattern",
+        "Listen attentively to short musical extracts and express a response"
+      ],
+      "Live Performance": [
+        "Use the body, voice and movement to express an intention or emotion",
+        "Take part in simple dance, mime, theatre or performance situations",
+        "Memorise and repeat short movement or sound sequences",
+        "Watch a performance or classmates' work as a respectful audience member",
+        "Describe what was seen, heard or felt during a live performance"
+      ]
     },
     "Exploring the World": {
       "Time": [
