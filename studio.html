@@ -63,6 +63,14 @@
 </div>
 </div>
 <div class="field">
+<label for="studioCycleSelect">Cycle</label>
+<select id="studioCycleSelect"></select>
+</div>
+<div class="field">
+<label for="studioYearLevel">Year level</label>
+<select id="studioYearLevel"></select>
+</div>
+<div class="field">
 <label>Curriculum mode</label>
 <div class="segmented" style="grid-template-columns:repeat(3,1fr)">
 <button class="seg-btn" id="currMode_ai_both" onclick="setCurriculumMode('ai_both')" type="button">AI chooses domain + LOs</button>
@@ -73,7 +81,7 @@
 </div>
 <div class="hidden" id="domainArea" style="margin-top:12px">
 <div class="field">
-<label for="domainSelect">Cycle 3 domain</label>
+<label for="domainSelect"><span id="studioDomainCycleLabel">Cycle 3</span> domain</label>
 <select id="domainSelect"></select>
 </div>
 </div>
@@ -595,10 +603,42 @@ let DOMAIN_NAMES = Object.keys(DOMAIN_LIBRARY);
 function normaliseCycle(value){
   return CYCLE_LABELS[value] ? value : 'cycle3';
 }
+function getCycleLabel(cycle=currentCycle){
+  return CYCLE_LABELS[normaliseCycle(cycle)];
+}
+function getCycleYears(cycle=currentCycle){
+  return CYCLE_YEAR_LEVELS[normaliseCycle(cycle)] || CYCLE_YEAR_LEVELS.cycle3;
+}
 function setCurrentCycle(cycle){
   currentCycle = normaliseCycle(cycle);
   DOMAIN_LIBRARY = CYCLE_DOMAIN_LIBRARIES[currentCycle] || CYCLE_DOMAIN_LIBRARIES.cycle3 || {};
   DOMAIN_NAMES = Object.keys(DOMAIN_LIBRARY);
+}
+function populateStudioCycleSelect(){
+  const select = qs('studioCycleSelect');
+  if(!select) return;
+  select.innerHTML = Object.entries(CYCLE_LABELS).map(([value,label]) => `<option value="${esc(value)}">${esc(label)}</option>`).join('');
+  select.value = currentCycle;
+}
+function populateStudioYearLevels(preferredYear=''){
+  const select = qs('studioYearLevel');
+  if(!select) return;
+  const years = getCycleYears();
+  select.innerHTML = years.map(year => `<option value="${esc(year)}">${esc(year)}</option>`).join('');
+  select.value = years.includes(preferredYear) ? preferredYear : years[0];
+}
+function applyStudioCycle(cycle, preferredYear=''){
+  setCurrentCycle(cycle);
+  populateStudioCycleSelect();
+  populateStudioYearLevels(preferredYear);
+  populateDomains();
+  const domainSelect = qs('domainSelect');
+  if(domainSelect && !DOMAIN_LIBRARY[domainSelect.value]){
+    domainSelect.value = DOMAIN_LIBRARY['English Literacy'] ? 'English Literacy' : (DOMAIN_NAMES[0] || '');
+  }
+  state.selectedOutcomes = (state.selectedOutcomes || []).filter(outcome => getFlatDomainOutcomes(domainSelect?.value || '').includes(outcome));
+  if(qs('studioDomainCycleLabel')) qs('studioDomainCycleLabel').textContent = getCycleLabel();
+  if(typeof renderOutcomeOptions === 'function') renderOutcomeOptions();
 }
 
 function getGroupedDomainOutcomes(domain){
@@ -817,6 +857,8 @@ const PREF_DEFAULTS = {
   imageModel: 'gpt-image-1.5',
   imageGenSize: '1024x1024',
   imageUsage: 'teacher_provided',
+  preferredCycle: 'cycle3',
+  yearLevel: 'CM1',
   curriculumMode: 'ai_both',
   useAICurriculum: true,
   showInstructions: true,
@@ -861,6 +903,8 @@ function buildPrefsObject(){
     imageModel: qs('imageModel')?.value.trim() || 'gpt-image-1.5',
     imageGenSize: (typeof getImageGenSize === 'function' ? getImageGenSize() : (readStoredPrefs().imageGenSize || PREF_DEFAULTS.imageGenSize)),
     imageUsage: (typeof getImageUsage === 'function' ? getImageUsage() : (state.imageUsage || readStoredPrefs().imageUsage || PREF_DEFAULTS.imageUsage)),
+    preferredCycle: currentCycle,
+    yearLevel: qs('studioYearLevel')?.value || getCycleYears()[0] || 'CM1',
     curriculumMode: state.curriculumMode || 'ai_both',
     useAICurriculum: (state.curriculumMode || 'ai_both') === 'ai_both',
     showInstructions: state.displayOptions?.instructions !== false,
@@ -935,6 +979,7 @@ function queuePreviewUpdate(){
 
 function loadPrefs(){
   const prefs = readStoredPrefs();
+  applyStudioCycle(prefs.preferredCycle || 'cycle3', prefs.yearLevel || '');
   if(qs('apiKey')) qs('apiKey').value = prefs.apiKey || '';
   if(qs('modelName')) qs('modelName').value = prefs.modelName || '';
   if(qs('outputMode')) qs('outputMode').value = prefs.outputMode || 'student';
@@ -952,13 +997,22 @@ function savePrefs(){
 }
 
 function bindPrefInputs(){
-  ['apiKey','modelName','outputMode','difficulty','questionCount','answerGenMode','worksheetBrief','templateText'].forEach(id => {
+  ['apiKey','modelName','outputMode','difficulty','questionCount','answerGenMode','worksheetBrief','templateText','studioCycleSelect','studioYearLevel'].forEach(id => {
     const el = qs(id);
     if(!el || el.dataset.prefBound === '1') return;
     el.dataset.prefBound = '1';
     el.addEventListener('input', savePrefs);
     el.addEventListener('change', savePrefs);
   });
+  const cycleSelect = qs('studioCycleSelect');
+  if(cycleSelect && cycleSelect.dataset.cycleBound !== '1'){
+    cycleSelect.dataset.cycleBound = '1';
+    cycleSelect.addEventListener('change', () => {
+      applyStudioCycle(cycleSelect.value, qs('studioYearLevel')?.value || '');
+      savePrefs();
+      syncToggles();
+    });
+  }
 }
 
 function setCurriculumMode(mode){
@@ -5001,6 +5055,7 @@ ensureImageGenerationUi();
 
 loadPrefs = function(){
   const prefs = readStoredPrefs();
+  applyStudioCycle(prefs.preferredCycle || 'cycle3', prefs.yearLevel || '');
   if(qs('apiKey')) qs('apiKey').value = prefs.apiKey || '';
   if(qs('modelName')) qs('modelName').value = prefs.modelName || '';
   if(qs('outputMode')) qs('outputMode').value = prefs.outputMode || 'student';
@@ -5743,6 +5798,8 @@ snapshotState = function(){
       worksheetBrief: qs('worksheetBrief').value,
       difficulty: qs('difficulty').value,
       questionCount: qs('questionCount').value,
+      preferredCycle: currentCycle,
+      yearLevel: qs('studioYearLevel')?.value || getCycleYears()[0] || 'CM1',
       domainSelect: qs('domainSelect').value,
       templateText: qs('templateText').value,
       imageApiKey: '',
@@ -5780,6 +5837,7 @@ applySnapshot = function(saved){
   qs('worksheetBrief').value = f.worksheetBrief || '';
   qs('difficulty').value = normaliseDifficulty(f.difficulty || 'cm1_moderate');
   qs('questionCount').value = f.questionCount || '6';
+  applyStudioCycle(f.preferredCycle || readStoredPrefs().preferredCycle || 'cycle3', f.yearLevel || readStoredPrefs().yearLevel || '');
   qs('domainSelect').value = f.domainSelect || '';
   qs('templateText').value = f.templateText || '';
   if(qs('imageApiKey')) qs('imageApiKey').value = f.imageApiKey || '';

@@ -14,7 +14,7 @@ Studio, Planner, and Assess read `window.CYCLE3_DOMAIN_LIBRARY` directly, so the
 - `cycle2`: Cycle 2 domain/subdomain structure, with outcomes still pending official import.
 - `cycle3`: the existing `window.CYCLE3_DOMAIN_LIBRARY` data.
 
-Studio still defaults to Cycle 3 while the multi-cycle UI is being wired. Assess still uses the Cycle 3 asset directly for now.
+Studio now has cycle/year controls and still defaults to Cycle 3 for existing users while prompt and export behavior are being made cycle-aware. Assess still uses the Cycle 3 asset directly for now.
 
 Assess normalizes older saved records that used French-labelled domain names so existing assessment history still counts under the matching shared domain.
 
