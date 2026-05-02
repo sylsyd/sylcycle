@@ -270,7 +270,62 @@ window.CYCLE_DOMAIN_LIBRARIES = {
         "Begin to understand why democratic debate requires respect and evidence"
       ]
     },
-    "Affective and Relational Education": {}
+    "Affective and Relational Education": {
+      "CP: Knowing and Respecting One's Body": [
+        "Identify and name the main parts of the body",
+        "Understand that every person has a body that must be respected",
+        "Recognise that bodies can be different and that differences should be respected",
+        "Identify trusted adults who can help when a child feels unsafe or uncomfortable"
+      ],
+      "CP: Understanding Emotions and Relationships": [
+        "Identify basic emotions in oneself and others",
+        "Express feelings using appropriate words",
+        "Recognise friendly, respectful and hurtful behaviours",
+        "Understand that friendship and group life require listening and respect"
+      ],
+      "CP: Consent, Privacy and Protection": [
+        "Understand that private space and personal boundaries must be respected",
+        "Know that a child can say no to unwanted contact",
+        "Distinguish between a pleasant, unpleasant and worrying situation",
+        "Know how to ask a trusted adult for help"
+      ],
+      "CE1: Respecting Self and Others": [
+        "Recognise similarities and differences between people without ranking them",
+        "Use respectful language when speaking about oneself and others",
+        "Understand that teasing, exclusion and stereotypes can hurt",
+        "Identify behaviours that support equal respect between girls and boys"
+      ],
+      "CE1: Emotions, Feelings and Relationships": [
+        "Name a wider range of emotions and feelings",
+        "Describe how emotions can affect behaviour",
+        "Recognise that relationships can involve affection, disagreement and repair",
+        "Use words and adult help to manage conflict respectfully"
+      ],
+      "CE1: Rights, Consent and Safety": [
+        "Understand that each person has the right to bodily privacy",
+        "Recognise that consent means agreement that can be given or refused",
+        "Identify situations that require asking for help",
+        "Know how to alert a trusted adult when a boundary is not respected"
+      ],
+      "CE2: Equality and Respectful Relationships": [
+        "Understand that girls and boys have equal rights and dignity",
+        "Identify stereotypes linked to gender, appearance or roles",
+        "Challenge unfair or disrespectful statements in age-appropriate situations",
+        "Recognise that respectful relationships are based on listening, care and equality"
+      ],
+      "CE2: Feelings, Empathy and Responsibility": [
+        "Distinguish emotions, feelings and opinions in everyday situations",
+        "Show empathy by considering another person's feelings",
+        "Take responsibility for words and actions in relationships",
+        "Use dialogue to prevent or resolve conflict"
+      ],
+      "CE2: Protection, Help and Digital Awareness": [
+        "Identify private information and understand why it should be protected",
+        "Recognise risky, uncomfortable or inappropriate situations online or offline",
+        "Know that seeking help is a protective action",
+        "Identify trusted adults and services that can support children"
+      ]
+    }
   },
   cycle3: window.CYCLE3_DOMAIN_LIBRARY || {}
 };

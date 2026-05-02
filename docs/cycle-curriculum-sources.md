@@ -16,7 +16,7 @@ The last stable build before Cycle 1 and Cycle 2 work is recorded in `docs/stabl
 - Cycle 2 French: Bulletin officiel no. 41, 31 October 2024, Annexe 3, "Programme de francais du cycle 2".
 - Cycle 2 mathematics: Bulletin officiel no. 41, 31 October 2024, Annexe 4, "Programme de mathematiques du cycle 2".
 - Cycle 2 EMC: Bulletin officiel no. 24, 13 June 2024, "Programme d'enseignement moral et civique du cours preparatoire a la classe terminale", with staged rollout by year level.
-- Cycle 2 EVAR: Eduscol's Cycle 2 overview identifies EVAR as a new programme for CP, CE1, and CE2.
+- Cycle 2 EVAR: Bulletin officiel no. 6, 6 February 2025, "Programme d'education a la vie affective et relationnelle, et a la sexualite", with Cycle 2 entries for CP, CE1, and CE2.
 - Cycle 2 unchanged areas: Eduscol identifies languages, arts, PE, and "questionner le monde" as unchanged for CP, CE1, and CE2.
 - Cycle 2 Questioning the World: Bulletin officiel special no. 11, 26 November 2015, Cycle 2 programme, "Questionner le monde".
 
@@ -28,6 +28,7 @@ The last stable build before Cycle 1 and Cycle 2 work is recorded in `docs/stabl
 - The first outcome import fills Cycle 1 language/mathematics and Cycle 2 literacy/mathematics from the 2025 BO programmes. Other Cycle 1 and Cycle 2 areas remain empty until their official programme sources are imported separately.
 - The next Cycle 2 import fills `Questioning the World` from the official Cycle 2 programme structure: living things/matter/objects, space/time, and organisations of the world.
 - The next Cycle 2 import fills `Civics and Moral Education` from the official 2024 EMC programme. Planner keeps the programme's annualised structure with CP, CE1, and CE2 subdomains.
+- The next Cycle 2 import fills `Affective and Relational Education` from the official 2025 EVAR programme. Planner keeps the CP, CE1, and CE2 year-level structure across body respect, emotions/relationships, consent, protection, equality, and digital awareness.
 - Planner may generate for Cycle 1 and Cycle 2 only from domains whose official outcomes have been imported. Empty domains remain visible as pending but are disabled in the domain picker.
 - Keep the existing Cycle 3 library working as-is while Cycle 1 and Cycle 2 data are added.
 - Store the user's preferred cycle. It is fine to remember the last selected year level too, as long as the year-level dropdown remains easy to change each time.
