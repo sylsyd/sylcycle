@@ -8,6 +8,14 @@
 
 Studio, Planner, and Assess read `window.CYCLE3_DOMAIN_LIBRARY` directly, so the three tools use the same English-facing domain names and learning outcomes.
 
+`assets/cycle-domain-library.js` is the newer multi-cycle wrapper being introduced in Planner first. It currently exposes:
+
+- `cycle1`: Cycle 1 domain/subdomain structure, with outcomes still pending official import.
+- `cycle2`: Cycle 2 domain/subdomain structure, with outcomes still pending official import.
+- `cycle3`: the existing `window.CYCLE3_DOMAIN_LIBRARY` data.
+
+Studio and Assess still use the Cycle 3 asset directly for now.
+
 Assess normalizes older saved records that used French-labelled domain names so existing assessment history still counts under the matching shared domain.
 
 When changing curriculum domains, subdomains, or outcomes, update the shared asset first so the three tools stay aligned.

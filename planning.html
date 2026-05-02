@@ -349,6 +349,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="assets/cycle3-domain-library.js"></script>
+<script src="assets/cycle-domain-library.js"></script>
 <script src="assets/storage.js"></script>
 <script>
 /* =============================================================
@@ -376,14 +377,9 @@ const CYCLE_YEAR_LEVELS = {
   cycle2:['CP','CE1','CE2'],
   cycle3:['CM1','CM2','CM1/CM2']
 };
-const CYCLE3_DOMAIN_LIBRARY = window.CYCLE3_DOMAIN_LIBRARY || {};
-const CYCLE_DOMAIN_LIBRARIES = {
-  cycle1:CYCLE3_DOMAIN_LIBRARY,
-  cycle2:CYCLE3_DOMAIN_LIBRARY,
-  cycle3:CYCLE3_DOMAIN_LIBRARY
-};
+const CYCLE_DOMAIN_LIBRARIES = window.CYCLE_DOMAIN_LIBRARIES || {cycle3:window.CYCLE3_DOMAIN_LIBRARY || {}};
 let currentCycle = 'cycle3';
-let DOMAIN_LIBRARY = CYCLE_DOMAIN_LIBRARIES.cycle3;
+let DOMAIN_LIBRARY = CYCLE_DOMAIN_LIBRARIES.cycle3 || {};
 let DOMAIN_NAMES = Object.keys(DOMAIN_LIBRARY);
 const APP_VERSION = '0.2.1-refactor-optimised';
 
