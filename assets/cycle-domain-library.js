@@ -217,8 +217,66 @@ window.CYCLE_DOMAIN_LIBRARIES = {
         "Use basic visual arts vocabulary to describe work and process"
       ]
     },
-    "Music": {},
-    "PE": {},
+    "Music": {
+      "Singing": [
+        "Sing a simple song with accurate pitch and rhythm",
+        "Memorise and perform a varied repertoire of songs",
+        "Control breathing, posture and voice during singing",
+        "Sing with others while listening to the group",
+        "Respect the starting signal, tempo and ending of a collective performance"
+      ],
+      "Listening and Comparing": [
+        "Listen attentively to short musical extracts",
+        "Identify and describe simple musical elements such as tempo, intensity, pitch and timbre",
+        "Compare two musical extracts using appropriate vocabulary",
+        "Recognise repeated patterns, contrasts or changes in a piece",
+        "Express a personal response to music and justify it simply"
+      ],
+      "Exploring and Creating Sounds": [
+        "Explore vocal, body and instrumental sounds",
+        "Imitate, vary and organise sounds in a short production",
+        "Create simple rhythmic or melodic patterns",
+        "Use silence, repetition and contrast in a sound production",
+        "Take part in a collective musical creation"
+      ],
+      "Exchanging and Sharing": [
+        "Listen respectfully to classmates' musical productions",
+        "Describe musical choices using simple vocabulary",
+        "Accept and use feedback to improve a performance",
+        "Take a role in a collective musical project",
+        "Present a short musical production to an audience"
+      ]
+    },
+    "PE": {
+      "Producing a Measured Performance": [
+        "Run, jump or throw while seeking to improve performance",
+        "Measure and compare simple physical performances",
+        "Adapt effort to the activity and duration",
+        "Respect safety rules during athletic activities",
+        "Recognise progress through repeated practice"
+      ],
+      "Adapting Movement to Different Environments": [
+        "Move safely in varied and unfamiliar environments",
+        "Adapt balance, speed and direction to the situation",
+        "Follow a route or course using simple landmarks",
+        "Control risk and respect safety instructions",
+        "Cooperate to complete an outdoor or adapted movement task"
+      ],
+      "Expressing Through Artistic or Acrobatic Activity": [
+        "Use the body to express an emotion, character or intention",
+        "Create and memorise a short sequence of movements",
+        "Coordinate actions with rhythm, space and partners",
+        "Present a movement sequence to others",
+        "Watch respectfully and describe a classmate's performance"
+      ],
+      "Conducting and Mastering Opposition": [
+        "Understand and follow the rules of a simple game or opposition activity",
+        "Cooperate with partners to achieve a shared aim",
+        "Oppose an opponent while respecting safety and fairness",
+        "Choose simple strategies in games or duels",
+        "Accept different roles such as player, observer or referee"
+      ]
+    },
     "Questioning the World": {
       "Questioning the World of Living Things, Matter and Objects": [
         "Identify the three states of matter and observe changes of state",
