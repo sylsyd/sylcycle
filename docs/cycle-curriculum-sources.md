@@ -12,6 +12,7 @@ The last stable build before Cycle 1 and Cycle 2 work is recorded in `docs/stabl
 - Cycle 1 language: Bulletin officiel no. 41, 31 October 2024, Annexe 1, "Programme d'enseignement pour le developpement et la structuration du langage oral et ecrit du cycle 1".
 - Cycle 1 mathematics: Bulletin officiel no. 41, 31 October 2024, Annexe 2, "Programme d'enseignement pour l'acquisition des premiers outils mathematiques du cycle 1".
 - Cycle 1 other domains: the unchanged 2021 Cycle 1 programme referenced from Eduscol.
+- Cycle 1 Exploring the World: official maternelle programme, "Explorer le monde", including time, space, living things, matter, objects, and digital tools.
 - Cycle 2 overview: Eduscol "J'enseigne au cycle 2" confirms CP, CE1, and CE2, and identifies which 2025 programmes are new or unchanged.
 - Cycle 2 French: Bulletin officiel no. 41, 31 October 2024, Annexe 3, "Programme de francais du cycle 2".
 - Cycle 2 mathematics: Bulletin officiel no. 41, 31 October 2024, Annexe 4, "Programme de mathematiques du cycle 2".
@@ -33,6 +34,7 @@ The last stable build before Cycle 1 and Cycle 2 work is recorded in `docs/stabl
 - The next Cycle 2 import fills `Affective and Relational Education` from the official 2025 EVAR programme. Planner keeps the CP, CE1, and CE2 year-level structure across body respect, emotions/relationships, consent, protection, equality, and digital awareness.
 - The next Cycle 2 import fills `Visual Arts` from the official Cycle 2 arts-plastiques programme.
 - The next Cycle 2 import fills `Music` and `PE` from the official Cycle 2 education musicale and EPS programmes, even though those subjects may usually have dedicated teachers.
+- The first remaining Cycle 1 import fills `Exploring the World` from the official maternelle programme structure: time, space, living things, matter, objects, and digital tools.
 - Planner may generate for Cycle 1 and Cycle 2 only from domains whose official outcomes have been imported. Empty domains remain visible as pending but are disabled in the domain picker.
 - Keep the existing Cycle 3 library working as-is while Cycle 1 and Cycle 2 data are added.
 - Store the user's preferred cycle. It is fine to remember the last selected year level too, as long as the year-level dropdown remains easy to change each time.

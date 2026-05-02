@@ -112,9 +112,48 @@ window.CYCLE_DOMAIN_LIBRARIES = {
       "Live Performance": []
     },
     "Exploring the World": {
-      "Time and Space": [],
-      "Living Things": [],
-      "Objects and Matter": []
+      "Time": [
+        "Stabilise the first temporal reference points through daily routines",
+        "Use words linked to time such as before, after, yesterday, today and tomorrow",
+        "Put familiar events or actions in chronological order",
+        "Recognise cycles such as days, weeks, months and seasons",
+        "Use simple tools to represent or measure time"
+      ],
+      "Space": [
+        "Situate oneself and objects in relation to others",
+        "Use spatial vocabulary such as on, under, next to, between, in front of and behind",
+        "Move through familiar spaces using simple landmarks",
+        "Represent familiar spaces through models, drawings or simple plans",
+        "Discover less familiar spaces through images, stories, maps or class projects"
+      ],
+      "Living Things": [
+        "Recognise the main stages in the development of plants and animals",
+        "Observe and describe living things in the class or school environment",
+        "Identify basic needs of plants, animals and human beings",
+        "Recognise and name parts of the body",
+        "Develop awareness of hygiene, health and safety",
+        "Respect living things and their environment"
+      ],
+      "Matter": [
+        "Explore materials through observation and manipulation",
+        "Recognise some properties of materials such as hard, soft, smooth, rough, liquid or solid",
+        "Observe simple transformations of matter",
+        "Use appropriate vocabulary to describe materials and changes",
+        "Compare and sort materials according to observable properties"
+      ],
+      "Objects": [
+        "Use, choose and manipulate tools and objects for a purpose",
+        "Discover how simple objects work",
+        "Assemble, take apart or make simple objects",
+        "Identify risks linked to using some objects and tools",
+        "Develop careful and safe gestures when using tools"
+      ],
+      "Digital Tools": [
+        "Discover simple digital tools used in class",
+        "Use a digital device with adult guidance for a learning purpose",
+        "Begin to understand that digital tools can produce, store or show information",
+        "Adopt careful and responsible behaviour when using shared digital equipment"
+      ]
     },
     "Affective and Relational Education": {}
   },
