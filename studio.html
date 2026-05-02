@@ -24,7 +24,7 @@
 <div class="brand-badge"><img alt="Cycle Suite" src="assets/cycle-suite-mark.png"/></div>
 <div>
 <h1>CycleStudio</h1>
-<p>Cycle 3 resource builder with editable preview, curriculum tagging and PDF export.</p>
+<p>Cycle resource builder with editable preview, curriculum tagging and PDF export.</p>
 </div>
 </div>
 <div class="topbar-right">
@@ -614,6 +614,25 @@ function setCurrentCycle(cycle){
   DOMAIN_LIBRARY = CYCLE_DOMAIN_LIBRARIES[currentCycle] || CYCLE_DOMAIN_LIBRARIES.cycle3 || {};
   DOMAIN_NAMES = Object.keys(DOMAIN_LIBRARY);
 }
+function getStudioYearLevel(){
+  return qs('studioYearLevel')?.value || getCycleYears()[0] || 'CM1';
+}
+function defaultStudioDomain(){
+  if(DOMAIN_LIBRARY['English Literacy']) return 'English Literacy';
+  if(DOMAIN_LIBRARY['Literacy']) return 'Literacy';
+  if(DOMAIN_LIBRARY['Oral and Written Language']) return 'Oral and Written Language';
+  return DOMAIN_NAMES[0] || '';
+}
+function studioCyclePromptGuidance(){
+  const year = getStudioYearLevel();
+  if(currentCycle === 'cycle1'){
+    return `Age and cycle fit: This is Cycle 1 (${year}, maternelle). Make the resource play-based, oral, visual and practical. Prefer sorting, matching, drawing, tracing, simple mark-making, oral rehearsal, manipulatives and teacher-led prompts. Keep written output very light and developmentally appropriate.`;
+  }
+  if(currentCycle === 'cycle2'){
+    return `Age and cycle fit: This is Cycle 2 (${year}). Keep the resource suitable for early primary learners. Use clear steps, short readable text, strong scaffolding, concrete examples and tasks that fit CP/CE1/CE2 independence.`;
+  }
+  return `Age and cycle fit: This is Cycle 3 (${year}). Keep the resource suitable for upper-primary learners, with clear instructions, purposeful challenge and enough scaffolding for classroom use.`;
+}
 function populateStudioCycleSelect(){
   const select = qs('studioCycleSelect');
   if(!select) return;
@@ -634,7 +653,7 @@ function applyStudioCycle(cycle, preferredYear=''){
   populateDomains();
   const domainSelect = qs('domainSelect');
   if(domainSelect && !DOMAIN_LIBRARY[domainSelect.value]){
-    domainSelect.value = DOMAIN_LIBRARY['English Literacy'] ? 'English Literacy' : (DOMAIN_NAMES[0] || '');
+    domainSelect.value = defaultStudioDomain();
   }
   state.selectedOutcomes = (state.selectedOutcomes || []).filter(outcome => getFlatDomainOutcomes(domainSelect?.value || '').includes(outcome));
   if(qs('studioDomainCycleLabel')) qs('studioDomainCycleLabel').textContent = getCycleLabel();
@@ -681,6 +700,7 @@ function canonicaliseDomain(value=''){
   const raw = String(value || '').trim();
   if(!raw) return '';
   if(DOMAIN_NAMES.includes(raw)) return raw;
+  if(currentCycle === 'cycle2' && raw === 'French' && DOMAIN_NAMES.includes('Literacy')) return 'Literacy';
   const norm = normaliseForMatch(raw);
   const exact = DOMAIN_NAMES.find(name => normaliseForMatch(name) === norm);
   if(exact) return exact;
@@ -703,6 +723,8 @@ function domainKeywordSeed(domain){
   switch(domain){
     case 'Mathematics': return ['number','calculate','calculation','fraction','decimal','problem','measure','measurement','geometry','shape','data','graph','table','pattern','sequence','angle','perimeter','area'];
     case 'French': return ['read','reading','write','writing','grammar','spelling','punctuation','verb','sentence','text','vocabulary','oral','speaking'];
+    case 'Literacy': return ['read','reading','write','writing','grammar','spelling','punctuation','verb','sentence','text','vocabulary','oral','speaking','comprehension','phonics','handwriting'];
+    case 'Oral and Written Language': return ['oral','speaking','listen','listening','story','book','letter','word','sentence','sound','draw','trace','write','dictation'];
     case 'English Literacy': return ['read','reading','write','writing','grammar','spelling','punctuation','verb','sentence','text','vocabulary','oral','speaking','inference','comprehension'];
     case 'Science and Technology': return ['science','scientific','investigation','experiment','material','energy','force','motion','living','habitat','plant','animal','earth','environment','weather','technology'];
     case 'History and Geography': return ['history','historical','geography','geographical','timeline','map','place','king','republic','revolution','empire','city','environment','travel'];
@@ -717,8 +739,8 @@ function domainKeywordSeed(domain){
 
 function inferDomainFromText(text=''){
   const textNorm = normaliseForMatch(text);
-  if(!textNorm) return 'English Literacy';
-  let bestDomain = 'English Literacy';
+  if(!textNorm) return defaultStudioDomain();
+  let bestDomain = defaultStudioDomain();
   let bestScore = -Infinity;
   DOMAIN_NAMES.forEach(domain => {
     let score = 0;
@@ -1547,6 +1569,10 @@ function difficultyInstruction(val){
 function buildAIPrompt(opts = {}){
   const mode = opts.mode || 'generate';
   const difficulty = difficultyInstruction(qs('difficulty')?.value || 'cm1_moderate');
+  const cycleLabel = getCycleLabel();
+  const yearLevel = getStudioYearLevel();
+  const cycleGuidance = studioCyclePromptGuidance();
+  const fallbackDomain = defaultStudioDomain();
   const brief = qs('worksheetBrief')?.value.trim() || '';
   const briefAnchor = brief
     ? `Keep the worksheet topic anchored to this teacher brief:\n"${brief}"`
@@ -1568,7 +1594,7 @@ function buildAIPrompt(opts = {}){
     ? 'The teacher selected AI suggested for task count. Choose a sensible number of tasks for the worksheet brief, normally 3-8. Return that concrete number of task objects; do not write "AI suggested" anywhere in the worksheet.'
     : `Target approximately ${taskCount} tasks.`;
 
-  const preamble = 'You are working on a printable worksheet for Cycle 3 students at an International French School. Write everything in English only.';
+  const preamble = `You are working on a printable worksheet for ${cycleLabel} (${yearLevel}) students at an International French School. Write everything in English only. ${cycleGuidance}`;
   const worksheetJson = state.worksheet ? JSON.stringify(buildWorksheetAiContext(), null, 2) : '{}';
   const imageContextNote = 'Image data inside the worksheet JSON has been summarised to keep this request lightweight. If relevant task images were attached with the request, use them as the visual reference.';
 
@@ -1576,24 +1602,25 @@ function buildAIPrompt(opts = {}){
   if(mode === 'generate'){
     const curriculumMode = state.curriculumMode || 'ai_both';
     const domain = qs('domainSelect')?.value.trim() || '';
+    const fixedDomain = domain || fallbackDomain;
     const outcomes = [...state.selectedOutcomes];
     const templateText = qs('templateText')?.value.trim() || '';
     const includeAnswers = shouldGenerateAnswers();
 
     const allowedDomainBank = getAllowedDomainCatalogueText();
-    const allowedOutcomeBank = getAllowedDomainCatalogueText(domain || 'English Literacy');
+    const allowedOutcomeBank = getAllowedDomainCatalogueText(fixedDomain);
 
     const domainInstruction = curriculumMode === 'ai_both'
-      ? `Choose the single best-fitting Cycle 3 domain from this exact list only: ${DOMAIN_NAMES.join(', ')}. You must return one exact domain string from the list with no variation.`
-      : `Use this domain exactly: ${domain || 'English Literacy'}. Do not change it or rename it.`;
+      ? `Choose the single best-fitting ${cycleLabel} domain from this exact list only: ${DOMAIN_NAMES.join(', ')}. You must return one exact domain string from the list with no variation.`
+      : `Use this domain exactly: ${fixedDomain}. Do not change it or rename it.`;
 
     const outcomeInstruction = curriculumMode === 'ai_both'
       ? `Choose 2 to 4 learning outcomes by copying them VERBATIM from the allowed curriculum bank for the chosen domain. Do not invent, paraphrase, merge or rewrite outcomes. Here is the exact allowed bank:\n${allowedDomainBank}`
       : curriculumMode === 'manual_domain_ai_lo'
-        ? `Choose 2 to 4 learning outcomes by copying them VERBATIM from this exact allowed bank for the fixed domain "${domain || 'English Literacy'}" only. Do not invent, paraphrase, merge or rewrite outcomes:\n${allowedOutcomeBank}`
+        ? `Choose 2 to 4 learning outcomes by copying them VERBATIM from this exact allowed bank for the fixed domain "${fixedDomain}" only. Do not invent, paraphrase, merge or rewrite outcomes:\n${allowedOutcomeBank}`
         : outcomes.length
           ? `Use these learning outcomes exactly as provided and do not invent extras:\n${outcomes.map(o=>'- ' + o).join('\n')}`
-          : `Choose 2 to 4 learning outcomes by copying them VERBATIM from this exact allowed bank for the fixed domain "${domain || 'English Literacy'}" only. Do not invent, paraphrase, merge or rewrite outcomes:\n${allowedOutcomeBank}`;
+          : `Choose 2 to 4 learning outcomes by copying them VERBATIM from this exact allowed bank for the fixed domain "${fixedDomain}" only. Do not invent, paraphrase, merge or rewrite outcomes:\n${allowedOutcomeBank}`;
 
     const briefInstruction = brief
       ? `The teacher brief below is the fixed topic and focus of the worksheet. You may expand it into a fuller classroom-ready concept, but you must stay on this topic and must not replace it with a different subject:\n"${brief}"`
@@ -1611,9 +1638,10 @@ function buildAIPrompt(opts = {}){
       ? 'Generate accurate teacher answers in the worksheet JSON so the finished resource can later be exported either as a student sheet or as a student sheet with answer key.'
       : 'Do not generate the teacher answer key now. Leave task answers blank or omit them entirely so only the student sheet is generated.';
 
-    return `You are designing a printable worksheet for an International French School teacher working with Cycle 3 students.
+    return `You are designing a printable worksheet for an International French School teacher working with ${cycleLabel} (${yearLevel}) students.
 Write EVERYTHING in English only.
 Keep the final product clean, practical, school-appropriate and easy to print on A4 portrait pages.
+${cycleGuidance}
 ${difficulty}
 ${taskCountInstruction}
 ${domainInstruction}
@@ -1733,7 +1761,7 @@ Rules:
 
   /* ── Generate answer key only ── */
   if(mode === 'answer_key'){
-    return `You are generating ONLY the teacher answer key for an existing printable Cycle 3 worksheet. Write everything in English only. ${difficulty}
+    return `You are generating ONLY the teacher answer key for an existing printable ${cycleLabel} (${yearLevel}) worksheet. Write everything in English only. ${cycleGuidance} ${difficulty}
 
 Current worksheet JSON:
 ${worksheetJson}
@@ -1760,7 +1788,7 @@ Rules:
 
   /* ── Auto-detect learning outcomes ── */
   if(mode === 'detect_los'){
-    const domain = state.worksheet?.domain || 'English Literacy';
+    const domain = canonicaliseDomain(state.worksheet?.domain || '') || fallbackDomain;
     const allOutcomes = getFlatDomainOutcomes(domain);
     const context = {
       domain,
@@ -1773,7 +1801,8 @@ Rules:
       instructions: state.worksheet?.instructions || '',
       extension: state.worksheet?.extension || ''
     };
-    return `You are analysing an existing Cycle 3 worksheet to identify which learning outcomes it actually addresses.
+    return `You are analysing an existing ${cycleLabel} (${yearLevel}) worksheet to identify which learning outcomes it actually addresses.
+${cycleGuidance}
 
 Worksheet JSON:
 ${JSON.stringify(context, null, 2)}
@@ -1934,7 +1963,7 @@ async function modifyWorksheet(){
     const ancillaryRule = explicitAncillary
       ? 'Only change instructions, success criteria or extension if the teacher explicitly asked for them.'
       : 'Leave "instructions", "success_criteria" and "extension" unchanged. Do not generate them or expand them.';
-    const prompt = `You are revising an existing printable worksheet for Cycle 3 students. Write everything in English only. ${difficultyInstruction(qs('difficulty')?.value || 'cm1_moderate')}
+    const prompt = `You are revising an existing printable worksheet for ${getCycleLabel()} (${getStudioYearLevel()}) students. Write everything in English only. ${studioCyclePromptGuidance()} ${difficultyInstruction(qs('difficulty')?.value || 'cm1_moderate')}
 
 The teacher request is:
 "${request}"
@@ -2046,7 +2075,7 @@ function toggleEditorOutcomeBrowser(){
 function renderEditorOutcomeBrowser(){
   const box = qs('editorOutcomesBox');
   if(!box || !state.worksheet) return;
-  const domain = state.worksheet.domain || 'English Literacy';
+  const domain = canonicaliseDomain(state.worksheet.domain || '') || defaultStudioDomain();
   const current = new Set(state.worksheet.learning_outcomes || []);
   const grouped = getGroupedDomainOutcomes(domain);
   if(grouped){
@@ -2125,7 +2154,7 @@ function toggleEditorOutcome(el){
 
 async function autoDetectLearningOutcomes(){
   if(!state.worksheet) return showStatus('Generate a worksheet first.', 'warn');
-  const domain = state.worksheet.domain || 'English Literacy';
+  const domain = canonicaliseDomain(state.worksheet.domain || '') || defaultStudioDomain();
   const allOutcomes = getFlatDomainOutcomes(domain);
   if(!allOutcomes.length) return showStatus('No outcomes available for this domain.', 'warn');
   const btn = qs('autoDetectLosBtn');
@@ -4102,7 +4131,8 @@ function buildQualityCheckPrompt(){
   const worksheetContext = JSON.stringify(buildWorksheetAiContext(), null, 2);
   const hasAnswers = hasAnswerKeyData();
   const exportMode = qs('outputMode')?.value || 'student';
-  return `You are doing a final quality check for a printable Cycle 3 worksheet before a teacher exports it.
+  return `You are doing a final quality check for a printable ${getCycleLabel()} (${getStudioYearLevel()}) worksheet before a teacher exports it.
+${studioCyclePromptGuidance()}
 
 Current preview/export mode: ${exportMode}.
 Answer key present: ${hasAnswers ? 'yes' : 'no'}.
@@ -4111,7 +4141,7 @@ Difficulty setting: ${qs('difficulty')?.value || 'cm1_moderate'}.
 Worksheet JSON:
 ${worksheetContext}
 
-Check for issues that would actually matter to a busy Year 4 / CM1 or CM2 teacher:
+Check for issues that would actually matter to a busy teacher using this selected cycle and year level:
 - unclear instructions or vague task wording
 - tasks that seem too easy, too hard, or not age-appropriate
 - missing answer lines where students clearly need space to write
@@ -5099,9 +5129,10 @@ normaliseWorksheet = function(result){
   const selectedDomain = canonicaliseDomain(qs('domainSelect')?.value.trim() || '');
   const evidenceText = buildCurriculumEvidenceText(result);
 
+  const fallbackDomain = defaultStudioDomain();
   let resolvedDomain = curriculumMode === 'ai_both'
-    ? (canonicaliseDomain(result?.domain) || inferDomainFromText(evidenceText) || 'English Literacy')
-    : (selectedDomain || 'English Literacy');
+    ? (canonicaliseDomain(result?.domain) || inferDomainFromText(evidenceText) || fallbackDomain)
+    : (selectedDomain || fallbackDomain);
 
   let learningOutcomes = [];
   if(curriculumMode === 'manual_both'){
@@ -5439,7 +5470,7 @@ taskEditorHtml = function(task, idx){
 addTask = function(){
   if(!state.worksheet){
     state.worksheet = {
-      domain: qs('domainSelect').value || 'English Literacy',
+      domain: canonicaliseDomain(qs('domainSelect').value || '') || defaultStudioDomain(),
       learning_outcomes: state.selectedOutcomes.length ? [...state.selectedOutcomes] : ['Learning outcome to be confirmed'],
       title: 'Untitled worksheet',
       instructions: '',
@@ -5893,27 +5924,28 @@ startNewResource = function(){
 
 
 function getWorksheetSectionMeta(key){
+  const cycleContext = `${getCycleLabel()} (${getStudioYearLevel()})`;
   const map = {
     instructions: {
       title: 'Instructions',
       placeholder: 'Add short student-facing instructions.',
       emptyNote: 'Leave this blank and it stays off the sheet.',
       success: 'Instructions updated.',
-      regenPrompt: `Regenerate ONLY the student-facing instructions for this printable Cycle 3 worksheet. Keep them short, clear and classroom-ready. Usually 1 to 3 brief sentences. Do not include a title. Do not mention answer keys, teachers, or internal notes.`
+      regenPrompt: `Regenerate ONLY the student-facing instructions for this printable ${cycleContext} worksheet. Keep them short, clear and classroom-ready. Usually 1 to 3 brief sentences. Do not include a title. Do not mention answer keys, teachers, or internal notes.`
     },
     success_criteria: {
       title: 'Success criteria',
       placeholder: 'Add success criteria. One per line works best.',
       emptyNote: 'Leave this blank and it stays off the sheet.',
       success: 'Success criteria updated.',
-      regenPrompt: `Regenerate ONLY the success criteria for this printable Cycle 3 worksheet. Write 2 to 4 short student-friendly criteria, separated by line breaks. Do not include bullets, numbering, or a title.`
+      regenPrompt: `Regenerate ONLY the success criteria for this printable ${cycleContext} worksheet. Write 2 to 4 short student-friendly criteria, separated by line breaks. Do not include bullets, numbering, or a title.`
     },
     extension: {
       title: 'Extension task',
       placeholder: 'Add an optional extension task.',
       emptyNote: 'Leave this blank and it stays off the sheet.',
       success: 'Extension task updated.',
-      regenPrompt: `Regenerate ONLY the extension task for this printable Cycle 3 worksheet. Make it a single concise but worthwhile extension that fits the worksheet topic and level. Do not include a title.`
+      regenPrompt: `Regenerate ONLY the extension task for this printable ${cycleContext} worksheet. Make it a single concise but worthwhile extension that fits the worksheet topic and level. Do not include a title.`
     }
   };
   return map[key];
@@ -6444,7 +6476,7 @@ function buildStarterDomain(){
   const selectedDomain = canonicaliseDomain(qs('domainSelect')?.value.trim() || '');
   if(selectedDomain) return selectedDomain;
   const evidenceText = [qs('worksheetBrief')?.value.trim() || '', qs('templateText')?.value.trim() || ''].filter(Boolean).join('\n');
-  return inferDomainFromText(evidenceText) || 'English Literacy';
+  return inferDomainFromText(evidenceText) || defaultStudioDomain();
 }
 
 function buildStarterLearningOutcomes(domain){
@@ -6506,7 +6538,7 @@ window.startWorksheetFromTemplate = function(id){
 };
 
 window.startBlankWorksheet = function(){
-  const selectedDomain = canonicaliseDomain(qs('domainSelect')?.value.trim() || '');
+  const selectedDomain = canonicaliseDomain(qs('domainSelect')?.value.trim() || '') || defaultStudioDomain();
   const curriculumMode = state.curriculumMode || 'ai_both';
   const learningOutcomes = (curriculumMode === 'manual_both' && selectedDomain)
     ? uniqueList((state.selectedOutcomes || []).map(outcome => canonicaliseOutcome(outcome, selectedDomain)).filter(Boolean))
