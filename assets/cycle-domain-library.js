@@ -101,10 +101,34 @@ window.CYCLE_DOMAIN_LIBRARIES = {
       ]
     },
     "Physical Activity": {
-      "Acting in Space, Time and with Objects": [],
-      "Adapting Balance and Movement": [],
-      "Expressive and Artistic Movement": [],
-      "Cooperating and Opposing": []
+      "Acting in Space, Time and with Objects": [
+        "Run, jump and throw in different ways, spaces and situations",
+        "Act on objects using varied actions such as carrying, rolling, throwing or catching",
+        "Adjust movements to a goal, distance, duration or target",
+        "Chain simple actions and movements in a course or game",
+        "Make effort, persist and take pleasure in physical activity"
+      ],
+      "Adapting Balance and Movement": [
+        "Explore and build new forms of balance",
+        "Move in varied environments or with varied constraints",
+        "Climb, crawl, roll, slide or move while changing supports and directions",
+        "Take measured risks while respecting safety rules",
+        "Adapt movement to obstacles, equipment, space or instructions"
+      ],
+      "Expressive and Artistic Movement": [
+        "Use the body to communicate an emotion, image or intention",
+        "Explore gestures, postures, rhythm and space through expressive movement",
+        "Create and memorise a short movement sequence",
+        "Move with others in a dance, mime or expressive activity",
+        "Watch and respond respectfully to classmates' movement productions"
+      ],
+      "Cooperating and Opposing": [
+        "Take part in simple collective games with shared rules",
+        "Cooperate with partners to achieve a common aim",
+        "Oppose another player or team while respecting rules and safety",
+        "Accept different roles in a game such as player, partner or observer",
+        "Search for simple strategies with others during cooperative or opposition activities"
+      ]
     },
     "Artistic Activities": {
       "Visual and Plastic Productions": [
