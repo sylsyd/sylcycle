@@ -180,7 +180,50 @@ window.CYCLE_DOMAIN_LIBRARIES = {
         "Adopt careful and responsible behaviour when using shared digital equipment"
       ]
     },
-    "Affective and Relational Education": {}
+    "Affective and Relational Education": {
+      "Before Age 4: Knowing Oneself and Others": [
+        "Name the main parts of the body using appropriate words",
+        "Recognise oneself as a person with a body, needs and emotions",
+        "Identify basic emotions such as joy, sadness, anger and fear",
+        "Begin to recognise emotions shown by others",
+        "Understand that each person can be different and must be respected"
+      ],
+      "Before Age 4: Relationships and Trust": [
+        "Identify familiar adults who care for and protect children",
+        "Take part in simple group life with adult support",
+        "Use words or gestures to express a need, refusal or discomfort",
+        "Begin to respect another child's space, body and belongings",
+        "Understand that help can be requested from a trusted adult"
+      ],
+      "From Age 4: Emotions, Body and Respect": [
+        "Use vocabulary to describe emotions and bodily feelings",
+        "Recognise that bodies and appearances can be different",
+        "Respect one's own body and the bodies of others",
+        "Identify behaviours that feel pleasant, unpleasant or worrying",
+        "Understand that no one should be mocked or excluded because of differences"
+      ],
+      "From Age 4: Consent and Boundaries": [
+        "Understand that each person has personal boundaries",
+        "Know that a child can say no to unwanted contact",
+        "Ask before touching another person or their belongings",
+        "Recognise situations where an adult's help is needed",
+        "Practise using clear words to express agreement, refusal or need for help"
+      ],
+      "From Age 5: Equality and Relationships": [
+        "Recognise that girls and boys can take part in the same games, roles and responsibilities",
+        "Identify stereotypes in stories, images or everyday situations",
+        "Use respectful words when speaking about bodies, feelings and relationships",
+        "Cooperate with others while respecting rules and individual choices",
+        "Understand that friendship involves care, listening and respect"
+      ],
+      "From Age 5: Protection and Help": [
+        "Identify trusted adults inside and outside school",
+        "Recognise that secrets causing worry or fear should be shared with a trusted adult",
+        "Distinguish between private and public parts of life in age-appropriate situations",
+        "Know simple protective behaviours for uncomfortable or unsafe situations",
+        "Understand that asking for help is allowed and important"
+      ]
+    }
   },
   cycle2: {
     "Literacy": {
