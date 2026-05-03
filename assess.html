@@ -51,8 +51,18 @@
   <p class="screen-sub">Domain and learning outcomes are identified automatically from each photo. No rubric to configure.</p>
   <div class="card">
     <div class="form-group">
+      <label class="form-label">Cycle</label>
+      <select id="setup-cycle" onchange="onSetupCycleChange()"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Year level</label>
+      <select id="setup-year"></select>
+    </div>
+  </div>
+  <div class="card">
+    <div class="form-group">
       <label class="form-label">Default context <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
-      <textarea id="setup-context" placeholder="e.g. Year level: CM2. School follows French Cycle 3 curriculum at an international school."></textarea>
+      <textarea id="setup-context" placeholder="e.g. Year level: CM2. School follows the French curriculum at an international school."></textarea>
       <div class="form-hint">Applied to every assessment. You can add specific context per session.</div>
     </div>
   </div>
@@ -541,6 +551,14 @@
       <label class="form-label">Default context</label>
       <textarea id="settings-context" style="min-height:65px"></textarea>
     </div>
+    <div class="form-group">
+      <label class="form-label">Cycle</label>
+      <select id="settings-cycle" onchange="onSettingsCycleChange()"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Year level</label>
+      <select id="settings-year"></select>
+    </div>
     <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px">
       <div style="display:flex;gap:8px">
         <button class="btn btn-secondary" onclick="exportData()" style="flex:1">⬇ Export data backup</button>
@@ -641,9 +659,42 @@
   </div>
 </div>
 <script src="assets/cycle3-domain-library.js"></script>
+<script src="assets/cycle-domain-library.js"></script>
 <script src="assets/storage.js"></script>
 <script>
-const CYCLESTUDIO_DOMAIN_LIBRARY = window.CYCLE3_DOMAIN_LIBRARY || {};
+const CYCLE_LABELS = {
+  cycle1: 'Cycle 1',
+  cycle2: 'Cycle 2',
+  cycle3: 'Cycle 3'
+};
+const CYCLE_YEAR_LEVELS = {
+  cycle1: ['PS', 'MS', 'GS'],
+  cycle2: ['CP', 'CE1', 'CE2'],
+  cycle3: ['CM1', 'CM2', 'CM1/CM2']
+};
+const CYCLE_DOMAIN_LIBRARIES = window.CYCLE_DOMAIN_LIBRARIES || { cycle3: window.CYCLE3_DOMAIN_LIBRARY || {} };
+let currentCycle = 'cycle3';
+let currentYearLevel = 'CM1';
+
+function normaliseCycle(value) {
+  return CYCLE_LABELS[value] ? value : 'cycle3';
+}
+
+function getCycleYears(cycle = currentCycle) {
+  return CYCLE_YEAR_LEVELS[normaliseCycle(cycle)] || CYCLE_YEAR_LEVELS.cycle3;
+}
+
+function getCycleLabel(cycle = currentCycle) {
+  return CYCLE_LABELS[normaliseCycle(cycle)] || CYCLE_LABELS.cycle3;
+}
+
+function getAssessCycleContext() {
+  return `${getCycleLabel()} (${currentYearLevel})`;
+}
+
+function getCurrentDomainLibrary() {
+  return CYCLE_DOMAIN_LIBRARIES[currentCycle] || CYCLE_DOMAIN_LIBRARIES.cycle3 || {};
+}
 
 function cloneDomainEntry(entry) {
   if (Array.isArray(entry)) return entry.slice();
@@ -661,22 +712,37 @@ function flattenDomainEntry(entry) {
   return [];
 }
 
-const CYCLE3_DOMAIN_STRUCTURE = Object.fromEntries(
-  Object.entries(CYCLESTUDIO_DOMAIN_LIBRARY).map(([domain, entry]) => [
+function buildDomainStructure(library) {
+  return Object.fromEntries(Object.entries(library || {}).map(([domain, entry]) => [
     domain,
     cloneDomainEntry(entry)
-  ])
-);
+  ]));
+}
 
-const CYCLE3_OUTCOMES = Object.fromEntries(
+let CYCLE3_DOMAIN_STRUCTURE = buildDomainStructure(getCurrentDomainLibrary());
+
+let CYCLE3_OUTCOMES = Object.fromEntries(
   Object.entries(CYCLE3_DOMAIN_STRUCTURE).map(([domain, entry]) => [domain, flattenDomainEntry(entry)])
 );
 
-const SUBDOMAIN_AWARE_DOMAINS = new Set(
+let SUBDOMAIN_AWARE_DOMAINS = new Set(
   Object.entries(CYCLE3_DOMAIN_STRUCTURE)
     .filter(([, entry]) => entry && !Array.isArray(entry) && typeof entry === 'object')
     .map(([domain]) => domain)
 );
+
+function refreshActiveCurriculumLibrary() {
+  CYCLE3_DOMAIN_STRUCTURE = buildDomainStructure(getCurrentDomainLibrary());
+  CYCLE3_OUTCOMES = Object.fromEntries(
+    Object.entries(CYCLE3_DOMAIN_STRUCTURE).map(([domain, entry]) => [domain, flattenDomainEntry(entry)])
+  );
+  SUBDOMAIN_AWARE_DOMAINS = new Set(
+    Object.entries(CYCLE3_DOMAIN_STRUCTURE)
+      .filter(([, entry]) => entry && !Array.isArray(entry) && typeof entry === 'object')
+      .map(([domain]) => domain)
+  );
+  APPROVED_DOMAIN_LIST = Object.keys(CYCLE3_DOMAIN_STRUCTURE);
+}
 
 function getDomainOutcomeGroups(domain) {
   const entry = CYCLE3_DOMAIN_STRUCTURE[domain];
@@ -712,7 +778,7 @@ function renderOutcomeOptions(domain, optsId, prefix, toggleFnName) {
   }).join('');
 }
 
-const APPROVED_DOMAIN_LIST = Object.keys(CYCLE3_DOMAIN_STRUCTURE);
+let APPROVED_DOMAIN_LIST = Object.keys(CYCLE3_DOMAIN_STRUCTURE);
 const APPROVED_DOMAIN_ALIASES = {
   'mathematiques': 'Mathematics',
   'maths': 'Mathematics',
@@ -761,6 +827,24 @@ function getApprovedDomainListText() {
   return APPROVED_DOMAIN_LIST.join(', ');
 }
 
+function buildDomainRoutingRules() {
+  const rules = [];
+  if (APPROVED_DOMAIN_LIST.includes('English Literacy')) {
+    rules.push('- English spelling, vocabulary, reading, writing, grammar and language arts ALWAYS belong to "English Literacy".');
+  } else if (APPROVED_DOMAIN_LIST.includes('Literacy')) {
+    rules.push('- Reading, writing, grammar, spelling, vocabulary and language arts belong to "Literacy".');
+  } else if (APPROVED_DOMAIN_LIST.includes('Oral and Written Language')) {
+    rules.push('- Oral language, stories, vocabulary, letters, early writing and phonological awareness belong to "Oral and Written Language".');
+  }
+  if (APPROVED_DOMAIN_LIST.includes('Modern Languages')) {
+    rules.push('- "Modern Languages" is ONLY for foreign-language learning.');
+  }
+  if (APPROVED_DOMAIN_LIST.includes('French')) {
+    rules.push('- French literacy belongs to "French".');
+  }
+  return rules.join('\n');
+}
+
 function populateDomainSelectOptions(selectId, placeholder) {
   const select = document.getElementById(selectId);
   if (!select) return;
@@ -772,6 +856,43 @@ function populateAllDomainSelects() {
   populateDomainSelectOptions('domain-select', 'Identify automatically');
   populateDomainSelectOptions('batch-domain-select', 'Identify automatically');
   populateDomainSelectOptions('domain-override', 'Change domain...');
+}
+
+function populateAssessCycleControls(cycle = currentCycle, year = currentYearLevel) {
+  ['settings-cycle', 'setup-cycle'].forEach(id => {
+    const cycleSelect = document.getElementById(id);
+    if (!cycleSelect) return;
+    cycleSelect.innerHTML = Object.entries(CYCLE_LABELS)
+      .map(([value, label]) => `<option value="${escAttr(value)}">${esc(label)}</option>`)
+      .join('');
+    cycleSelect.value = normaliseCycle(cycle);
+  });
+  ['settings-year', 'setup-year'].forEach(id => {
+    const yearSelect = document.getElementById(id);
+    if (!yearSelect) return;
+    const years = getCycleYears(cycle);
+    yearSelect.innerHTML = years.map(level => `<option value="${escAttr(level)}">${esc(level)}</option>`).join('');
+    yearSelect.value = years.includes(year) ? year : years[0];
+  });
+}
+
+function applyAssessCycle(cycle = 'cycle3', year = '') {
+  currentCycle = normaliseCycle(cycle);
+  const years = getCycleYears(currentCycle);
+  currentYearLevel = years.includes(year) ? year : years[0];
+  refreshActiveCurriculumLibrary();
+  populateAssessCycleControls(currentCycle, currentYearLevel);
+  populateAllDomainSelects();
+}
+
+function onSettingsCycleChange() {
+  const cycle = document.getElementById('settings-cycle')?.value || currentCycle;
+  applyAssessCycle(cycle, document.getElementById('settings-year')?.value || '');
+}
+
+function onSetupCycleChange() {
+  const cycle = document.getElementById('setup-cycle')?.value || currentCycle;
+  applyAssessCycle(cycle, document.getElementById('setup-year')?.value || '');
 }
 
 function normalizeApprovedDomain(value = '') {
@@ -955,15 +1076,13 @@ async function callAnthropicJSON({ messageContent, maxTokens = 800, timeoutMs = 
 
 async function identifyApprovedDomain({ messageContent, timeoutMs = 45000, includePdfBeta = false, activityDescription = '' }) {
   const descriptionLine = activityDescription ? `Teacher context: ${activityDescription}` : '';
-  const prompt = `You are identifying the curriculum domain for a Cycle 3 assessment at an international school following the French curriculum.
+  const prompt = `You are identifying the curriculum domain for a ${getAssessCycleContext()} assessment at an international school following the French curriculum.
 
 Choose EXACTLY one approved domain from this list:
 ${getApprovedDomainListText()}
 
 Critical school rule:
-- English spelling, vocabulary, reading, writing, grammar and language arts ALWAYS belong to "English Literacy".
-- "Modern Languages" is ONLY for foreign-language learning.
-- French literacy belongs to "French".
+${buildDomainRoutingRules()}
 ${descriptionLine}
 
 Return ONLY valid JSON:
@@ -1158,8 +1277,8 @@ const STATUS_LABEL = { met: 'Met', wt: 'Working Towards', nm: 'Not Met' };
    INIT
 ══════════════════════════════════════════ */
 function initApp() {
-  populateAllDomainSelects();
   const settings = DB.loadSettings();
+  applyAssessCycle(settings.preferredCycle || 'cycle3', settings.yearLevel || '');
   if (settings.apiKey) {
     window.__key = settings.apiKey;
     showMainApp();
@@ -1178,7 +1297,8 @@ function completeSetup() {
   const key = document.getElementById('api-key').value.trim();
   if (!key) { flash('Please enter your API key.'); return; }
   const ctx = document.getElementById('setup-context').value.trim();
-  DB.saveSettings({ apiKey: key, defaultContext: ctx });
+  applyAssessCycle(document.getElementById('setup-cycle')?.value || currentCycle, document.getElementById('setup-year')?.value || currentYearLevel);
+  DB.saveSettings({ apiKey: key, defaultContext: ctx, preferredCycle: currentCycle, yearLevel: currentYearLevel });
   window.__key = key;
   showMainApp();
 }
@@ -1599,7 +1719,7 @@ ${buildOutcomeLibraryPrompt(resolvedDomain)}`;
       ? '"comment": "<comprehensive comment addressed to the student by name: strengths, areas to focus on, next step — in light Australian English, no em dashes>",' 
       : '"comment": "<specific next step in light Australian English, no em dashes — OR empty string>",' ;
 
-    const prompt = `You are an experienced teacher at an international school following the French Cycle 3 curriculum (CM1, CM2, 6ème, ages 8-11). All comments and English translations must be in English.
+    const prompt = `You are an experienced teacher at an international school following the French curriculum for ${getAssessCycleContext()}. All comments and English translations must be in English.
 
 ${usingPdf ? "A PDF document of the student's work is attached. It may contain one or more scanned pages. Treat the whole PDF as one piece of work." : (activePhotos.length > 1 ? activePhotos.length + " photographs of the student's work are attached — treat them as a single piece of work spanning multiple pages." : "A photograph of the student's work is attached.")}${ctxBlock}
 
@@ -3064,7 +3184,7 @@ function printProfile(name) {
       ${outs}${cmt}
     </div>`;
   }).join('');
-  document.getElementById('print-area').innerHTML = `<div class="print-head"><h1>Portfolio — ${esc(name)}</h1><p>Printed ${today} · ${st.assessments.length} assessments · French Cycle 3</p></div>${cards}`;
+  document.getElementById('print-area').innerHTML = `<div class="print-head"><h1>Portfolio — ${esc(name)}</h1><p>Printed ${today} · ${st.assessments.length} assessments · French curriculum</p></div>${cards}`;
   window.print();
 }
 
@@ -4111,7 +4231,7 @@ async function runBatchIdentify() {
 Approved library for ${resolvedDomain}:
 ${buildOutcomeLibraryPrompt(resolvedDomain)}`;
 
-    const prompt = `You are an experienced teacher at an international school following the French Cycle 3 curriculum.
+    const prompt = `You are an experienced teacher at an international school following the French curriculum for ${getAssessCycleContext()}.
 
 ${batchInputType === 'text' ? 'The teacher has described an activity.' : 'A photo or document of the activity/worksheet is attached.'}
 The domain is fixed as: ${resolvedDomain}. Use this exact domain. The approved in-app curriculum library is the source of truth.
@@ -4684,6 +4804,7 @@ async function saveRename() {
 
 function openSettings() {
   const s = DB.loadSettings();
+  applyAssessCycle(s.preferredCycle || currentCycle || 'cycle3', s.yearLevel || currentYearLevel || '');
   document.getElementById('settings-key').value     = s.apiKey || '';
   document.getElementById('settings-context').value = s.defaultContext || '';
   document.getElementById('settings-modal').classList.add('open');
@@ -4692,7 +4813,10 @@ function saveSettings() {
   const key = document.getElementById('settings-key').value.trim();
   const ctx = document.getElementById('settings-context').value.trim();
   if (!key) { flash('API key cannot be empty.'); return; }
-  DB.saveSettings({ apiKey: key, defaultContext: ctx });
+  const cycle = document.getElementById('settings-cycle')?.value || currentCycle;
+  const year = document.getElementById('settings-year')?.value || currentYearLevel;
+  applyAssessCycle(cycle, year);
+  DB.saveSettings({ apiKey: key, defaultContext: ctx, preferredCycle: currentCycle, yearLevel: currentYearLevel });
   window.__key = key;
   closeSettings();
 }
