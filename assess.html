@@ -946,6 +946,12 @@ function studentForActiveCycle(student) {
   };
 }
 
+function studentsForActiveCycle(students = []) {
+  return (students || [])
+    .map(studentForActiveCycle)
+    .filter(student => (student.assessments || []).length);
+}
+
 function normalizeStoredAssessmentData(data) {
   if (!data || typeof data !== 'object') return { students: {} };
   const defaultCycle = normaliseCycle(data.preferredCycle || 'cycle3');
@@ -5085,8 +5091,8 @@ function buildWorkbook(students) {
 }
 
 async function exportAllExcel() {
-  const students = DB.getAllStudents();
-  if (!students.length) { flash('No student data to export.'); return; }
+  const students = studentsForActiveCycle(DB.getAllStudents());
+  if (!students.length) { flash('No student data to export for the active cycle.', 'warn'); return; }
   const wb = buildWorkbook(students);
   const today = new Date().toISOString().split('T')[0];
   const buf = await wb.xlsx.writeBuffer();
@@ -5098,8 +5104,9 @@ async function exportAllExcel() {
 }
 
 async function exportStudentExcel(name) {
-  const st = DB.getStudent(name);
+  const st = studentForActiveCycle(DB.getStudent(name));
   if (!st) return;
+  if (!st.assessments.length) { flash('No assessments to export for the active cycle.', 'warn'); return; }
   const wb = buildWorkbook([st]);
   // Remove the overview sheet for individual export — just keep the student sheet
   // Actually keep both — overview has 1 student which is fine
