@@ -3029,13 +3029,41 @@ function normalizeBatchReopenOutcomes(entries) {
   return sourceOutcomes.map(o => ({ fr: o?.fr || o?.en || '', en: o?.en || o?.fr || '' }));
 }
 
-function reopenBatchSession(sessionId, options = {}) {
+function getRecordCycleLabel(record) {
+  const cycle = normaliseCycle(record?.cycle || 'cycle3');
+  const year = normaliseYearForCycle(cycle, record?.yearLevel || '');
+  return `${getCycleLabel(cycle)} (${year})`;
+}
+
+async function ensureCycleForBatchSession(session) {
+  const targetCycle = normaliseCycle(session?.cycle || 'cycle3');
+  const targetYear = normaliseYearForCycle(targetCycle, session?.yearLevel || '');
+  if (targetCycle === currentCycle) return true;
+  const ok = await appConfirm(
+    'Switch cycle to reopen this batch?',
+    `This saved batch belongs to ${getCycleLabel(targetCycle)} (${targetYear}). Assess is currently set to ${getAssessCycleContext()}. Switching now keeps domains and outcomes aligned.`,
+    `Switch to ${getCycleLabel(targetCycle)}`,
+    'btn-primary'
+  );
+  if (!ok) return false;
+  const settings = DB.loadSettings();
+  applyAssessCycle(targetCycle, targetYear);
+  DB.saveSettings({
+    ...settings,
+    preferredCycle: currentCycle,
+    yearLevel: currentYearLevel
+  });
+  return true;
+}
+
+async function reopenBatchSession(sessionId, options = {}) {
   try {
     const session = DB.getSessions().find(entry => entry.id === sessionId);
     if (!session || session.type !== 'batch') {
       flash('Could not reopen that batch record.', 'warn');
       return;
     }
+    if (!await ensureCycleForBatchSession(session)) return;
 
     const entries = (session.students || []).map(entry => ({
       ...entry,
