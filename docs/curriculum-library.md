@@ -22,6 +22,8 @@ Assess normalizes older saved records that used French-labelled domain names so 
 
 CycleAssess treats the selected cycle/year in Settings as the active teacher profile. Teachers should normally set this once for the school year and leave it alone.
 
+The first setup screen and Settings describe this as the active teaching context. Admins can still change it freely when testing different cycles or year levels.
+
 Each new assessment and batch session stores its own `cycle` and `yearLevel` snapshot when it is created. This lets an admin test multiple cycles in one browser without mixing records in Insights, profiles, or Excel exports.
 
 When Settings changes cycle, CycleAssess switches the active curriculum library and filters cycle-aware views to that active cycle. JSON backups remain full-data backups and are not cycle-filtered.
