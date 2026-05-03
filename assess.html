@@ -938,6 +938,14 @@ function filterAssessmentsForActiveCycle(assessments = []) {
   return (assessments || []).filter(assessmentMatchesActiveCycle);
 }
 
+function studentForActiveCycle(student) {
+  if (!student || typeof student !== 'object') return student;
+  return {
+    ...student,
+    assessments: filterAssessmentsForActiveCycle(student.assessments || [])
+  };
+}
+
 function normalizeStoredAssessmentData(data) {
   if (!data || typeof data !== 'object') return { students: {} };
   const defaultCycle = normaliseCycle(data.preferredCycle || 'cycle3');
@@ -2364,7 +2372,7 @@ function formatMiniDateLabel(dateStr) {
 }
 
 function buildStudentProfileDataset(st) {
-  const assessments = (st.assessments || []).slice().sort((a,b) => (a.date || '').localeCompare(b.date || '') || (a.id || '').localeCompare(b.id || ''));
+  const assessments = filterAssessmentsForActiveCycle(st.assessments || []).slice().sort((a,b) => (a.date || '').localeCompare(b.date || '') || (a.id || '').localeCompare(b.id || ''));
   const overall = { met: 0, wt: 0, nm: 0, total: 0 };
   const domainMap = {};
   const outcomeMap = {};
@@ -2627,7 +2635,7 @@ function saveProfileDomainComment(name) {
 }
 
 function buildDomainCommentEvidence(st, domain) {
-  const assessments = (st.assessments || [])
+  const assessments = filterAssessmentsForActiveCycle(st.assessments || [])
     .filter(a => (a.domain || '') === domain)
     .slice()
     .sort((a, b) => ((b.date || '').localeCompare(a.date || '')) || ((b.id || '').localeCompare(a.id || '')));
@@ -2713,7 +2721,7 @@ function buildDomainCommentEvidence(st, domain) {
 }
 
 async function generateDomainCommentFromData(name) {
-  const st = DB.getStudent(name);
+  const st = studentForActiveCycle(DB.getStudent(name));
   const sel = document.getElementById('profile-domain-comment-select');
   const ta = document.getElementById('profile-domain-comment-text');
   const btn = document.getElementById('profile-domain-comment-generate-btn');
@@ -2799,7 +2807,7 @@ Return ONLY valid JSON:
 
 function renderProfile(name) {
   currentProfileStudent = name;
-  const st = DB.getStudent(name);
+  const st = studentForActiveCycle(DB.getStudent(name));
   if (!st) { document.getElementById('profile-content').innerHTML = '<p>Student not found.</p>'; return; }
 
   const assessments = (st.assessments || []).slice().sort((a, b) => {
@@ -3210,7 +3218,7 @@ function closeEditModal() {
 }
 
 function printProfile(name) {
-  const st = DB.getStudent(name);
+  const st = studentForActiveCycle(DB.getStudent(name));
   if (!st) return;
   const today = new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'});
   const cards = st.assessments.map(a => {
