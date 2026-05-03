@@ -908,14 +908,38 @@ function normalizeStoredDomain(value = '') {
   return APPROVED_DOMAIN_LIST.includes(domain) ? domain : String(value || '').trim();
 }
 
+function normaliseYearForCycle(cycle = 'cycle3', year = '') {
+  const safeCycle = normaliseCycle(cycle);
+  const years = getCycleYears(safeCycle);
+  return years.includes(year) ? year : years[0];
+}
+
+function getAssessCycleSnapshot() {
+  return {
+    cycle: normaliseCycle(currentCycle),
+    yearLevel: normaliseYearForCycle(currentCycle, currentYearLevel)
+  };
+}
+
+function normalizeStoredCycleFields(record, fallback = {}) {
+  if (!record || typeof record !== 'object') return record;
+  const fallbackCycle = normaliseCycle(fallback.cycle || 'cycle3');
+  record.cycle = normaliseCycle(record.cycle || record.preferredCycle || fallbackCycle);
+  record.yearLevel = normaliseYearForCycle(record.cycle, record.yearLevel || fallback.yearLevel || '');
+  return record;
+}
+
 function normalizeStoredAssessmentData(data) {
   if (!data || typeof data !== 'object') return { students: {} };
+  const defaultCycle = normaliseCycle(data.preferredCycle || 'cycle3');
+  const defaultYear = normaliseYearForCycle(defaultCycle, data.yearLevel || '');
   data.students = data.students && typeof data.students === 'object' ? data.students : {};
   Object.values(data.students).forEach(student => {
     if (!student || typeof student !== 'object') return;
     if (Array.isArray(student.assessments)) {
       student.assessments.forEach(assessment => {
         if (assessment && assessment.domain) assessment.domain = normalizeStoredDomain(assessment.domain);
+        normalizeStoredCycleFields(assessment, { cycle: defaultCycle, yearLevel: defaultYear });
       });
     }
     if (student.domainComments && typeof student.domainComments === 'object') {
@@ -928,9 +952,11 @@ function normalizeStoredAssessmentData(data) {
   });
   if (Array.isArray(data.sessions)) {
     data.sessions.forEach(session => {
+      normalizeStoredCycleFields(session, { cycle: defaultCycle, yearLevel: defaultYear });
       if (session && session.domain) session.domain = normalizeStoredDomain(session.domain);
       if (session && Array.isArray(session.students)) {
         session.students.forEach(entry => {
+          normalizeStoredCycleFields(entry, { cycle: session.cycle, yearLevel: session.yearLevel });
           if (entry && entry.domain) entry.domain = normalizeStoredDomain(entry.domain);
         });
       }
@@ -1146,6 +1172,7 @@ const DB = {
   },
 
   saveAssessment(name, assessment) {
+    normalizeStoredCycleFields(assessment, getAssessCycleSnapshot());
     const data = this.loadData();
     if (!data.students[name]) data.students[name] = { name, assessments: [] };
     data.students[name].assessments.unshift(assessment);
@@ -1193,6 +1220,10 @@ const DB = {
     this.saveData(data);
   },
   saveSession(session) {
+    normalizeStoredCycleFields(session, getAssessCycleSnapshot());
+    if (Array.isArray(session.students)) {
+      session.students.forEach(entry => normalizeStoredCycleFields(entry, { cycle: session.cycle, yearLevel: session.yearLevel }));
+    }
     const data = this.loadData();
     if (!data.sessions) data.sessions = [];
     data.sessions.unshift(session);
@@ -1835,10 +1866,12 @@ function confirmResult() {
   const name    = document.getElementById('student-name').value.trim();
   const comment = document.getElementById('comment-input').value.trim();
   currentResult.comment = comment;
+  const cycleSnapshot = getAssessCycleSnapshot();
 
   const assessment = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2,5),
     date: new Date().toISOString().split('T')[0],
+    ...cycleSnapshot,
     domain: currentResult.domain,
     outcomes: currentResult.outcomes,
     comment,
@@ -1894,7 +1927,8 @@ function finishSession() {
   DB.saveSession({
     id: Date.now().toString(36),
     date: new Date().toISOString().split('T')[0],
-    students: sessionStudents.map(s => ({ name: s.name, domain: s.domain, assessmentId: s.id }))
+    ...getAssessCycleSnapshot(),
+    students: sessionStudents.map(s => ({ name: s.name, domain: s.domain, assessmentId: s.id, cycle: s.cycle, yearLevel: s.yearLevel }))
   });
   document.getElementById('summary-sub').textContent = sessionStudents.length + ' student' + (sessionStudents.length!==1?'s':'') + ' assessed this session';
   const cards = document.getElementById('summary-cards');
@@ -4604,6 +4638,7 @@ function addStudentToBatchGrid() {
 
 function saveBatchRecord() {
   const today = new Date().toISOString().split('T')[0];
+  const cycleSnapshot = getAssessCycleSnapshot();
   const totalOutcomes = (batchContext?.outcomes || []).length;
   const activeRows = Object.entries(batchStudentStatuses).filter(([, v]) => !v.absent);
   const partial = [];
@@ -4632,10 +4667,11 @@ function saveBatchRecord() {
   let updatedCount = 0;
 
   if (!session) {
-    session = { id: Date.now().toString(36), date: today, type: 'batch', activity: batchContext.description, students: [] };
+    session = { id: Date.now().toString(36), date: today, type: 'batch', activity: batchContext.description, ...cycleSnapshot, students: [] };
     data.sessions.unshift(session);
   } else {
     session.activity = batchContext.description;
+    Object.assign(session, cycleSnapshot);
   }
 
   toSave.forEach(([name, v]) => {
@@ -4648,6 +4684,7 @@ function saveBatchRecord() {
       const existing = (student.assessments || []).find(item => item.id === v.assessmentId);
       if (existing) {
         existing.type = 'batch';
+        Object.assign(existing, cycleSnapshot);
         existing.domain = batchContext.domain;
         existing.activity = batchContext.description;
         existing.outcomes = nextOutcomes;
@@ -4658,6 +4695,7 @@ function saveBatchRecord() {
         const assessment = {
           id: v.assessmentId,
           date: today,
+          ...cycleSnapshot,
           type: 'batch',
           domain: batchContext.domain,
           activity: batchContext.description,
@@ -4672,14 +4710,16 @@ function saveBatchRecord() {
       if (existingEntry) {
         existingEntry.name = name;
         existingEntry.domain = batchContext.domain;
+        Object.assign(existingEntry, cycleSnapshot);
         existingEntry.assessmentId = v.assessmentId;
       } else {
-        session.students.push({ name, domain: batchContext.domain, assessmentId: v.assessmentId });
+        session.students.push({ name, domain: batchContext.domain, assessmentId: v.assessmentId, ...cycleSnapshot });
       }
     } else {
       const assessment = {
         id: Date.now().toString(36) + Math.random().toString(36).slice(2,5),
         date: today,
+        ...cycleSnapshot,
         type: 'batch',
         domain: batchContext.domain,
         activity: batchContext.description,
@@ -4689,7 +4729,7 @@ function saveBatchRecord() {
       };
       student.assessments.unshift(assessment);
       v.assessmentId = assessment.id;
-      session.students.push({ name, domain: batchContext.domain, assessmentId: assessment.id });
+      session.students.push({ name, domain: batchContext.domain, assessmentId: assessment.id, ...cycleSnapshot });
       createdCount += 1;
     }
   });

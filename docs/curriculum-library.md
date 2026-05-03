@@ -14,7 +14,7 @@ Planner, Studio, and Assess now read through the multi-cycle wrapper below so th
 - `cycle2`: Cycle 2 domain/subdomain structure and imported official outcomes.
 - `cycle3`: the existing `window.CYCLE3_DOMAIN_LIBRARY` data.
 
-Studio now has cycle/year controls, cycle-aware difficulty options, defaults older saved items to Cycle 3, stores cycle/year in saved resources and history, and sends the selected cycle/year into its worksheet, answer-key, learning-outcome detection, and quality-check prompts. Assess has a cycle/year preference shell and can switch its active curriculum library, while older data still defaults to Cycle 3.
+Studio now has cycle/year controls, cycle-aware difficulty options, defaults older saved items to Cycle 3, stores cycle/year in saved resources and history, and sends the selected cycle/year into its worksheet, answer-key, learning-outcome detection, and quality-check prompts. Assess has a cycle/year preference shell, can switch its active curriculum library, and snapshots cycle/year onto new assessment and session records. Older Assess data still defaults to Cycle 3.
 
 Assess normalizes older saved records that used French-labelled domain names so existing assessment history still counts under the matching shared domain.
 
