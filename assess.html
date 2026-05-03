@@ -567,8 +567,8 @@
           <input type="file" accept=".json" onchange="importData(event)" style="display:none">
         </label>
       </div>
-      <button class="btn btn-ghost" onclick="clearAssessmentsOnly()" style="color:var(--wt);border-color:var(--wt-bd);margin-bottom:6px">🗑 Clear all assessments (keep students)</button>
-      <button class="btn btn-ghost" onclick="clearAllData()" style="color:var(--nm);border-color:var(--nm-bd)">🗑 Clear all student data</button>
+      <button class="btn btn-ghost" onclick="clearAssessmentsOnly()" style="color:var(--wt);border-color:var(--wt-bd);margin-bottom:6px">🗑 Clear all assessments, all cycles (keep students)</button>
+      <button class="btn btn-ghost" onclick="clearAllData()" style="color:var(--nm);border-color:var(--nm-bd)">🗑 Clear all student data, all cycles</button>
     </div>
     <div class="modal-actions">
       <button class="btn btn-primary" onclick="saveSettings()">Save</button>
@@ -5161,7 +5161,7 @@ async function exportStudentExcel(name) {
 }
 
 async function clearAssessmentsOnly() {
-  if (!await appConfirm('Clear all assessments?', 'Students stay in the roster but all assessment records, history and session logs will be deleted. Cannot be undone.', 'Clear all', 'btn-ghost')) return;
+  if (!await appConfirm('Clear all assessments across all cycles?', 'Students stay in the roster, but assessment records, history and session logs from every cycle will be deleted. Cannot be undone.', 'Clear all cycles', 'btn-ghost')) return;
   const data = DB.loadData();
   Object.values(data.students).forEach(st => { st.assessments = []; });
   data.sessions = [];
@@ -5172,7 +5172,7 @@ async function clearAssessmentsOnly() {
 }
 
 async function clearAllData() {
-  if (!await appConfirm('Delete all data?', 'All students, assessments and history will be permanently deleted. Cannot be undone.', 'Delete everything', 'btn-ghost')) return;
+  if (!await appConfirm('Delete all data across all cycles?', 'All students, assessments and history from every cycle will be permanently deleted. Cannot be undone.', 'Delete everything', 'btn-ghost')) return;
   localStorage.removeItem(DB.KEY);
   closeSettings();
   renderRoster();

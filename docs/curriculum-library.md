@@ -26,6 +26,8 @@ Each new assessment and batch session stores its own `cycle` and `yearLevel` sna
 
 When Settings changes cycle, CycleAssess switches the active curriculum library and filters cycle-aware views to that active cycle. JSON backups remain full-data backups and are not cycle-filtered.
 
+CycleAssess destructive clear actions are also full-data actions across all cycles. Their UI wording should stay explicit about this unless a future cycle-scoped delete is added.
+
 If a saved batch belongs to another cycle, CycleAssess asks before switching Settings to that saved cycle/year and reopening the grid.
 
 When changing curriculum domains, subdomains, or outcomes, update the shared asset first so the three tools stay aligned.
