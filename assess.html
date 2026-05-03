@@ -938,6 +938,17 @@ function filterAssessmentsForActiveCycle(assessments = []) {
   return (assessments || []).filter(assessmentMatchesActiveCycle);
 }
 
+function sessionForActiveCycle(session) {
+  if (!session || typeof session !== 'object') return null;
+  const fallbackCycle = normaliseCycle(session.cycle || 'cycle3');
+  const students = (session.students || []).filter(entry => {
+    const entryCycle = normaliseCycle(entry?.cycle || fallbackCycle);
+    return entryCycle === currentCycle;
+  });
+  if (!students.length) return null;
+  return { ...session, students };
+}
+
 function studentForActiveCycle(student) {
   if (!student || typeof student !== 'object') return student;
   return {
@@ -2024,19 +2035,19 @@ async function deleteSessionRecord(sessionId) {
 
 function renderHistory() {
   const list = document.getElementById('history-list');
-  const sessions = DB.getSessions();
+  const sessions = DB.getSessions().map(sessionForActiveCycle).filter(Boolean);
 
   // Also reconstruct sessions from assessment data (catches records saved before session logging)
   const allStudents = DB.getAllStudents();
   const reconstructed = {}; // key: date+activity -> {date, activity, type, students:[]}
   allStudents.forEach(st => {
-    st.assessments.forEach(a => {
+    filterAssessmentsForActiveCycle(st.assessments || []).forEach(a => {
       // Check if this assessment already has a session log
       const hasLog = sessions.some(s => s.students.some(e => e.assessmentId === a.id));
       if (hasLog) return;
       const key = a.date + '|' + (a.activity || a.domain || '');
-      if (!reconstructed[key]) reconstructed[key] = { date: a.date, activity: a.activity || '', type: a.type || 'assess', students: [], _reconstructed: true };
-      reconstructed[key].students.push({ name: st.name, domain: a.domain, assessmentId: a.id });
+      if (!reconstructed[key]) reconstructed[key] = { date: a.date, activity: a.activity || '', type: a.type || 'assess', students: [], _reconstructed: true, cycle: a.cycle, yearLevel: a.yearLevel };
+      reconstructed[key].students.push({ name: st.name, domain: a.domain, assessmentId: a.id, cycle: a.cycle, yearLevel: a.yearLevel });
     });
   });
 
