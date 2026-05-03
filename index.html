@@ -149,16 +149,17 @@
     .cards {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
+      gap: 24px;
       width: 100%;
-      max-width: 860px;
+      max-width: 980px;
     }
     .app-card {
       position: relative;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 24px;
-      padding: 28px 26px 24px;
+      min-height: 380px;
+      padding: 36px 34px 30px;
       text-decoration: none;
       display: flex;
       flex-direction: column;
@@ -172,7 +173,7 @@
       width: 32px;
       height: 6px;
       border-radius: 999px;
-      margin-bottom: 16px;
+      margin-bottom: 22px;
       background: var(--accent-lt);
       border: 1px solid var(--border);
     }
@@ -181,24 +182,24 @@
       box-shadow: var(--shadow-lg);
     }
     .card-label {
-      font-size: 11px; font-weight: 800;
+      font-size: 12px; font-weight: 800;
       text-transform: uppercase; letter-spacing: 0.12em;
-      margin-bottom: 7px;
+      margin-bottom: 9px;
     }
     .card-title {
       font-family: Merriweather, Georgia, serif;
-      font-size: 24px; font-weight: 700;
+      font-size: 30px; font-weight: 700;
       letter-spacing: -0.03em; line-height: 1.1;
-      margin-bottom: 9px;
+      margin-bottom: 14px;
     }
     .card-desc {
-      font-size: 13px; color: var(--ink-soft);
-      line-height: 1.58; flex: 1; margin-bottom: 20px;
+      font-size: 15px; color: var(--ink-soft);
+      line-height: 1.62; flex: 1; margin-bottom: 28px;
     }
     .card-cta {
       display: inline-flex; align-items: center; gap: 7px;
-      font-size: 13px; font-weight: 800; letter-spacing: -0.01em;
-      padding: 10px 18px; border-radius: 13px;
+      font-size: 14px; font-weight: 800; letter-spacing: -0.01em;
+      padding: 12px 22px; border-radius: 14px;
       cursor: pointer; font-family: Inter, sans-serif;
       transition: all 0.15s ease; border: 1.5px solid;
     }
@@ -226,6 +227,11 @@
       text-align: center; padding: 14px 20px;
       font-size: 10px; color: rgba(90,114,147,.75);
       font-weight: 600; letter-spacing: 0.01em;
+    }
+    footer a {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 3px;
     }
 
     .hidden { display: none !important; }
@@ -297,7 +303,7 @@
   </div>
 </main>
 
-<footer>Cycle Suite · Built for cycle-based planning, resources, and assessment</footer>
+<footer>Built By Syl · <a href="mailto:s.magnin@ifs.edu.sg">s.magnin@ifs.edu.sg</a></footer>
 
 <script>
   function showError(msg) {
