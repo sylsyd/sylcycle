@@ -18,4 +18,14 @@ Studio now has cycle/year controls, cycle-aware difficulty options, defaults old
 
 Assess normalizes older saved records that used French-labelled domain names so existing assessment history still counts under the matching shared domain.
 
+## Assess cycle behaviour
+
+CycleAssess treats the selected cycle/year in Settings as the active teacher profile. Teachers should normally set this once for the school year and leave it alone.
+
+Each new assessment and batch session stores its own `cycle` and `yearLevel` snapshot when it is created. This lets an admin test multiple cycles in one browser without mixing records in Insights, profiles, or Excel exports.
+
+When Settings changes cycle, CycleAssess switches the active curriculum library and filters cycle-aware views to that active cycle. JSON backups remain full-data backups and are not cycle-filtered.
+
+If a saved batch belongs to another cycle, CycleAssess asks before switching Settings to that saved cycle/year and reopening the grid.
+
 When changing curriculum domains, subdomains, or outcomes, update the shared asset first so the three tools stay aligned.
