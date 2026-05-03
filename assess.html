@@ -1554,7 +1554,7 @@ function onNameInput() {
   const names = DB.getStudentNames().filter(n => n.toLowerCase().startsWith(q) || n.toLowerCase().includes(q));
   if (!names.length) { list.classList.remove('open'); return; }
   list.innerHTML = names.slice(0, 6).map(n => {
-    const st = DB.getStudent(n);
+    const st = studentForActiveCycle(DB.getStudent(n));
     const lastThumb = st?.assessments[0]?.thumb || '';
     const lastDate  = st?.assessments[0]?.date ? formatDate(st.assessments[0].date) : '';
     const count = st?.assessments.length || 0;
@@ -2230,8 +2230,10 @@ function renderRoster() {
   }
 
   list.innerHTML = students.map(st => {
-    const last = st.assessments[0];
-    const domains = [...new Set(st.assessments.map(a => a.domain))];
+    const activeStudent = studentForActiveCycle(st);
+    const activeAssessments = activeStudent.assessments || [];
+    const last = activeAssessments[0];
+    const domains = [...new Set(activeAssessments.map(a => a.domain))];
     const thumb = last?.thumb || '';
     const initial = st.name.trim()[0]?.toUpperCase() || '?';
     const thumbEl = thumb
@@ -2243,7 +2245,7 @@ function renderRoster() {
       ${thumbEl}
       <div class="student-info">
         <div class="student-name-row">${esc(st.name)} ${classBadge}</div>
-        <div class="student-meta">${st.assessments.length} assessment${st.assessments.length!==1?'s':''} · Last: ${formatDate(last?.date)}</div>
+        <div class="student-meta">${activeAssessments.length} assessment${activeAssessments.length!==1?'s':''}${last?.date ? ' · Last: ' + formatDate(last.date) : ''}</div>
         <div class="domain-tags">${domainTags}</div>
       </div>
       <div style="display:flex;align-items:center;gap:4px">
