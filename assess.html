@@ -929,6 +929,15 @@ function normalizeStoredCycleFields(record, fallback = {}) {
   return record;
 }
 
+function assessmentMatchesActiveCycle(assessment) {
+  const cycle = normaliseCycle(assessment?.cycle || 'cycle3');
+  return cycle === currentCycle;
+}
+
+function filterAssessmentsForActiveCycle(assessments = []) {
+  return (assessments || []).filter(assessmentMatchesActiveCycle);
+}
+
 function normalizeStoredAssessmentData(data) {
   if (!data || typeof data !== 'object') return { students: {} };
   const defaultCycle = normaliseCycle(data.preferredCycle || 'cycle3');
@@ -3237,7 +3246,10 @@ function setHmView(v) {
 }
 
 function renderHeatmap() {
-  const students = DB.getAllStudents();
+  const students = DB.getAllStudents().map(student => ({
+    ...student,
+    assessments: filterAssessmentsForActiveCycle(student.assessments || [])
+  }));
   if (!students.length) {
     document.getElementById('heatmap-list').innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><p>No data yet. Assess some students first.</p></div>`;
     document.getElementById('hm-summary').textContent = '';
@@ -3252,7 +3264,8 @@ function renderHeatmap() {
     classFilterEl.innerHTML = '<option value="">All classes</option>' +
       allClasses.map(c => `<option value="${esc(c)}" ${c===currentClass?'selected':''}>${esc(c)}</option>`).join('');
   }
-  const filteredStudents = currentClass ? students.filter(s => s.class === currentClass) : students;
+  const filteredStudents = (currentClass ? students.filter(s => s.class === currentClass) : students)
+    .filter(student => (student.assessments || []).length);
 
   const allDomains = [...new Set(filteredStudents.flatMap(s => s.assessments.map(a => a.domain)))].sort();
   const domainFilter = document.getElementById('hm-domain-filter');
