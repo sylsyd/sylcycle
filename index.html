@@ -148,10 +148,10 @@
     /* ── App cards ── */
     .cards {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 34px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 26px;
       width: 100%;
-      max-width: 1060px;
+      max-width: 1380px;
     }
     .app-card {
       position: relative;
@@ -206,10 +206,11 @@
     .card-cta .arrow { font-size: 16px; transition: transform 0.15s ease; }
     .app-card:hover .card-cta .arrow { transform: translateX(3px); }
 
-    .card-plan .card-label { color: #c0272d; }
-    .card-plan::before { background: #fff0f0; border-color: #e8a0a0; }
-    .card-plan .card-cta { background: #fff0f0; color: #c0272d; border-color: #e8a0a0; }
-    .card-plan:hover { border-color: #e8a0a0; }
+    .card-plan .card-label { color: #6f001c; }
+    .card-plan::before { background: #fff0f3; border-color: #c95a74; }
+    .card-plan .card-title { color: #6f001c; }
+    .card-plan .card-cta { background: #fff0f3; color: #6f001c; border-color: #c95a74; }
+    .card-plan:hover { border-color: #c95a74; }
 
     .card-create .card-label { color: #3a82c4; }
     .card-create::before { background: #e3f0ff; border-color: #adc7f7; }
@@ -222,6 +223,12 @@
     .card-assess .card-title { color: #2060a0; }
     .card-assess .card-cta { background: var(--accent-lt); color: #2060a0; border-color: var(--border-strong); }
     .card-assess:hover { border-color: var(--border-strong); }
+
+    .card-assist .card-label { color: #50528f; }
+    .card-assist::before { background: #f0f1ff; border-color: #b7b9e4; }
+    .card-assist .card-title { color: #50528f; }
+    .card-assist .card-cta { background: #f0f1ff; color: #50528f; border-color: #b7b9e4; }
+    .card-assist:hover { border-color: #b7b9e4; }
 
     footer {
       text-align: center; padding: 14px 20px;
@@ -239,6 +246,9 @@
     @media (max-width: 700px) {
       .cards { grid-template-columns: 1fr; max-width: 400px; }
       .login-card { padding: 36px 24px 28px; }
+    }
+    @media (min-width: 701px) and (max-width: 1180px) {
+      .cards { grid-template-columns: repeat(2, 1fr); max-width: 820px; }
     }
   </style>
 </head>
@@ -300,6 +310,13 @@
       <button class="card-cta">Open Assess <span class="arrow">→</span></button>
     </a>
 
+    <a class="app-card card-assist" href="assist.html">
+      <div class="card-label">Assist</div>
+      <div class="card-title">Cycle<br>Assist</div>
+      <div class="card-desc">Quick lesson plans and activities for when you're in a rush or need a cover lesson.</div>
+      <button class="card-cta">Open Assist <span class="arrow">→</span></button>
+    </a>
+
   </div>
 </main>
 
@@ -333,13 +350,14 @@
     const appView   = document.getElementById('appView');
     const headerRight = document.getElementById('headerRight');
 
-    if (user) {
+    if (user || SylCycle.localMode) {
       loginView.classList.add('hidden');
       appView.classList.remove('hidden');
-      const name = user.displayName || user.email;
+      const name = user ? (user.displayName || user.email) : 'Local mode';
       headerRight.innerHTML =
         '<div class="user-pill">' + name +
-        '&nbsp;&nbsp;<button class="logout-btn" onclick="SylCycle.logout()">Log out</button></div>';
+        (user ? '&nbsp;&nbsp;<button class="logout-btn" onclick="SylCycle.logout()">Log out</button>' : '') +
+        '</div>';
     } else {
       loginView.classList.remove('hidden');
       appView.classList.add('hidden');

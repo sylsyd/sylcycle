@@ -19,7 +19,8 @@
   const APP_KEYS = {
     studio:   ['wg_v1_prefs', 'wg_v1_drafts', 'wg_v1_templates', 'cyclestudio_history_v1', 'cyclestudio_editor_accordions_v2'],
     assess:   ['ca_v2_data', 'ca_v2_settings'],
-    planning: ['cycleplanner_refactor_prefs_v1', 'cycleplanner_refactor_current_v1', 'cycleplanner_refactor_history_v1', 'cycleplanner_refactor_templates_v1']
+    planning: ['cycleplanner_refactor_prefs_v1', 'cycleplanner_refactor_current_v1', 'cycleplanner_refactor_history_v1', 'cycleplanner_refactor_templates_v1'],
+    assist:   ['cycleassist_library_v1', 'cycleassist_settings_v1']
   };
 
   /* ── Detect current app from the URL ── */
@@ -27,14 +28,20 @@
     const p = location.pathname.toLowerCase();
     if (p.includes('studio'))   return 'studio';
     if (p.includes('assess'))   return 'assess';
+    if (p.includes('assist'))   return 'assist';
     if (p.includes('plann'))    return 'planning';
     return null;                // launcher page
+  }
+
+  function isLocalMode() {
+    return location.protocol === 'file:' || new URLSearchParams(location.search).has('local');
   }
 
   /* ── Global SylCycle object ── */
   window.SylCycle = {
     user: null, uid: null, db: null,
     app: detectApp(),
+    localMode: isLocalMode(),
     _readyCbs: [], _ready: false,
 
     /** Register a callback to run once auth + cloud sync are done. */
@@ -92,6 +99,7 @@
     },
 
     logout() {
+      if (this.localMode) { location.href = 'index.html?local=1'; return; }
       firebase.auth().signOut().then(() => { location.href = 'index.html'; });
     },
 
@@ -116,7 +124,7 @@
 
   /* ── Boot ── */
   function boot() {
-    if (typeof firebase === 'undefined' || FIREBASE_CONFIG.apiKey === 'PASTE_YOUR_API_KEY') {
+    if (SylCycle.localMode || typeof firebase === 'undefined' || FIREBASE_CONFIG.apiKey === 'PASTE_YOUR_API_KEY') {
       console.warn('[SylCycle] Firebase not configured — running in offline/local mode.');
       SylCycle._fireReady();
       return;
